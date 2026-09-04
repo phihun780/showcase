@@ -1,6 +1,6 @@
 @echo off
 cd /d "%~dp0"
-title DAY CODE LEN GITHUB - PHI HUNG PORTFOLIO
+title CAP NHAT CODE GITHUB - PHI HUNG PORTFOLIO
 color 0A
 
 echo =======================================================
@@ -8,27 +8,70 @@ echo    DANG CAP NHAT CODE LEN GITHUB VA CLOUDFLARE
 echo =======================================================
 echo.
 
-echo [1/2] Dang luu thay doi code...
-git add .
-git commit -m "Update portfolio: %date% %time%"
+rem Kiem tra Git da duoc cai dat chua
+where git >nul 2>nul
+if errorlevel 1 goto NO_GIT
 
-echo.
-echo [2/2] Dang day code len GitHub (git push origin main)...
-git push origin main
-
-echo.
-if %errorlevel% equ 0 (
-    echo =======================================================
-    echo    THANH CONG! Code da duoc day len GitHub.
-    echo    Cloudflare Pages dang tu dong cap nhat website!
-    echo =======================================================
-) else (
-    color 0C
-    echo =======================================================
-    echo    CO LOI XAY RA KHI DAY LEN GITHUB!
-    echo =======================================================
+rem Kiem tra va thiet lap thong tin neu chua co
+git config user.name >nul 2>nul
+if errorlevel 1 (
+    git config user.name "phihun780"
+    git config user.email "phihun780@users.noreply.github.com"
 )
 
+echo [1/2] Dang luu thay doi code...
+git add .
+git commit -m "Update portfolio: %date% %time%" >nul 2>nul
+
+echo.
+echo [2/2] Dang day code len GitHub...
+git push origin main
+if errorlevel 1 goto PUSH_ERROR
+
+color 0A
+echo.
+echo =======================================================
+echo    THANH CONG! Code da duoc day len GitHub.
+echo    Cloudflare Pages dang tu dong cap nhat website...
+echo =======================================================
 echo.
 pause
+exit /b 0
+
+:NO_GIT
+color 0C
+echo =======================================================
+echo    LOI: MAY TINH CUA BAN CHUA CAI DAT GIT!
+echo =======================================================
+echo.
+echo    HUONG DAN XU LY CHO MAY MOI:
+echo    1. Vao link: https://git-scm.com/download/win
+echo    2. Tai file va cai dat Git vao may.
+echo    3. Sau do mo lai file nay la xong ngay!
+echo.
+echo =======================================================
+echo.
+pause
+exit /b 1
+
+:PUSH_ERROR
+color 0C
+echo.
+echo =======================================================
+echo    LOI: KHONG THE DAY CODE LEN GITHUB!
+echo =======================================================
+echo.
+echo    HUONG DAN XU LY KHI DOI SANG MAY MOI:
+echo.
+echo    1. Neu trinh duyet bat popup hoi dang nhap:
+echo       Hay bam "Sign in with your browser" de xac thuc.
+echo.
+echo    2. Dam bao may tinh cua ban dang co ket noi mang.
+echo.
+echo =======================================================
+echo.
+pause
+exit /b 1
+
+
 

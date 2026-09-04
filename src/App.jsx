@@ -77,14 +77,47 @@ function SecurityShield() {
       }
     };
 
+    // 4. Mobile Anti-Zoom & Double-Tap Zoom Prevention
+    const handleTouchMove = (e) => {
+      if (e.touches && e.touches.length > 1) {
+        e.preventDefault();
+      }
+    };
+
+    let lastTap = 0;
+    const handleTouchEnd = (e) => {
+      const now = Date.now();
+      if (now - lastTap <= 300) {
+        const isInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target?.tagName);
+        if (!isInput) {
+          e.preventDefault();
+        }
+      }
+      lastTap = now;
+    };
+
+    const handleGesture = (e) => {
+      e.preventDefault();
+    };
+
     window.addEventListener('contextmenu', handleContextMenu, true);
     window.addEventListener('dragstart', handleDragStart, true);
     window.addEventListener('keydown', handleKeyDown, true);
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('touchend', handleTouchEnd, { passive: false });
+    document.addEventListener('gesturestart', handleGesture, { passive: false });
+    document.addEventListener('gesturechange', handleGesture, { passive: false });
+    document.addEventListener('gestureend', handleGesture, { passive: false });
 
     return () => {
       window.removeEventListener('contextmenu', handleContextMenu, true);
       window.removeEventListener('dragstart', handleDragStart, true);
       window.removeEventListener('keydown', handleKeyDown, true);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
+      document.removeEventListener('gesturestart', handleGesture);
+      document.removeEventListener('gesturechange', handleGesture);
+      document.removeEventListener('gestureend', handleGesture);
     };
   }, []);
 
