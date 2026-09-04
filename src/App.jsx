@@ -94,14 +94,17 @@ function SecurityShield() {
 function PortfolioApp() {
   const { profile } = usePortfolioData();
 
-  const [currentPath, setCurrentPath] = useState(() => {
-    if (typeof window !== 'undefined') {
-      if (window.location.pathname === '/cms' || window.location.hash === '#/cms') {
-        return '/cms';
-      }
+  const getCleanPath = () => {
+    if (typeof window === 'undefined') return '/';
+    const path = window.location.pathname.replace(/\/+$/, '') || '/';
+    const hash = window.location.hash.replace(/\/+$/, '') || '';
+    if (path === '/cms' || hash === '#/cms' || hash === '#cms') {
+      return '/cms';
     }
     return '/';
-  });
+  };
+
+  const [currentPath, setCurrentPath] = useState(getCleanPath);
 
   const [activeSection, setActiveSection] = useState('work');
 
@@ -142,8 +145,7 @@ function PortfolioApp() {
 
   useEffect(() => {
     const handleLocationChange = () => {
-      const isCMS = window.location.pathname === '/cms' || window.location.hash === '#/cms';
-      setCurrentPath(isCMS ? '/cms' : '/');
+      setCurrentPath(getCleanPath());
     };
 
     window.addEventListener('popstate', handleLocationChange);
