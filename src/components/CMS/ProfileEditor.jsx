@@ -13,6 +13,7 @@ export default function ProfileEditor({ profile, onSave }) {
     cvUrl: profile.cvUrl || profile.resumeUrl || '',
     location: profile.location || 'Tp. Buôn Ma Thuột, Đắk Lắk',
     email: profile.email || 'phihung.contact@example.com',
+    tabTitle: profile.tabTitle || 'Phi Hùng — Graphic Designer | Portfolio Showcase',
     favicon: profile.favicon || '',
     ogImage: profile.ogImage || '',
     socials: Array.isArray(profile.socials) ? [...profile.socials] : [],
@@ -447,20 +448,39 @@ export default function ProfileEditor({ profile, onSave }) {
         </div>
       </div>
 
-      {/* Nhận Diện & Thumbnail (Favicon & Social Preview) */}
+      {/* Nhận Diện, Tiêu Đề Tab & Thumbnail (SEO / Favicon / OpenGraph) */}
       <div className="p-5 sm:p-6 rounded-2xl bg-[#121216] border border-white/10 space-y-4">
         <div className="pb-2 border-b border-white/10">
           <h3 className="text-base font-display font-bold text-white">
-            Nhận Diện & Thumbnail Chia Sẻ (Favicon / OpenGraph)
+            Tiêu Đề Tab Trình Duyệt, Favicon & Thumbnail Chia Sẻ
           </h3>
         </div>
 
+        {/* 1. Tiêu đề Tab Trình duyệt */}
+        <div className="p-4 rounded-xl bg-black/40 border border-white/10 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="font-mono font-bold text-xs text-[#C3EA39] uppercase">
+              1. Tiêu đề Tab Trình duyệt (Browser Tab Title)
+            </span>
+            <span className="text-[10px] font-mono text-white/40 bg-white/5 px-2 py-0.5 rounded border border-white/10">
+              Hiển thị trên tab Chrome, Safari...
+            </span>
+          </div>
+          <input
+            type="text"
+            value={formData.tabTitle || ''}
+            onChange={(e) => setFormData({ ...formData, tabTitle: e.target.value })}
+            placeholder="Phi Hùng — Graphic Designer | Portfolio Showcase"
+            className="w-full px-3.5 py-2.5 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-sm font-medium placeholder-white/30"
+          />
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Favicon */}
+          {/* 2. Favicon */}
           <div className="p-4 rounded-xl bg-black/40 border border-white/10 space-y-3">
             <div className="flex items-center justify-between">
               <span className="font-mono font-bold text-xs text-[#C3EA39] uppercase">
-                1. Favicon (Icon tab web)
+                2. Favicon (Icon tab web)
               </span>
               <span className="text-[10px] font-mono text-white/40 bg-white/5 px-2 py-0.5 rounded border border-white/10">
                 1:1 • 64×64px / 32×32px
@@ -503,7 +523,7 @@ export default function ProfileEditor({ profile, onSave }) {
           <div className="p-4 rounded-xl bg-black/40 border border-white/10 space-y-3">
             <div className="flex items-center justify-between">
               <span className="font-mono font-bold text-xs text-[#C3EA39] uppercase">
-                2. Thumbnail Chia Sẻ (Zalo / FB)
+                3. Thumbnail Chia Sẻ (Zalo / FB)
               </span>
               <span className="text-[10px] font-mono text-white/40 bg-white/5 px-2 py-0.5 rounded border border-white/10">
                 1200×630px (Tỷ lệ 1.91:1)

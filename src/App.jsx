@@ -108,11 +108,25 @@ function PortfolioApp() {
 
   const [activeSection, setActiveSection] = useState('work');
 
-  // Dynamic Favicon & Social Preview Meta Tags sync
+  // Dynamic Tab Title, Favicon & Social Preview Meta Tags sync
   useEffect(() => {
     if (typeof document === 'undefined') return;
 
-    // 1. Dynamic Favicon
+    // 1. Dynamic Browser Tab Title & Social Title
+    if (profile?.tabTitle && profile.tabTitle.trim()) {
+      document.title = profile.tabTitle.trim();
+      
+      const ogTitle = document.querySelector("meta[property='og:title']");
+      if (ogTitle) ogTitle.content = profile.tabTitle.trim();
+
+      const twTitle = document.querySelector("meta[name='twitter:title']");
+      if (twTitle) twTitle.content = profile.tabTitle.trim();
+    } else if (profile?.name) {
+      const defaultTitle = `${profile.name} — ${profile.title || 'Graphic Designer'} | Portfolio Showcase`;
+      document.title = defaultTitle;
+    }
+
+    // 2. Dynamic Favicon
     if (profile?.favicon) {
       let link = document.querySelector("link[rel~='icon']");
       if (!link) {
@@ -123,7 +137,7 @@ function PortfolioApp() {
       link.href = profile.favicon;
     }
 
-    // 2. Dynamic OpenGraph Image
+    // 3. Dynamic OpenGraph Image
     if (profile?.ogImage) {
       let ogImg = document.querySelector("meta[property='og:image']");
       if (!ogImg) {
@@ -141,7 +155,7 @@ function PortfolioApp() {
       }
       twImg.content = profile.ogImage;
     }
-  }, [profile?.favicon, profile?.ogImage]);
+  }, [profile?.tabTitle, profile?.name, profile?.title, profile?.favicon, profile?.ogImage]);
 
   useEffect(() => {
     const handleLocationChange = () => {
