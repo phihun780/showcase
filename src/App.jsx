@@ -159,8 +159,19 @@ function PortfolioApp() {
 
   useEffect(() => {
     const handleLocationChange = () => {
-      setCurrentPath(getCleanPath());
+      const clean = getCleanPath();
+      setCurrentPath(clean);
+
+      // Auto-normalize any extra path like /phihun or /phihun/ back to clean /
+      if (typeof window !== 'undefined') {
+        const path = window.location.pathname.replace(/\/+$/, '') || '/';
+        if (path !== '/' && path !== '/cms' && !path.startsWith('/api')) {
+          window.history.replaceState({}, '', '/');
+        }
+      }
     };
+
+    handleLocationChange();
 
     window.addEventListener('popstate', handleLocationChange);
     window.addEventListener('hashchange', handleLocationChange);
