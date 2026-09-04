@@ -140,18 +140,22 @@ export function PortfolioDataProvider({ children }) {
     return () => { isMounted = false; };
   }, []);
 
-  // 2. Save to LocalStorage
+  // 2. Save to LocalStorage safely (handles quota limit without crashing)
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_MARQUEE_KEY, JSON.stringify(marqueeItems));
-      localStorage.setItem(STORAGE_SEASONAL_EFFECT_KEY, seasonalEffect);
-      localStorage.setItem(STORAGE_COVER_BANNERS_KEY, JSON.stringify(coverBanners));
-      localStorage.setItem(STORAGE_RANDOM_WORKS_KEY, JSON.stringify(randomWorks));
-      localStorage.setItem(STORAGE_PROJECTS_KEY, JSON.stringify(projects));
-      localStorage.setItem(STORAGE_PROFILE_KEY, JSON.stringify(profile));
-    } catch (e) {
-      console.error("Failed to save to localStorage", e);
-    }
+    const safeSet = (key, val) => {
+      try {
+        localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val));
+      } catch (e) {
+        // If quota exceeded, try cleaning up or skip
+      }
+    };
+
+    safeSet(STORAGE_MARQUEE_KEY, marqueeItems);
+    safeSet(STORAGE_SEASONAL_EFFECT_KEY, seasonalEffect);
+    safeSet(STORAGE_COVER_BANNERS_KEY, coverBanners);
+    safeSet(STORAGE_RANDOM_WORKS_KEY, randomWorks);
+    safeSet(STORAGE_PROJECTS_KEY, projects);
+    safeSet(STORAGE_PROFILE_KEY, profile);
   }, [marqueeItems, seasonalEffect, coverBanners, randomWorks, projects, profile]);
 
   // 3. Auto-sync entire portfolio database to Cloudflare R2 (Debounced 1.5s)

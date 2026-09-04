@@ -16,9 +16,18 @@ export default function ProjectModal({ project, isOpen, onClose, onSelectNextPro
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') onClose();
     };
+
+    const handleGlobalWheel = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        e.preventDefault();
+        containerRef.current.scrollTop += e.deltaY;
+      }
+    };
+
     if (isOpen) {
       document.body.style.overflow = 'hidden';
       window.addEventListener('keydown', handleKeyDown);
+      window.addEventListener('wheel', handleGlobalWheel, { passive: false });
       setScrollProgress(0);
       setActiveImageIndex(0);
       setShowBackToTop(false);
@@ -26,6 +35,7 @@ export default function ProjectModal({ project, isOpen, onClose, onSelectNextPro
     return () => {
       document.body.style.overflow = 'unset';
       window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('wheel', handleGlobalWheel);
     };
   }, [isOpen, onClose]);
 
@@ -136,11 +146,6 @@ export default function ProjectModal({ project, isOpen, onClose, onSelectNextPro
                     onDragStart={(e) => e.preventDefault()}
                     className="w-full h-auto object-cover select-none group-hover:scale-[1.01] transition-transform duration-500"
                   />
-                  {galleryCount > 1 && (
-                    <div className="absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-black/75 backdrop-blur-md text-[11px] font-mono font-bold text-white/80 border border-white/10 pointer-events-none">
-                      0{idx + 1} / 0{galleryCount}
-                    </div>
-                  )}
                 </div>
               ))}
             </div>

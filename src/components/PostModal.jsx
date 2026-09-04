@@ -12,15 +12,25 @@ export default function PostModal({ post, isOpen, onClose }) {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') onClose();
     };
+
+    const handleGlobalWheel = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        e.preventDefault();
+        containerRef.current.scrollTop += e.deltaY;
+      }
+    };
+
     if (isOpen) {
       document.body.style.overflow = 'hidden';
       window.addEventListener('keydown', handleKeyDown);
+      window.addEventListener('wheel', handleGlobalWheel, { passive: false });
       setScrollProgress(0);
       setShowBackToTop(false);
     }
     return () => {
       document.body.style.overflow = 'unset';
       window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('wheel', handleGlobalWheel);
     };
   }, [isOpen, onClose]);
 
