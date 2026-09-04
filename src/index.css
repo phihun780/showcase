@@ -1,0 +1,197 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --color-lime: #C3EA39;
+    --color-lime-glow: rgba(195, 234, 57, 0.25);
+    --bg-main: #08080A;
+    --bg-card: #121216;
+    --bg-card-hover: #18181E;
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-lime: rgba(195, 234, 57, 0.4);
+    
+    --font-sans: 'Be Vietnam Pro', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-display: 'Be Vietnam Pro', 'Space Grotesk', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  html {
+    scrollbar-gutter: stable;
+    overflow-y: scroll;
+  }
+
+  body {
+    background-color: var(--bg-main);
+    color: #EDEDED;
+    font-family: var(--font-sans);
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.03em;
+  }
+
+  .font-mono-code {
+    font-family: var(--font-mono);
+  }
+}
+
+
+/* Creative Glow & Accents */
+.text-lime-brand {
+  color: #C3EA39;
+}
+.bg-lime-brand {
+  background-color: #C3EA39;
+}
+.border-lime-brand {
+  border-color: #C3EA39;
+}
+
+.glow-lime {
+  box-shadow: 0 0 25px rgba(195, 234, 57, 0.25);
+}
+.glow-lime-sm {
+  box-shadow: 0 0 15px rgba(195, 234, 57, 0.15);
+}
+
+/* Background Grid Pattern */
+.bg-grid-pattern {
+  background-size: 44px 44px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+}
+
+/* Infinite Marquee Animation - 100% Seamless & GPU Accelerated */
+@keyframes marquee {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 35s linear infinite;
+  will-change: transform;
+}
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Noise overlay */
+.noise-overlay {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+/* Custom Scrollbar - Minimalist & Refined */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 9999px;
+  transition: all 0.2s ease;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #C3EA39;
+  box-shadow: 0 0 10px rgba(195, 234, 57, 0.5);
+}
+
+/* Modal and Element Custom Scrollbar - Ultra Modern Floating Pill */
+.custom-scrollbar,
+.modal-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar,
+.modal-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track,
+.modal-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  margin-top: 24px;
+  margin-bottom: 24px;
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb,
+.modal-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  border: 1.5px solid transparent;
+  background-clip: padding-box;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.custom-scrollbar:hover::-webkit-scrollbar-thumb,
+.modal-scrollbar:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+  background-clip: padding-box;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover,
+.modal-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #C3EA39 !important;
+  background-clip: padding-box;
+  box-shadow: 0 0 14px rgba(195, 234, 57, 0.7);
+}
+
+/* Selection */
+::selection {
+  background-color: #C3EA39;
+  color: #000000;
+}
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+.no-scrollbar {
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
+}
+
+
+
+/* Mobile & Touch Optimizations */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  touch-action: manipulation;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+/* Image Anti-Copy, Anti-Drag & Long-Press Download Lock */
+img {
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  user-drag: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  -webkit-touch-callout: none !important;
+}
+
+

@@ -1,0 +1,55 @@
+import React, { useEffect, useState } from 'react';
+
+export default function CursorSpotlight() {
+  const [position, setPosition] = useState({ x: -100, y: -100 });
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    // Only enable on pointer devices (desktop mouse)
+    if (window.matchMedia('(pointer: coarse)').matches) return;
+
+    const handleMouseMove = (e) => {
+      setPosition({ x: e.clientX, y: e.clientY });
+      if (!isVisible) setIsVisible(true);
+    };
+
+    const handleMouseLeave = () => {
+      setIsVisible(false);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseleave', handleMouseLeave);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseleave', handleMouseLeave);
+    };
+  }, [isVisible]);
+
+  if (!isVisible) return null;
+
+  return (
+    <>
+      {/* Concentrated Bright Lime Spotlight */}
+      <div
+        className="pointer-events-none fixed inset-0 z-30 transition-opacity duration-300"
+        style={{
+          background: `radial-gradient(280px circle at ${position.x}px ${position.y}px, rgba(195, 234, 57, 0.32) 0%, rgba(195, 234, 57, 0.12) 45%, transparent 70%)`,
+        }}
+      />
+
+      {/* Bright Central Focus Core */}
+      <div
+        className="pointer-events-none fixed z-40 transition-transform duration-75 ease-out"
+        style={{
+          left: `${position.x}px`,
+          top: `${position.y}px`,
+          transform: 'translate(-50%, -50%)',
+        }}
+      >
+        <div className="w-4 h-4 rounded-full bg-[#C3EA39]/40 blur-[3px] animate-pulse" />
+      </div>
+    </>
+  );
+
+}
