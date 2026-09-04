@@ -92,11 +92,6 @@ export default function WorkSection() {
                         : 'bg-[#121216]/60 border border-white/5 hover:border-white/20 hover:bg-[#141418]/80'
                     }`}
                   >
-                    {/* Active Left Indicator */}
-                    {isActive && (
-                      <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C3EA39]" />
-                    )}
-
                     {/* Left: Index & Project Title */}
                     <div className="flex items-center gap-3">
                       <span className={`font-mono font-bold text-xs ${isActive ? 'text-[#C3EA39]' : 'text-white/40'}`}>
