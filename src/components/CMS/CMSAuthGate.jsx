@@ -33,12 +33,15 @@ export default function CMSAuthGate({ onAuthenticated, onBackToPortfolio }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: enteredPin }),
       });
-      if (res.ok) {
+      if (res.status === 200) {
         const data = await res.json();
         if (data.success) {
           handleSuccess();
           return;
         }
+      } else if (res.status === 401) {
+        handleFailure();
+        return;
       }
     } catch (e) {}
 
