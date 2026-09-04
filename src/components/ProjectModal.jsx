@@ -92,24 +92,30 @@ export default function ProjectModal({ project, isOpen, onClose, onSelectNextPro
           />
         </div>
 
-        {/* Floating Close Button - Prominent, Clear & High Contrast */}
-        <button
-          onClick={onClose}
-          className="fixed sm:absolute top-5 right-5 sm:top-6 sm:right-6 z-50 w-10 h-10 rounded-full flex items-center justify-center bg-[#1A1A22] text-white hover:bg-[#C3EA39] hover:text-black transition-all border border-white/20 hover:border-[#C3EA39] shadow-2xl cursor-pointer hover:scale-110"
-          aria-label="Đóng popup"
-        >
-          <X className="w-5 h-5 stroke-[2.5]" />
-        </button>
+        {/* Sticky Top-Right Floating Close Button - Always visible, perfect on mobile */}
+        <div className="sticky top-0 right-0 z-[100] flex justify-end p-3.5 sm:p-6 pointer-events-none -mb-14 sm:-mb-16">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
+            className="pointer-events-auto w-11 h-11 sm:w-10 sm:h-10 rounded-full flex items-center justify-center bg-[#181820]/95 hover:bg-[#C3EA39] text-white hover:text-black backdrop-blur-xl transition-all border border-white/25 hover:border-[#C3EA39] shadow-2xl cursor-pointer active:scale-90 hover:scale-105 touch-manipulation"
+            aria-label="Đóng popup"
+          >
+            <X className="w-5 h-5 stroke-[2.5]" />
+          </button>
+        </div>
 
         {/* Modal Content: Title + Subtitle -> Full Image Gallery */}
-        <div className="p-6 sm:p-10 md:p-14 space-y-8 sm:space-y-10">
+        <div className="p-5 sm:p-10 md:p-14 space-y-6 sm:space-y-10">
           
           {/* Title & Subtitle */}
-          <div className="pr-12 sm:pr-16 space-y-2 sm:space-y-3">
-            <h2 className="text-2xl sm:text-4xl md:text-5xl font-display font-black uppercase text-white tracking-tight">
+          <div className="pr-14 sm:pr-16 space-y-1.5 sm:space-y-2">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-bold uppercase text-white tracking-tight leading-snug">
               {project.title}
             </h2>
-            <p className="text-sm sm:text-base md:text-lg text-white/70 font-light leading-relaxed max-w-3xl">
+            <p className="text-xs sm:text-sm md:text-base text-white/70 font-light leading-relaxed max-w-3xl">
               {project.subtitle}
             </p>
           </div>

@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Download, ArrowUpRight, Check, Copy } from 'lucide-react';
+import { Download, ArrowUpRight, Check, Copy, Loader2 } from 'lucide-react';
 import { usePortfolioData } from '../context/PortfolioDataContext';
 
 export default function AboutSection() {
   const { profile } = usePortfolioData();
   const [copiedEmail, setCopiedEmail] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadComplete, setDownloadComplete] = useState(false);
 
   const handleCopyEmail = (e, emailVal) => {
     e.preventDefault();
@@ -17,13 +20,40 @@ export default function AboutSection() {
     setTimeout(() => setCopiedEmail(false), 2500);
   };
 
-  const handleDownloadCV = () => {
-    const cvLink = profile.cvUrl || profile.resumeUrl;
-    if (cvLink && cvLink.trim()) {
-      window.open(cvLink.trim(), '_blank', 'noopener,noreferrer');
-    } else {
-      window.open('/cv.pdf', '_blank', 'noopener,noreferrer');
-    }
+  const handleDownloadCV = (e) => {
+    e?.preventDefault();
+    if (isDownloading) return;
+
+    setIsDownloading(true);
+    setDownloadProgress(0);
+    setDownloadComplete(false);
+
+    let current = 0;
+    const interval = setInterval(() => {
+      // Dynamic non-linear progress increments (+6% to +16%)
+      const increment = Math.floor(Math.random() * 11) + 6;
+      current = Math.min(100, current + increment);
+      setDownloadProgress(current);
+
+      if (current >= 100) {
+        clearInterval(interval);
+        setDownloadComplete(true);
+
+        // Open/download file upon reaching 100%
+        setTimeout(() => {
+          const cvLink = profile.cvUrl || profile.resumeUrl;
+          const targetUrl = (cvLink && cvLink.trim()) ? cvLink.trim() : '/cv.pdf';
+          window.open(targetUrl, '_blank', 'noopener,noreferrer');
+        }, 200);
+
+        // Reset state after 2.5s
+        setTimeout(() => {
+          setIsDownloading(false);
+          setDownloadProgress(0);
+          setDownloadComplete(false);
+        }, 2500);
+      }
+    }, 55);
   };
 
   return (
@@ -223,13 +253,54 @@ export default function AboutSection() {
 
             </div>
 
-            {/* Resume / CV Download Button (Under Những Nơi Khác) */}
+            {/* Resume / CV Download Button with Interactive 0-100% Progress Simulator */}
             <button
               onClick={handleDownloadCV}
-              className="w-full py-4 px-6 rounded-2xl bg-[#C3EA39] hover:bg-[#d4f854] text-black font-display font-bold text-sm tracking-wide flex items-center justify-center gap-2.5 transition-all shadow-lg shadow-[#C3EA39]/15 hover:scale-[1.01] cursor-pointer"
+              disabled={isDownloading}
+              className={`relative overflow-hidden w-full py-4 px-6 rounded-2xl font-display font-bold text-sm tracking-wide transition-all shadow-lg select-none cursor-pointer group ${
+                isDownloading || downloadComplete
+                  ? 'bg-[#181820] text-black border border-[#C3EA39]'
+                  : 'bg-[#C3EA39] hover:bg-[#d4f854] text-black shadow-[#C3EA39]/15 hover:scale-[1.01]'
+              }`}
             >
-              <Download className="w-4 h-4" />
-              <span>TẢI CV / RESUME (PDF)</span>
+              {/* Background Animated Progress Bar */}
+              {(isDownloading || downloadComplete) && (
+                <div
+                  className="absolute inset-0 bg-[#C3EA39] transition-all duration-75 ease-out"
+                  style={{ width: `${downloadProgress}%` }}
+                />
+              )}
+
+              {/* Shimmer Light effect while downloading */}
+              {isDownloading && (
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/35 to-transparent -skew-x-12 animate-pulse pointer-events-none" />
+              )}
+
+              {/* Button Label & Status Icon */}
+              <div className="relative z-10 flex items-center justify-center gap-2.5">
+                {downloadComplete ? (
+                  <>
+                    <Check className="w-4 h-4 text-black stroke-[3] animate-bounce" />
+                    <span className="font-mono font-bold text-black uppercase tracking-wider">
+                      ĐÃ XONG 100% ✓
+                    </span>
+                  </>
+                ) : isDownloading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 text-black animate-spin" />
+                    <span className="font-mono font-bold text-black tracking-wider">
+                      ĐANG TẢI... {downloadProgress}%
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4 text-black stroke-[2.5]" />
+                    <span className="text-black uppercase">
+                      TẢI CV / RESUME (PDF)
+                    </span>
+                  </>
+                )}
+              </div>
             </button>
 
           </motion.div>

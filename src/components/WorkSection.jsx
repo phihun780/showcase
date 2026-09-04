@@ -171,8 +171,8 @@ export default function WorkSection() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent pointer-events-none" />
 
                 {/* Bottom Clean Project Info */}
-                <div className="relative z-10 space-y-1.5">
-                  <h3 className="text-2xl sm:text-3xl font-bold uppercase text-white tracking-tight group-hover:text-[#C3EA39] transition-colors">
+                <div className="relative z-10 space-y-1 sm:space-y-1.5">
+                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold uppercase text-white tracking-tight group-hover:text-[#C3EA39] transition-colors">
                     {currentProject.title}
                   </h3>
                   <p className="text-xs sm:text-sm text-white/70 font-light max-w-lg line-clamp-1">

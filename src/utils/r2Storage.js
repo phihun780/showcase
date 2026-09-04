@@ -1,4 +1,4 @@
-﻿// Cloudflare R2 Direct Integration & Storage Utility
+// Cloudflare R2 Direct Integration & Storage Utility
 
 export const R2_CONFIG = {
   accountId: 'a0650e4cdd588f8cab25b3a13a282dc4',
