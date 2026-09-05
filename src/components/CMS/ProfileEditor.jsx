@@ -65,6 +65,14 @@ export default function ProfileEditor({ profile, onSave }) {
   const [isCropOpen, setIsCropOpen] = useState(false);
 
   // Drag & drop state for Experience list
+  const [draggedExpIndex, setDraggedExpIndex] = useState(null);
+  const [dragOverExpIndex, setDragOverExpIndex] = useState(null);
+  const [canDragExp, setCanDragExp] = useState(false);
+
+  // Drag & drop state for Socials list
+  const [draggedSocialIndex, setDraggedSocialIndex] = useState(null);
+  const [dragOverSocialIndex, setDragOverSocialIndex] = useState(null);
+  const [canDragSocial, setCanDragSocial] = useState(false);
 
   const handleAvatarUpload = async (e) => {
     const file = e.target.files?.[0];
