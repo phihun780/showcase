@@ -36,12 +36,54 @@ import {
   Eye,
   X,
   SlidersHorizontal,
-  Check
+  Check,
+  Loader2
 } from 'lucide-react';
 
 const AUTH_STORAGE_KEY = 'phihung_cms_authenticated';
 const AUTH_TIMESTAMP_KEY = 'phihung_cms_last_active';
 const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
+
+function StickySaveBar({ isSaved, onSave, isSyncing, label = "Lưu Thay Đổi", hint = "Nhớ bấm lưu sau khi thay đổi dữ liệu" }) {
+  return (
+    <div className="sticky bottom-4 z-30 p-3.5 sm:p-4 rounded-2xl bg-[#121216]/95 backdrop-blur-xl border border-white/15 shadow-2xl flex items-center justify-between gap-3 animate-fadeIn">
+      {isSaved ? (
+        <span className="text-xs font-mono text-[#C3EA39] font-bold flex items-center gap-1.5 animate-fadeIn">
+          <Check className="w-4 h-4" />
+          <span>Đã lưu thành công!</span>
+        </span>
+      ) : isSyncing ? (
+        <span className="text-xs font-mono text-[#C3EA39] font-bold flex items-center gap-1.5 animate-pulse">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          <span>Đang lưu lên Cloud...</span>
+        </span>
+      ) : (
+        <span className="text-xs font-mono text-white/40 hidden sm:inline">
+          {hint}
+        </span>
+      )}
+
+      <button
+        type="button"
+        onClick={onSave}
+        disabled={isSyncing}
+        className="ml-auto px-6 py-2.5 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] disabled:opacity-50 text-black font-display font-bold text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-[1.01] cursor-pointer min-h-[42px] active:scale-95"
+      >
+        {isSyncing ? (
+          <>
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span>Đang Lưu...</span>
+          </>
+        ) : (
+          <>
+            <Check className="w-4 h-4" />
+            <span>{label}</span>
+          </>
+        )}
+      </button>
+    </div>
+  );
+}
 
 export default function CMSPage({ onBackToPortfolio }) {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -179,10 +221,72 @@ export default function CMSPage({ onBackToPortfolio }) {
   const [newMarqueeText, setNewMarqueeText] = useState('');
   const [cropModalConfig, setCropModalConfig] = useState(null);
   const [previewingImage, setPreviewingImage] = useState(null);
+  const [embedModalConfig, setEmbedModalConfig] = useState(null);
   const fileInputRef = useRef(null);
   const projectFileInputRef = useRef(null);
   const coverBannerFileInputRef = useRef(null);
   const randomWorkFileInputRef = useRef(null);
+
+  // Local Working States for Tabs (Changes are applied upon clicking "Lưu Thay Đổi")
+  const [localProjects, setLocalProjects] = useState(projects);
+  const [localCoverBanners, setLocalCoverBanners] = useState(coverBanners);
+  const [localRandomWorks, setLocalRandomWorks] = useState(randomWorks);
+  const [localMarqueeItems, setLocalMarqueeItems] = useState(marqueeItems);
+  const [localSeasonalEffect, setLocalSeasonalEffect] = useState(seasonalEffect);
+
+  // Success Feedback Alert State for each tab
+  const [savedAlerts, setSavedAlerts] = useState({
+    projects: false,
+    banner: false,
+    random: false,
+    marquee: false,
+    seasonal: false,
+  });
+
+  const triggerSaveAlert = (tabKey) => {
+    setSavedAlerts(prev => ({ ...prev, [tabKey]: true }));
+    setTimeout(() => {
+      setSavedAlerts(prev => ({ ...prev, [tabKey]: false }));
+    }, 2500);
+  };
+
+  // Sync with global store on external data updates (import / reset / cloud load)
+  useEffect(() => { setLocalProjects(projects); }, [projects]);
+  useEffect(() => { setLocalCoverBanners(coverBanners); }, [coverBanners]);
+  useEffect(() => { setLocalRandomWorks(randomWorks); }, [randomWorks]);
+  useEffect(() => { setLocalMarqueeItems(marqueeItems); }, [marqueeItems]);
+  useEffect(() => { setLocalSeasonalEffect(seasonalEffect); }, [seasonalEffect]);
+
+  // Tab Save Handlers (Persist to Store & Sync to Cloudflare R2)
+  const handleSaveProjectsTab = async () => {
+    updateProjectsList(localProjects);
+    await saveToCloud();
+    triggerSaveAlert('projects');
+  };
+
+  const handleSaveBannersTab = async () => {
+    updateCoverBannersList(localCoverBanners);
+    await saveToCloud();
+    triggerSaveAlert('banner');
+  };
+
+  const handleSaveRandomWorksTab = async () => {
+    updateRandomWorksList(localRandomWorks);
+    await saveToCloud();
+    triggerSaveAlert('random');
+  };
+
+  const handleSaveMarqueeTab = async () => {
+    updateMarqueeItems(localMarqueeItems);
+    await saveToCloud();
+    triggerSaveAlert('marquee');
+  };
+
+  const handleSaveSeasonalTab = async () => {
+    updateSeasonalEffect(localSeasonalEffect);
+    await saveToCloud();
+    triggerSaveAlert('seasonal');
+  };
 
   if (!isAuthenticated) {
     return (
@@ -205,19 +309,37 @@ export default function CMSPage({ onBackToPortfolio }) {
 
   const handleSaveProject = (formData) => {
     if (editingProject) {
-      updateProject(editingProject.id, formData);
+      setLocalProjects(prev =>
+        prev.map(p => (p.id === editingProject.id ? { ...formData, id: editingProject.id } : p))
+      );
     } else {
-      addProject(formData);
+      const newProj = {
+        ...formData,
+        id: Date.now().toString(),
+      };
+      setLocalProjects(prev => [newProj, ...prev]);
     }
+    setIsEditorOpen(false);
   };
 
   const handleDeleteProject = (proj) => {
     if (window.confirm(`Xoá dự án "${proj.title}"?`)) {
-      // Automatically clean up all related images from Cloudflare R2
       const imagesToDelete = [proj.coverImage, ...(proj.gallery || [])].filter(Boolean);
       deleteMultipleFromR2(imagesToDelete);
-      deleteProject(proj.id);
+      setLocalProjects(prev => prev.filter(p => p.id !== proj.id));
     }
+  };
+
+  const moveLocalProject = (index, direction) => {
+    setLocalProjects(prev => {
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= prev.length) return prev;
+      const newArr = [...prev];
+      const temp = newArr[index];
+      newArr[index] = newArr[targetIndex];
+      newArr[targetIndex] = temp;
+      return newArr;
+    });
   };
 
   // 0. Project Handlers (Immediate Crop on Upload + Re-crop)
@@ -230,7 +352,7 @@ export default function CMSPage({ onBackToPortfolio }) {
           isOpen: true,
           imageSrc: loadEvent.target.result,
           mode: 'project',
-          editingIndex: null, // new project
+          editingIndex: null,
           title: file.name.replace(/\.[^/.]+$/, "") || "Dự án mới",
           subtitle: "Dự án thiết kế sáng tạo",
         });
@@ -240,7 +362,7 @@ export default function CMSPage({ onBackToPortfolio }) {
     e.target.value = '';
   };
 
-  // 1. Cover Banners Handlers (Immediate Crop on Upload + Re-crop)
+  // 1. Cover Banners Handlers
   const handleUploadCoverBanner = (e) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -250,7 +372,7 @@ export default function CMSPage({ onBackToPortfolio }) {
           isOpen: true,
           imageSrc: loadEvent.target.result,
           mode: 'banner',
-          editingIndex: null, // new banner
+          editingIndex: null,
           title: "",
           subtitle: "",
         });
@@ -259,8 +381,6 @@ export default function CMSPage({ onBackToPortfolio }) {
     }
     e.target.value = '';
   };
-
-  const [embedModalConfig, setEmbedModalConfig] = useState(null);
 
   const handleOpenAddEmbedBanner = () => {
     setEmbedModalConfig({
@@ -295,22 +415,25 @@ export default function CMSPage({ onBackToPortfolio }) {
   const handleSaveEmbedBanner = (data) => {
     if (embedModalConfig?.editingIndex !== null && embedModalConfig?.editingIndex !== undefined) {
       const idx = embedModalConfig.editingIndex;
-      const updated = [...coverBanners];
-      updated[idx] = {
-        ...updated[idx],
-        type: 'embed',
-        embedCode: data.embedCode || '',
-        embedUrl: data.embedUrl || '',
-        beforeImage: data.beforeImage || '',
-        afterImage: data.afterImage || '',
-        beforeLabel: data.beforeLabel || '',
-        afterLabel: data.afterLabel || '',
-        title: data.title || '',
-        subtitle: data.subtitle || '',
-      };
-      updateCoverBannersList(updated);
+      setLocalCoverBanners(prev => {
+        const updated = [...prev];
+        updated[idx] = {
+          ...updated[idx],
+          type: 'embed',
+          embedCode: data.embedCode || '',
+          embedUrl: data.embedUrl || '',
+          beforeImage: data.beforeImage || '',
+          afterImage: data.afterImage || '',
+          beforeLabel: data.beforeLabel || '',
+          afterLabel: data.afterLabel || '',
+          title: data.title || '',
+          subtitle: data.subtitle || '',
+        };
+        return updated;
+      });
     } else {
-      addCoverBanner({
+      const newBanner = {
+        id: Date.now().toString(),
         type: 'embed',
         embedCode: data.embedCode || '',
         embedUrl: data.embedUrl || '',
@@ -321,7 +444,8 @@ export default function CMSPage({ onBackToPortfolio }) {
         title: data.title || '',
         subtitle: data.subtitle || '',
         image: data.afterImage || '',
-      });
+      };
+      setLocalCoverBanners(prev => [...prev, newBanner]);
     }
     setEmbedModalConfig(null);
   };
@@ -331,7 +455,7 @@ export default function CMSPage({ onBackToPortfolio }) {
       isOpen: true,
       imageSrc: banner.image,
       mode: 'banner',
-      editingIndex: idx, // editing existing banner
+      editingIndex: idx,
       title: banner.title || '',
       subtitle: banner.subtitle || '',
     });
@@ -341,41 +465,62 @@ export default function CMSPage({ onBackToPortfolio }) {
     const url = window.prompt("Nhập đường dẫn URL ảnh banner:");
     if (url && url.trim()) {
       const title = window.prompt("Nhập tiêu đề banner (hoặc để trống):") || "";
-      addCoverBanner({
+      const newBanner = {
+        id: Date.now().toString(),
         type: 'image',
         title: title.trim(),
         subtitle: "",
         image: url.trim(),
-      });
+      };
+      setLocalCoverBanners(prev => [...prev, newBanner]);
     }
   };
 
-  // 2. Random Works Handlers (Immediate Crop on Upload + Re-crop)
+  const moveLocalCoverBanner = (index, direction) => {
+    setLocalCoverBanners(prev => {
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= prev.length) return prev;
+      const newArr = [...prev];
+      const temp = newArr[index];
+      newArr[index] = newArr[targetIndex];
+      newArr[targetIndex] = temp;
+      return newArr;
+    });
+  };
+
+  const handleDeleteCoverBanner = (banner, idx) => {
+    if (window.confirm("Xoá banner cover này?")) {
+      if (banner.image && banner.type !== 'embed') deleteFromR2(banner.image);
+      setLocalCoverBanners(prev => prev.filter((_, i) => i !== idx));
+    }
+  };
+
+  // 2. Random Works Handlers
   const handleUploadRandomWork = async (e) => {
     const file = e.target.files?.[0];
     if (file) {
       const isGif = file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
       if (isGif) {
-        // Direct upload to preserve GIF animation
         try {
           const res = await optimizeAndUploadToR2(file, 'random');
-          addRandomWork({
+          const newWork = {
+            id: Date.now().toString(),
             title: file.name.replace(/\.[^/.]+$/, "") || "Artwork mới",
             subtitle: "Tác phẩm lúc rảnh rỗi",
             image: res.url,
-          });
+          };
+          setLocalRandomWorks(prev => [...prev, newWork]);
         } catch (err) {
           console.error("Error uploading GIF to R2:", err);
         }
       } else {
-        // Open 1:1 square crop tool
         const reader = new FileReader();
         reader.onload = (loadEvent) => {
           setCropModalConfig({
             isOpen: true,
             imageSrc: loadEvent.target.result,
             mode: 'random',
-            editingIndex: null, // new artwork
+            editingIndex: null,
             title: file.name.replace(/\.[^/.]+$/, "") || "Artwork mới",
             subtitle: "Tác phẩm lúc rảnh rỗi",
           });
@@ -391,7 +536,7 @@ export default function CMSPage({ onBackToPortfolio }) {
       isOpen: true,
       imageSrc: work.image,
       mode: 'random',
-      editingIndex: idx, // editing existing artwork
+      editingIndex: idx,
       title: work.title || `Artwork ${idx + 1}`,
       subtitle: work.subtitle || '',
     });
@@ -401,11 +546,32 @@ export default function CMSPage({ onBackToPortfolio }) {
     const url = window.prompt("Nhập đường dẫn URL ảnh artwork:");
     if (url && url.trim()) {
       const title = window.prompt("Nhập tên tác phẩm (hoặc để trống):") || "Artwork mới";
-      addRandomWork({
+      const newWork = {
+        id: Date.now().toString(),
         title: title.trim(),
         subtitle: "Tác phẩm lúc rảnh rỗi",
         image: url.trim(),
-      });
+      };
+      setLocalRandomWorks(prev => [...prev, newWork]);
+    }
+  };
+
+  const moveLocalRandomWork = (index, direction) => {
+    setLocalRandomWorks(prev => {
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= prev.length) return prev;
+      const newArr = [...prev];
+      const temp = newArr[index];
+      newArr[index] = newArr[targetIndex];
+      newArr[targetIndex] = temp;
+      return newArr;
+    });
+  };
+
+  const handleDeleteRandomWork = (work, idx) => {
+    if (window.confirm("Xoá artwork này khỏi Tùm lum tà la?")) {
+      if (work.image) deleteFromR2(work.image);
+      setLocalRandomWorks(prev => prev.filter((_, i) => i !== idx));
     }
   };
 
@@ -415,20 +581,21 @@ export default function CMSPage({ onBackToPortfolio }) {
 
     if (cropModalConfig.mode === 'project') {
       if (cropModalConfig.editingIndex !== null) {
-        // Replace existing project cover image
-        const newArr = [...projects];
-        const oldImg = newArr[cropModalConfig.editingIndex]?.coverImage;
-        if (oldImg && oldImg !== croppedUrl) {
-          deleteFromR2(oldImg);
-        }
-        newArr[cropModalConfig.editingIndex] = {
-          ...newArr[cropModalConfig.editingIndex],
-          coverImage: croppedUrl,
-        };
-        updateProjectsList(newArr);
+        setLocalProjects(prev => {
+          const newArr = [...prev];
+          const oldImg = newArr[cropModalConfig.editingIndex]?.coverImage;
+          if (oldImg && oldImg !== croppedUrl) {
+            deleteFromR2(oldImg);
+          }
+          newArr[cropModalConfig.editingIndex] = {
+            ...newArr[cropModalConfig.editingIndex],
+            coverImage: croppedUrl,
+          };
+          return newArr;
+        });
       } else {
-        // Add new project from direct crop upload
-        addProject({
+        const newProj = {
+          id: Date.now().toString(),
           title: cropModalConfig.title || "Dự án mới",
           subtitle: cropModalConfig.subtitle || "Mô tả dự án",
           coverImage: croppedUrl,
@@ -436,70 +603,100 @@ export default function CMSPage({ onBackToPortfolio }) {
           tags: ["Graphic Design", "Branding"],
           year: `${new Date().getFullYear()}`,
           gallery: [],
-        });
+        };
+        setLocalProjects(prev => [newProj, ...prev]);
       }
     } else if (cropModalConfig.mode === 'banner') {
       if (cropModalConfig.editingIndex !== null) {
-        // Replace existing banner image
-        const newArr = [...coverBanners];
-        const oldImg = newArr[cropModalConfig.editingIndex]?.image;
-        if (oldImg && oldImg !== croppedUrl) {
-          deleteFromR2(oldImg);
-        }
-        newArr[cropModalConfig.editingIndex] = {
-          ...newArr[cropModalConfig.editingIndex],
-          image: croppedUrl,
-        };
-        updateCoverBannersList(newArr);
+        setLocalCoverBanners(prev => {
+          const newArr = [...prev];
+          const oldImg = newArr[cropModalConfig.editingIndex]?.image;
+          if (oldImg && oldImg !== croppedUrl) {
+            deleteFromR2(oldImg);
+          }
+          newArr[cropModalConfig.editingIndex] = {
+            ...newArr[cropModalConfig.editingIndex],
+            image: croppedUrl,
+          };
+          return newArr;
+        });
       } else {
-        // Add new banner
-        addCoverBanner({
+        const newBanner = {
+          id: Date.now().toString(),
+          type: 'image',
           title: cropModalConfig.title || "Slide Banner",
           subtitle: cropModalConfig.subtitle || "Showcase banner",
           image: croppedUrl,
-        });
+        };
+        setLocalCoverBanners(prev => [...prev, newBanner]);
       }
     } else if (cropModalConfig.mode === 'random') {
       if (cropModalConfig.editingIndex !== null) {
-        // Replace existing random work image
-        const newArr = [...randomWorks];
-        const oldImg = newArr[cropModalConfig.editingIndex]?.image;
-        if (oldImg && oldImg !== croppedUrl) {
-          deleteFromR2(oldImg);
-        }
-        newArr[cropModalConfig.editingIndex] = {
-          ...newArr[cropModalConfig.editingIndex],
-          image: croppedUrl,
-        };
-        updateRandomWorksList(newArr);
+        setLocalRandomWorks(prev => {
+          const newArr = [...prev];
+          const oldImg = newArr[cropModalConfig.editingIndex]?.image;
+          if (oldImg && oldImg !== croppedUrl) {
+            deleteFromR2(oldImg);
+          }
+          newArr[cropModalConfig.editingIndex] = {
+            ...newArr[cropModalConfig.editingIndex],
+            image: croppedUrl,
+          };
+          return newArr;
+        });
       } else {
-        // Add new random work
-        addRandomWork({
+        const newWork = {
+          id: Date.now().toString(),
           title: cropModalConfig.title || "Artwork mới",
           subtitle: cropModalConfig.subtitle || "Tác phẩm lúc rảnh rỗi",
           image: croppedUrl,
-        });
+        };
+        setLocalRandomWorks(prev => [...prev, newWork]);
       }
     }
 
     setCropModalConfig(null);
   };
 
-  const moveMarqueeItem = (index, direction) => {
-    const newArr = [...marqueeItems];
-    const targetIndex = direction === 'up' ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= newArr.length) return;
-    const temp = newArr[index];
-    newArr[index] = newArr[targetIndex];
-    newArr[targetIndex] = temp;
-    updateMarqueeItems(newArr);
+  const moveLocalMarqueeItem = (index, direction) => {
+    setLocalMarqueeItems(prev => {
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= prev.length) return prev;
+      const newArr = [...prev];
+      const temp = newArr[index];
+      newArr[index] = newArr[targetIndex];
+      newArr[targetIndex] = temp;
+      return newArr;
+    });
   };
 
   const handleAddNewMarquee = (e) => {
     e.preventDefault();
     if (newMarqueeText && newMarqueeText.trim()) {
-      addMarqueeItem(newMarqueeText.trim());
+      setLocalMarqueeItems(prev => [...prev, newMarqueeText.trim()]);
       setNewMarqueeText('');
+    }
+  };
+
+  const updateLocalMarqueeItem = (index, value) => {
+    setLocalMarqueeItems(prev => {
+      const newArr = [...prev];
+      newArr[index] = value;
+      return newArr;
+    });
+  };
+
+  const deleteLocalMarqueeItem = (index) => {
+    if (localMarqueeItems.length <= 2) {
+      alert("Nên giữ tối thiểu 2 cụm từ để dòng chữ chạy liên tục mượt mà!");
+      return;
+    }
+    setLocalMarqueeItems(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const resetLocalMarquee = () => {
+    if (window.confirm("Khôi phục danh sách cụm từ mặc định ban đầu?")) {
+      setLocalMarqueeItems(defaultMarqueeItems);
     }
   };
 
@@ -519,9 +716,8 @@ export default function CMSPage({ onBackToPortfolio }) {
     <div className="min-h-screen bg-[#08080A] text-[#EDEDED] font-sans antialiased selection:bg-[#C3EA39] selection:text-black relative">
       
       {/* Live Seasonal Atmosphere Overlay */}
-      <SeasonalAtmosphere />
+      <SeasonalAtmosphere effectOverride={localSeasonalEffect} />
 
-      {/* Topbar */}
       {/* Topbar */}
       <header className="sticky top-0 z-40 bg-[#08080A]/95 backdrop-blur-xl border-b border-white/10 py-2.5 sm:py-3">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-4">
@@ -655,7 +851,7 @@ export default function CMSPage({ onBackToPortfolio }) {
               <span className={`text-[10px] sm:text-[11px] px-1.5 py-0.2 rounded-md ${
                 activeTab === 'projects' ? 'bg-black/20 text-black' : 'bg-white/10 text-white/50'
               }`}>
-                {projects.length < 10 ? `0${projects.length}` : projects.length}
+                {localProjects.length < 10 ? `0${localProjects.length}` : localProjects.length}
               </span>
             </button>
 
@@ -671,7 +867,7 @@ export default function CMSPage({ onBackToPortfolio }) {
               <span className={`text-[10px] sm:text-[11px] px-1.5 py-0.2 rounded-md ${
                 activeTab === 'banner' ? 'bg-black/20 text-black' : 'bg-white/10 text-white/50'
               }`}>
-                {coverBanners.length < 10 ? `0${coverBanners.length}` : coverBanners.length}
+                {localCoverBanners.length < 10 ? `0${localCoverBanners.length}` : localCoverBanners.length}
               </span>
             </button>
 
@@ -687,7 +883,7 @@ export default function CMSPage({ onBackToPortfolio }) {
               <span className={`text-[10px] sm:text-[11px] px-1.5 py-0.2 rounded-md ${
                 activeTab === 'random' ? 'bg-black/20 text-black' : 'bg-white/10 text-white/50'
               }`}>
-                {randomWorks.length < 10 ? `0${randomWorks.length}` : randomWorks.length}
+                {localRandomWorks.length < 10 ? `0${localRandomWorks.length}` : localRandomWorks.length}
               </span>
             </button>
 
@@ -703,7 +899,7 @@ export default function CMSPage({ onBackToPortfolio }) {
               <span className={`text-[10px] sm:text-[11px] px-1.5 py-0.2 rounded-md ${
                 activeTab === 'marquee' ? 'bg-black/20 text-black' : 'bg-white/10 text-white/50'
               }`}>
-                {marqueeItems.length < 10 ? `0${marqueeItems.length}` : marqueeItems.length}
+                {localMarqueeItems.length < 10 ? `0${localMarqueeItems.length}` : localMarqueeItems.length}
               </span>
             </button>
 
@@ -716,7 +912,7 @@ export default function CMSPage({ onBackToPortfolio }) {
               }`}
             >
               <span>Hiệu Ứng</span>
-              {seasonalEffect !== 'none' && (
+              {localSeasonalEffect !== 'none' && (
                 <span className="w-2 h-2 rounded-full bg-[#C3EA39] animate-ping" />
               )}
             </button>
@@ -761,7 +957,7 @@ export default function CMSPage({ onBackToPortfolio }) {
         {/* Tab 1: Dự án */}
         {activeTab === 'projects' && (
           <div className="space-y-4">
-            {projects.length === 0 ? (
+            {localProjects.length === 0 ? (
               <div
                 onClick={handleOpenCreate}
                 className="p-8 sm:p-16 rounded-3xl border-2 border-dashed border-white/15 hover:border-[#C3EA39]/50 bg-[#121216]/50 hover:bg-[#121216] transition-all flex flex-col items-center justify-center text-center cursor-pointer group"
@@ -776,7 +972,7 @@ export default function CMSPage({ onBackToPortfolio }) {
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-3 sm:gap-3.5">
-                {projects.map((proj, idx) => {
+                {localProjects.map((proj, idx) => {
                   const isGif = proj.coverImage && (proj.coverImage.startsWith('data:image/gif') || proj.coverImage.toLowerCase().endsWith('.gif'));
                   const galleryCount = Array.isArray(proj.gallery) ? proj.gallery.length : 0;
                   const tagsArr = Array.isArray(proj.tags) ? proj.tags : (typeof proj.tags === 'string' ? proj.tags.split(',').map(t => t.trim()).filter(Boolean) : []);
@@ -875,7 +1071,7 @@ export default function CMSPage({ onBackToPortfolio }) {
                       <div className="flex items-center justify-between sm:justify-end gap-1.5 w-full md:w-auto pt-2.5 md:pt-0 border-t md:border-t-0 border-white/10 shrink-0">
                         <div className="flex items-center gap-1.5">
                           <button
-                            onClick={() => moveProject(idx, 'up')}
+                            onClick={() => moveLocalProject(idx, 'up')}
                             disabled={idx === 0}
                             className="p-2 rounded-xl bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/80 transition-colors cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
                             title="Di chuyển lên trên"
@@ -884,8 +1080,8 @@ export default function CMSPage({ onBackToPortfolio }) {
                           </button>
 
                           <button
-                            onClick={() => moveProject(idx, 'down')}
-                            disabled={idx === projects.length - 1}
+                            onClick={() => moveLocalProject(idx, 'down')}
+                            disabled={idx === localProjects.length - 1}
                             className="p-2 rounded-xl bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/80 transition-colors cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
                             title="Di chuyển xuống dưới"
                           >
@@ -927,6 +1123,15 @@ export default function CMSPage({ onBackToPortfolio }) {
                 </div>
               </div>
             )}
+
+            {/* Sticky Bottom Save Bar for Projects */}
+            <StickySaveBar
+              isSaved={savedAlerts.projects}
+              onSave={handleSaveProjectsTab}
+              isSyncing={isCloudSyncing}
+              label="Lưu Danh Sách Dự Án"
+              hint="Nhớ bấm lưu để cập nhật thứ tự và danh sách dự án"
+            />
           </div>
         )}
 
@@ -977,7 +1182,7 @@ export default function CMSPage({ onBackToPortfolio }) {
               </div>
             </div>
 
-            {coverBanners.length === 0 ? (
+            {localCoverBanners.length === 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Option 1: Upload 21:9 Image */}
                 <div
@@ -1009,7 +1214,7 @@ export default function CMSPage({ onBackToPortfolio }) {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
-                {coverBanners.map((banner, idx) => {
+                {localCoverBanners.map((banner, idx) => {
                   const isEmbed = banner.type === 'embed' || Boolean(banner.embedCode || banner.embedUrl);
                   const embedSrc = extractEmbedSrc(banner.embedUrl || banner.embedCode || banner.image);
 
@@ -1094,12 +1299,7 @@ export default function CMSPage({ onBackToPortfolio }) {
                           )}
 
                           <button
-                            onClick={() => {
-                              if (window.confirm("Xoá banner cover này?")) {
-                                if (banner.image && !isEmbed) deleteFromR2(banner.image);
-                                deleteCoverBanner(banner.id || idx);
-                              }
-                            }}
+                            onClick={() => handleDeleteCoverBanner(banner, idx)}
                             className="p-1 sm:p-1.5 rounded-lg bg-black/75 hover:bg-red-500 text-white/80 hover:text-white transition-colors cursor-pointer border border-white/10 shadow-md"
                             title="Xoá banner"
                           >
@@ -1120,9 +1320,12 @@ export default function CMSPage({ onBackToPortfolio }) {
                               value={banner.title || ''}
                               placeholder="Nhập tiêu đề (VD: So Sánh Bản Vẽ...)"
                               onChange={(e) => {
-                                const newArr = [...coverBanners];
-                                newArr[idx] = { ...newArr[idx], title: e.target.value };
-                                updateCoverBannersList(newArr);
+                                const val = e.target.value;
+                                setLocalCoverBanners(prev => {
+                                  const newArr = [...prev];
+                                  newArr[idx] = { ...newArr[idx], title: val };
+                                  return newArr;
+                                });
                               }}
                               className="w-full px-3 py-2 sm:py-1.5 rounded-xl bg-white/5 border border-white/10 text-base sm:text-xs font-medium text-white placeholder-white/20 focus:outline-none focus:border-[#C3EA39] focus:text-[#C3EA39] transition-all"
                             />
@@ -1137,9 +1340,12 @@ export default function CMSPage({ onBackToPortfolio }) {
                               value={banner.subtitle || ''}
                               placeholder="Nhập mô tả ngắn..."
                               onChange={(e) => {
-                                const newArr = [...coverBanners];
-                                newArr[idx] = { ...newArr[idx], subtitle: e.target.value };
-                                updateCoverBannersList(newArr);
+                                const val = e.target.value;
+                                setLocalCoverBanners(prev => {
+                                  const newArr = [...prev];
+                                  newArr[idx] = { ...newArr[idx], subtitle: val };
+                                  return newArr;
+                                });
                               }}
                               className="w-full px-3 py-2 sm:py-1.5 rounded-xl bg-white/5 border border-white/10 text-base sm:text-xs font-light text-white/80 placeholder-white/20 focus:outline-none focus:border-[#C3EA39] transition-all"
                             />
@@ -1151,7 +1357,7 @@ export default function CMSPage({ onBackToPortfolio }) {
                           <span className="text-[11px] text-white/40">Thứ tự:</span>
                           <div className="flex items-center gap-1.5">
                             <button
-                              onClick={() => moveCoverBanner(idx, 'up')}
+                              onClick={() => moveLocalCoverBanner(idx, 'up')}
                               disabled={idx === 0}
                               className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/80 hover:text-white transition-colors flex items-center gap-1 text-[11px] cursor-pointer min-h-[32px]"
                               title="Di chuyển lên trước"
@@ -1160,8 +1366,8 @@ export default function CMSPage({ onBackToPortfolio }) {
                               <span>Trước</span>
                             </button>
                             <button
-                              onClick={() => moveCoverBanner(idx, 'down')}
-                              disabled={idx === coverBanners.length - 1}
+                              onClick={() => moveLocalCoverBanner(idx, 'down')}
+                              disabled={idx === localCoverBanners.length - 1}
                               className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/80 hover:text-white transition-colors flex items-center gap-1 text-[11px] cursor-pointer min-h-[32px]"
                               title="Di chuyển ra sau"
                             >
@@ -1177,13 +1383,22 @@ export default function CMSPage({ onBackToPortfolio }) {
                 })}
               </div>
             )}
+
+            {/* Sticky Bottom Save Bar for Slide Banner */}
+            <StickySaveBar
+              isSaved={savedAlerts.banner}
+              onSave={handleSaveBannersTab}
+              isSyncing={isCloudSyncing}
+              label="Lưu Danh Sách Banner"
+              hint="Nhớ bấm lưu để cập nhật danh sách và nội dung banner"
+            />
           </div>
         )}
 
         {/* Tab 3: Tùm Lum Tà La (Square Rotating Works) */}
         {activeTab === 'random' && (
           <div className="space-y-4 sm:space-y-5">
-            {randomWorks.length === 0 ? (
+            {localRandomWorks.length === 0 ? (
               <div
                 onClick={() => randomWorkFileInputRef.current?.click()}
                 className="p-8 sm:p-16 rounded-3xl border-2 border-dashed border-white/15 hover:border-[#C3EA39]/50 bg-[#121216]/50 hover:bg-[#121216] transition-all flex flex-col items-center justify-center text-center cursor-pointer group"
@@ -1198,7 +1413,7 @@ export default function CMSPage({ onBackToPortfolio }) {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
-                {randomWorks.map((work, idx) => (
+                {localRandomWorks.map((work, idx) => (
                   <div
                     key={work.id || idx}
                     className="relative rounded-2xl overflow-hidden border border-white/10 bg-[#121216] group flex flex-col hover:border-[#C3EA39]/40 transition-all shadow-xl"
@@ -1235,12 +1450,7 @@ export default function CMSPage({ onBackToPortfolio }) {
                           <Eye className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                         </button>
                         <button
-                          onClick={() => {
-                            if (window.confirm("Xoá artwork này khỏi Tùm lum tà la?")) {
-                              if (work.image) deleteFromR2(work.image);
-                              deleteRandomWork(work.id || idx);
-                            }
-                          }}
+                          onClick={() => handleDeleteRandomWork(work, idx)}
                           className="p-1 sm:p-1.5 rounded-lg bg-black/75 hover:bg-red-500 text-white/80 hover:text-white transition-colors cursor-pointer border border-white/10"
                           title="Xoá artwork"
                         >
@@ -1261,9 +1471,12 @@ export default function CMSPage({ onBackToPortfolio }) {
                             value={work.title || ''}
                             placeholder="Nhập tên tác phẩm..."
                             onChange={(e) => {
-                              const newArr = [...randomWorks];
-                              newArr[idx] = { ...newArr[idx], title: e.target.value };
-                              updateRandomWorksList(newArr);
+                              const val = e.target.value;
+                              setLocalRandomWorks(prev => {
+                                const newArr = [...prev];
+                                newArr[idx] = { ...newArr[idx], title: val };
+                                return newArr;
+                              });
                             }}
                             className="w-full px-3 py-2 sm:py-1.5 rounded-xl bg-white/5 border border-white/10 text-base sm:text-xs font-medium text-white placeholder-white/20 focus:outline-none focus:border-[#C3EA39] focus:text-[#C3EA39] transition-all"
                           />
@@ -1278,9 +1491,12 @@ export default function CMSPage({ onBackToPortfolio }) {
                             value={work.subtitle || ''}
                             placeholder="VD: 3D Blender, Typography..."
                             onChange={(e) => {
-                              const newArr = [...randomWorks];
-                              newArr[idx] = { ...newArr[idx], subtitle: e.target.value };
-                              updateRandomWorksList(newArr);
+                              const val = e.target.value;
+                              setLocalRandomWorks(prev => {
+                                const newArr = [...prev];
+                                newArr[idx] = { ...newArr[idx], subtitle: val };
+                                return newArr;
+                              });
                             }}
                             className="w-full px-3 py-2 sm:py-1.5 rounded-xl bg-white/5 border border-white/10 text-base sm:text-xs font-light text-white/80 placeholder-white/20 focus:outline-none focus:border-[#C3EA39] transition-all"
                           />
@@ -1292,7 +1508,7 @@ export default function CMSPage({ onBackToPortfolio }) {
                         <span className="text-[11px] text-white/40">Thứ tự:</span>
                         <div className="flex items-center gap-1.5">
                           <button
-                            onClick={() => moveRandomWork(idx, 'up')}
+                            onClick={() => moveLocalRandomWork(idx, 'up')}
                             disabled={idx === 0}
                             className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/80 hover:text-white transition-colors flex items-center gap-1 text-[11px] cursor-pointer min-h-[32px]"
                             title="Di chuyển lên trước"
@@ -1301,8 +1517,8 @@ export default function CMSPage({ onBackToPortfolio }) {
                             <span>Trước</span>
                           </button>
                           <button
-                            onClick={() => moveRandomWork(idx, 'down')}
-                            disabled={idx === randomWorks.length - 1}
+                            onClick={() => moveLocalRandomWork(idx, 'down')}
+                            disabled={idx === localRandomWorks.length - 1}
                             className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/80 hover:text-white transition-colors flex items-center gap-1 text-[11px] cursor-pointer min-h-[32px]"
                             title="Di chuyển ra sau"
                           >
@@ -1328,6 +1544,15 @@ export default function CMSPage({ onBackToPortfolio }) {
                 </div>
               </div>
             )}
+
+            {/* Sticky Bottom Save Bar for Random Works */}
+            <StickySaveBar
+              isSaved={savedAlerts.random}
+              onSave={handleSaveRandomWorksTab}
+              isSyncing={isCloudSyncing}
+              label="Lưu Danh Sách Artwork"
+              hint="Nhớ bấm lưu để cập nhật danh sách và thông tin tác phẩm"
+            />
           </div>
         )}
 
@@ -1342,12 +1567,12 @@ export default function CMSPage({ onBackToPortfolio }) {
                   <span className="w-2 h-2 rounded-full bg-[#C3EA39] animate-ping" />
                   <span>Dòng chữ chạy trực tiếp:</span>
                 </span>
-                <span>{marqueeItems.length} cụm từ</span>
+                <span>{localMarqueeItems.length} cụm từ</span>
               </div>
 
               <div className="py-3 px-4 rounded-2xl bg-[#0D0D12] border border-[#C3EA39]/40 overflow-hidden shadow-lg">
                 {(() => {
-                  const previewList = marqueeItems && marqueeItems.length > 0 ? marqueeItems : defaultMarqueeItems;
+                  const previewList = localMarqueeItems && localMarqueeItems.length > 0 ? localMarqueeItems : defaultMarqueeItems;
                   const repeatCount = Math.max(2, Math.ceil(16 / (previewList.length || 1)));
                   const repeated = Array(repeatCount).fill(previewList).flat();
                   return (
@@ -1395,7 +1620,7 @@ export default function CMSPage({ onBackToPortfolio }) {
 
             {/* List of Phrases */}
             <div className="space-y-2">
-              {marqueeItems.map((item, idx) => (
+              {localMarqueeItems.map((item, idx) => (
                 <div
                   key={idx}
                   className="p-3 sm:p-4 rounded-2xl bg-[#121216] border border-white/10 hover:border-white/20 transition-all flex items-center justify-between gap-2.5 group"
@@ -1407,14 +1632,14 @@ export default function CMSPage({ onBackToPortfolio }) {
                     <input
                       type="text"
                       value={item}
-                      onChange={(e) => updateMarqueeItem(idx, e.target.value)}
+                      onChange={(e) => updateLocalMarqueeItem(idx, e.target.value)}
                       className="flex-1 bg-transparent text-base sm:text-sm font-mono font-bold text-white focus:outline-none focus:text-[#C3EA39] transition-colors py-1"
                     />
                   </div>
 
                   <div className="flex items-center gap-1 shrink-0">
                     <button
-                      onClick={() => moveMarqueeItem(idx, 'up')}
+                      onClick={() => moveLocalMarqueeItem(idx, 'up')}
                       disabled={idx === 0}
                       className="p-2 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/70 hover:text-white transition-colors min-w-[34px] min-h-[34px] flex items-center justify-center cursor-pointer"
                       title="Lên"
@@ -1423,8 +1648,8 @@ export default function CMSPage({ onBackToPortfolio }) {
                     </button>
 
                     <button
-                      onClick={() => moveMarqueeItem(idx, 'down')}
-                      disabled={idx === marqueeItems.length - 1}
+                      onClick={() => moveLocalMarqueeItem(idx, 'down')}
+                      disabled={idx === localMarqueeItems.length - 1}
                       className="p-2 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/70 hover:text-white transition-colors min-w-[34px] min-h-[34px] flex items-center justify-center cursor-pointer"
                       title="Xuống"
                     >
@@ -1432,13 +1657,7 @@ export default function CMSPage({ onBackToPortfolio }) {
                     </button>
 
                     <button
-                      onClick={() => {
-                        if (marqueeItems.length <= 2) {
-                          alert("Nên giữ tối thiểu 2 cụm từ để dòng chữ chạy liên tục mượt mà!");
-                          return;
-                        }
-                        deleteMarqueeItem(idx);
-                      }}
+                      onClick={() => deleteLocalMarqueeItem(idx)}
                       className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white transition-colors min-w-[34px] min-h-[34px] flex items-center justify-center cursor-pointer"
                       title="Xoá cụm từ"
                     >
@@ -1452,11 +1671,7 @@ export default function CMSPage({ onBackToPortfolio }) {
             {/* Quick Reset to Default Terms */}
             <div className="pt-2 flex justify-end">
               <button
-                onClick={() => {
-                  if (window.confirm("Khôi phục danh sách cụm từ mặc định ban đầu?")) {
-                    updateMarqueeItems(defaultMarqueeItems);
-                  }
-                }}
+                onClick={resetLocalMarquee}
                 className="text-xs font-mono text-white/40 hover:text-[#C3EA39] transition-colors flex items-center gap-1.5 cursor-pointer"
               >
                 <RefreshCw className="w-3 h-3" />
@@ -1464,10 +1679,18 @@ export default function CMSPage({ onBackToPortfolio }) {
               </button>
             </div>
 
+            {/* Sticky Bottom Save Bar for Marquee */}
+            <StickySaveBar
+              isSaved={savedAlerts.marquee}
+              onSave={handleSaveMarqueeTab}
+              isSyncing={isCloudSyncing}
+              label="Lưu Dòng Chữ Chạy"
+              hint="Nhớ bấm lưu để cập nhật nội dung và thứ tự chữ chạy"
+            />
           </div>
         )}
 
-        {/* Tab 4: Hiệu Ứng Lễ Hội & Khí Quyển */}
+        {/* Tab 5: Hiệu Ứng Lễ Hội & Khí Quyển */}
         {activeTab === 'seasonal' && (
           <div className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1501,12 +1724,12 @@ export default function CMSPage({ onBackToPortfolio }) {
                   badge: 'Rằm Tháng 8',
                 },
               ].map((opt) => {
-                const isSelected = seasonalEffect === opt.id;
+                const isSelected = localSeasonalEffect === opt.id;
 
                 return (
                   <div
                     key={opt.id}
-                    onClick={() => updateSeasonalEffect(opt.id)}
+                    onClick={() => setLocalSeasonalEffect(opt.id)}
                     className={`relative p-5 rounded-3xl border transition-all cursor-pointer flex flex-col justify-between group ${
                       isSelected
                         ? 'bg-[#121216] border-[#C3EA39] shadow-lg shadow-[#C3EA39]/10'
@@ -1545,11 +1768,11 @@ export default function CMSPage({ onBackToPortfolio }) {
                       {isSelected ? (
                         <span className="text-xs font-mono font-bold text-[#C3EA39] flex items-center gap-1">
                           <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>Đang Bật</span>
+                          <span>Đang Chọn</span>
                         </span>
                       ) : (
                         <span className="text-xs font-mono text-white/40 group-hover:text-white transition-colors">
-                          Bấm để bật
+                          Bấm để chọn
                         </span>
                       )}
                     </div>
@@ -1557,12 +1780,27 @@ export default function CMSPage({ onBackToPortfolio }) {
                 );
               })}
             </div>
+
+            {/* Sticky Bottom Save Bar for Seasonal Effect */}
+            <StickySaveBar
+              isSaved={savedAlerts.seasonal}
+              onSave={handleSaveSeasonalTab}
+              isSyncing={isCloudSyncing}
+              label="Lưu Hiệu Ứng Khí Quyển"
+              hint="Nhớ bấm lưu để áp dụng hiệu ứng cho toàn bộ website"
+            />
           </div>
         )}
 
-        {/* Tab 4: Thông tin cá nhân */}
+        {/* Tab 6: Thông tin cá nhân */}
         {activeTab === 'profile' && (
-          <ProfileEditor profile={profile} onSave={updateProfile} />
+          <ProfileEditor
+            profile={profile}
+            onSave={async (updatedProfile) => {
+              updateProfile(updatedProfile);
+              await saveToCloud();
+            }}
+          />
         )}
 
       </main>

@@ -1,8 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 import { usePortfolioData } from '../context/PortfolioDataContext';
 
-export default function SeasonalAtmosphere() {
-  const { seasonalEffect } = usePortfolioData();
+export default function SeasonalAtmosphere({ effectOverride } = {}) {
+  const { seasonalEffect: contextEffect } = usePortfolioData();
+  const seasonalEffect = effectOverride !== undefined ? effectOverride : contextEffect;
   const canvasRef = useRef(null);
 
   useEffect(() => {
