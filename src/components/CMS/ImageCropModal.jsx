@@ -1,6 +1,14 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { X, Check, ZoomIn, ZoomOut, RotateCcw, Crop, Sparkles, Loader2, Maximize2, Eye, EyeOff, Image as ImageIcon } from 'lucide-react';
+import { X, Check, ZoomIn, ZoomOut, RotateCcw, Crop, Sparkles, Loader2, Maximize2, Eye, EyeOff, Image as ImageIcon, Sliders } from 'lucide-react';
 import { uploadToR2 } from '../../utils/r2Storage';
+
+const FILTER_PRESETS = [
+  { id: 'none', label: 'Màu gốc', icon: '🎨', filterString: 'none' },
+  { id: 'bw_contrast', label: 'Trắng Đen (Tương phản cao ⭐)', icon: '🖤', filterString: 'grayscale(100%) contrast(125%)' },
+  { id: 'bw_classic', label: 'Trắng Đen (Chuẩn)', icon: '⚪', filterString: 'grayscale(100%) contrast(110%)' },
+  { id: 'bw_soft', label: 'Trắng Đen (Film dịu)', icon: '🎞️', filterString: 'grayscale(100%) contrast(100%) brightness(105%)' },
+  { id: 'vintage', label: 'Tone Ấm Vintage', icon: '☕', filterString: 'sepia(30%) contrast(105%) brightness(102%)' },
+];
 
 export default function ImageCropModal({
   isOpen,
@@ -39,6 +47,7 @@ export default function ImageCropModal({
   const [imageObj, setImageObj] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [showLiveMockup, setShowLiveMockup] = useState(true);
+  const [selectedFilter, setSelectedFilter] = useState('none');
 
   // 2. All Ref Hooks (Unconditionally at top)
   const canvasRef = useRef(null);
@@ -149,6 +158,8 @@ export default function ImageCropModal({
       const renderX = (BASE_WIDTH - renderW) / 2 + currentOffsetX;
       const renderY = (baseHeight - renderH) / 2 + currentOffsetY;
 
+      const activeFilter = FILTER_PRESETS.find(f => f.id === selectedFilter)?.filterString || 'none';
+
       // 1. Draw Main Interactive Canvas
       if (canvasRef.current) {
         const canvas = canvasRef.current;
@@ -159,7 +170,9 @@ export default function ImageCropModal({
           ctx.clearRect(0, 0, BASE_WIDTH, baseHeight);
           ctx.imageSmoothingEnabled = true;
           ctx.imageSmoothingQuality = 'high';
+          ctx.filter = activeFilter;
           ctx.drawImage(imageObj, renderX, renderY, renderW, renderH);
+          ctx.filter = 'none';
         }
       }
 
@@ -173,13 +186,15 @@ export default function ImageCropModal({
           pCtx.clearRect(0, 0, BASE_WIDTH, baseHeight);
           pCtx.imageSmoothingEnabled = true;
           pCtx.imageSmoothingQuality = 'high';
+          pCtx.filter = activeFilter;
           pCtx.drawImage(imageObj, renderX, renderY, renderW, renderH);
+          pCtx.filter = 'none';
         }
       }
     } catch (err) {
       console.warn('Canvas render error in ImageCropModal:', err);
     }
-  }, [imageObj, scale, offset, aspectRatio]);
+  }, [imageObj, scale, offset, aspectRatio, selectedFilter]);
 
   // 6. Draw whenever state changes
   useEffect(() => {
@@ -322,10 +337,13 @@ export default function ImageCropModal({
       const renderX = (exportW - renderW) / 2 + currentOffsetX * ratioScale;
       const renderY = (exportH - renderH) / 2 + currentOffsetY * ratioScale;
 
+      const activeFilter = FILTER_PRESETS.find(f => f.id === selectedFilter)?.filterString || 'none';
       if (ctx) {
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
+        ctx.filter = activeFilter;
         ctx.drawImage(imageObj, renderX, renderY, renderW, renderH);
+        ctx.filter = 'none';
       }
 
       let dataUrl;
@@ -455,7 +473,7 @@ export default function ImageCropModal({
         {/* Scrollable Body */}
         <div className="space-y-3.5 overflow-y-auto custom-scrollbar flex-1 py-2 text-xs">
           
-          {/* Top Bar: Aspect Presets & Live Overlay Toggle */}
+          {/* Top Bar 1: Aspect Presets & Live Overlay Toggle */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 bg-black/40 p-2 sm:p-2.5 rounded-2xl border border-white/10">
             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth py-0.5">
               <div className="flex items-center gap-1 text-xs font-mono text-white/60 mr-1 shrink-0">
@@ -495,6 +513,42 @@ export default function ImageCropModal({
               {showLiveMockup ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
               <span>{showLiveMockup ? 'Hiện mockup chữ' : 'Ẩn mockup chữ'}</span>
             </button>
+          </div>
+
+          {/* Top Bar 2: B&W & Color Filters */}
+          <div className="flex items-center justify-between gap-2 bg-black/40 p-2 sm:p-2.5 rounded-2xl border border-white/10 overflow-x-auto no-scrollbar">
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth py-0.5">
+              <div className="flex items-center gap-1 text-xs font-mono text-white/60 mr-1 shrink-0">
+                <Sparkles className="w-3.5 h-3.5 text-[#C3EA39]" />
+                <span className="hidden sm:inline">Bộ lọc:</span>
+              </div>
+
+              {FILTER_PRESETS.map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setSelectedFilter(f.id)}
+                  className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1.5 ${
+                    selectedFilter === f.id
+                      ? 'bg-[#C3EA39] text-black shadow-md shadow-[#C3EA39]/15'
+                      : 'bg-white/5 hover:bg-white/10 text-white/70'
+                  }`}
+                >
+                  <span>{f.icon}</span>
+                  <span>{f.label}</span>
+                </button>
+              ))}
+            </div>
+
+            {selectedFilter !== 'none' && (
+              <button
+                type="button"
+                onClick={() => setSelectedFilter('none')}
+                className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-[11px] font-mono text-white/60 hover:text-white transition-colors cursor-pointer shrink-0"
+              >
+                Về màu gốc
+              </button>
+            )}
           </div>
 
           {/* Main Workspace Grid */}
