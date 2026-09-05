@@ -241,10 +241,7 @@ export default function CMSPage({ onBackToPortfolio }) {
   // Success Feedback Alert State for each tab
   const [savedAlerts, setSavedAlerts] = useState({
     projects: false,
-    banner: false,
-    random: false,
-    marquee: false,
-    seasonal: false,
+    home: false,
   });
 
   const triggerSaveAlert = (tabKey) => {
@@ -276,49 +273,10 @@ export default function CMSPage({ onBackToPortfolio }) {
     triggerSaveAlert('projects');
   };
 
-  const handleSaveBannersTab = async () => {
+  const handleSaveHomeTab = async () => {
     updateCoverBannersList(localCoverBanners);
-    await saveToCloud({
-      updatedAt: new Date().toISOString(),
-      profile,
-      projects: localProjects,
-      coverBanners: localCoverBanners,
-      randomWorks: localRandomWorks,
-      marqueeItems: localMarqueeItems,
-      seasonalEffect: localSeasonalEffect,
-    });
-    triggerSaveAlert('banner');
-  };
-
-  const handleSaveRandomWorksTab = async () => {
     updateRandomWorksList(localRandomWorks);
-    await saveToCloud({
-      updatedAt: new Date().toISOString(),
-      profile,
-      projects: localProjects,
-      coverBanners: localCoverBanners,
-      randomWorks: localRandomWorks,
-      marqueeItems: localMarqueeItems,
-      seasonalEffect: localSeasonalEffect,
-    });
-    triggerSaveAlert('random');
-  };
-
-  const handleSaveMarqueeTab = async () => {
     updateMarqueeItems(localMarqueeItems);
-    await saveToCloud({
-      updatedAt: new Date().toISOString(),
-      profile,
-      projects: localProjects,
-      coverBanners: localCoverBanners,
-      randomWorks: localRandomWorks,
-      marqueeItems: localMarqueeItems,
-      seasonalEffect: localSeasonalEffect,
-    });
-    triggerSaveAlert('marquee');
-  };
-
-  const handleSaveSeasonalTab = async () => {
     updateSeasonalEffect(localSeasonalEffect);
     await saveToCloud({
       updatedAt: new Date().toISOString(),
@@ -329,7 +287,7 @@ export default function CMSPage({ onBackToPortfolio }) {
       marqueeItems: localMarqueeItems,
       seasonalEffect: localSeasonalEffect,
     });
-    triggerSaveAlert('seasonal');
+    triggerSaveAlert('home');
   };
 
   if (!isAuthenticated) {
@@ -997,18 +955,19 @@ export default function CMSPage({ onBackToPortfolio }) {
       {/* Main Container */}
       <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-7 space-y-4 sm:space-y-6">
         
-        {/* Sleek Tab Navigation Bar (Swipeable Pills on Mobile, Grid on Desktop) */}
+        {/* Sleek Tab Navigation Bar (3 Clean Tabs) */}
         <div className="w-full pb-2 sm:pb-4 border-b border-white/10">
-          <div className="flex sm:grid sm:grid-cols-3 lg:grid-cols-6 gap-1.5 p-1.5 rounded-2xl bg-[#121216] border border-white/10 shadow-lg w-full overflow-x-auto no-scrollbar scroll-smooth">
+          <div className="grid grid-cols-3 gap-1.5 p-1.5 rounded-2xl bg-[#121216] border border-white/10 shadow-lg w-full">
             
             <button
               onClick={() => setActiveTab('projects')}
-              className={`shrink-0 sm:shrink py-2 px-3.5 sm:px-3 rounded-xl text-xs sm:text-sm font-display font-bold flex items-center justify-center gap-2 transition-all cursor-pointer select-none active:scale-95 ${
+              className={`py-2 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-display font-bold flex items-center justify-center gap-1.5 sm:gap-2 transition-all cursor-pointer select-none active:scale-95 ${
                 activeTab === 'projects'
                   ? 'bg-[#C3EA39] text-black shadow-md shadow-[#C3EA39]/15'
                   : 'text-white/60 hover:text-white hover:bg-white/5'
               }`}
             >
+              <FolderKanban className="w-4 h-4 shrink-0" />
               <span>Dự Án</span>
               <span className={`text-[10px] sm:text-[11px] font-mono px-1.5 py-0.2 rounded-md ${
                 activeTab === 'projects' ? 'bg-black/20 text-black font-bold' : 'bg-white/10 text-white/50'
@@ -1018,75 +977,29 @@ export default function CMSPage({ onBackToPortfolio }) {
             </button>
 
             <button
-              onClick={() => setActiveTab('banner')}
-              className={`shrink-0 sm:shrink py-2 px-3.5 sm:px-3 rounded-xl text-xs sm:text-sm font-display font-bold flex items-center justify-center gap-2 transition-all cursor-pointer select-none active:scale-95 ${
-                activeTab === 'banner'
+              onClick={() => setActiveTab('home')}
+              className={`py-2 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-display font-bold flex items-center justify-center gap-1.5 sm:gap-2 transition-all cursor-pointer select-none active:scale-95 ${
+                activeTab === 'home'
                   ? 'bg-[#C3EA39] text-black shadow-md shadow-[#C3EA39]/15'
                   : 'text-white/60 hover:text-white hover:bg-white/5'
               }`}
             >
-              <span>Slide Banner</span>
-              <span className={`text-[10px] sm:text-[11px] font-mono px-1.5 py-0.2 rounded-md ${
-                activeTab === 'banner' ? 'bg-black/20 text-black font-bold' : 'bg-white/10 text-white/50'
-              }`}>
-                {localCoverBanners.length < 10 ? `0${localCoverBanners.length}` : localCoverBanners.length}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('random')}
-              className={`shrink-0 sm:shrink py-2 px-3.5 sm:px-3 rounded-xl text-xs sm:text-sm font-display font-bold flex items-center justify-center gap-2 transition-all cursor-pointer select-none active:scale-95 ${
-                activeTab === 'random'
-                  ? 'bg-[#C3EA39] text-black shadow-md shadow-[#C3EA39]/15'
-                  : 'text-white/60 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              <span>Tùm Lum Tà La</span>
-              <span className={`text-[10px] sm:text-[11px] font-mono px-1.5 py-0.2 rounded-md ${
-                activeTab === 'random' ? 'bg-black/20 text-black font-bold' : 'bg-white/10 text-white/50'
-              }`}>
-                {localRandomWorks.length < 10 ? `0${localRandomWorks.length}` : localRandomWorks.length}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('marquee')}
-              className={`shrink-0 sm:shrink py-2 px-3.5 sm:px-3 rounded-xl text-xs sm:text-sm font-display font-bold flex items-center justify-center gap-2 transition-all cursor-pointer select-none active:scale-95 ${
-                activeTab === 'marquee'
-                  ? 'bg-[#C3EA39] text-black shadow-md shadow-[#C3EA39]/15'
-                  : 'text-white/60 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              <span>Chữ Chạy</span>
-              <span className={`text-[10px] sm:text-[11px] font-mono px-1.5 py-0.2 rounded-md ${
-                activeTab === 'marquee' ? 'bg-black/20 text-black font-bold' : 'bg-white/10 text-white/50'
-              }`}>
-                {localMarqueeItems.length < 10 ? `0${localMarqueeItems.length}` : localMarqueeItems.length}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('seasonal')}
-              className={`shrink-0 sm:shrink py-2 px-3.5 sm:px-3 rounded-xl text-xs sm:text-sm font-display font-bold flex items-center justify-center gap-2 transition-all cursor-pointer select-none active:scale-95 ${
-                activeTab === 'seasonal'
-                  ? 'bg-[#C3EA39] text-black shadow-md shadow-[#C3EA39]/15'
-                  : 'text-white/60 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              <span>Hiệu Ứng</span>
+              <SlidersHorizontal className="w-4 h-4 shrink-0" />
+              <span className="truncate">Trang Chủ & Banner</span>
               {localSeasonalEffect !== 'none' && (
-                <span className="w-2 h-2 rounded-full bg-[#C3EA39] animate-ping" />
+                <span className="w-2 h-2 rounded-full bg-[#C3EA39] animate-ping shrink-0" />
               )}
             </button>
 
             <button
               onClick={() => setActiveTab('profile')}
-              className={`shrink-0 sm:shrink py-2 px-3.5 sm:px-3 rounded-xl text-xs sm:text-sm font-display font-bold flex items-center justify-center gap-2 transition-all cursor-pointer select-none active:scale-95 ${
+              className={`py-2 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-display font-bold flex items-center justify-center gap-1.5 sm:gap-2 transition-all cursor-pointer select-none active:scale-95 ${
                 activeTab === 'profile'
                   ? 'bg-[#C3EA39] text-black shadow-md shadow-[#C3EA39]/15'
                   : 'text-white/60 hover:text-white hover:bg-white/5'
               }`}
             >
+              <User className="w-4 h-4 shrink-0" />
               <span>Thông Tin</span>
             </button>
 
@@ -1149,22 +1062,22 @@ export default function CMSPage({ onBackToPortfolio }) {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleOpenCreate}
-                  className="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black text-xs font-display font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-[1.02] cursor-pointer min-h-[38px]"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>+ Thêm Dự Án Mới</span>
-                </button>
-
+              <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
                 <button
                   onClick={() => projectFileInputRef.current?.click()}
-                  className="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 text-xs font-mono transition-colors cursor-pointer flex items-center justify-center gap-1.5 min-h-[38px]"
-                  title="Tải nhanh ảnh bìa để tạo dự án mới"
+                  className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer min-h-[38px]"
+                  title="Tải ảnh bìa trực tiếp từ máy tính"
                 >
                   <Upload className="w-3.5 h-3.5 text-[#C3EA39]" />
                   <span>+ Tải Ảnh Bìa</span>
+                </button>
+
+                <button
+                  onClick={handleOpenCreate}
+                  className="px-4 py-2 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black text-xs font-display font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-[1.02] cursor-pointer min-h-[38px]"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Thêm Dự Án</span>
                 </button>
               </div>
             </div>
@@ -1263,14 +1176,22 @@ export default function CMSPage({ onBackToPortfolio }) {
                         </div>
                       </div>
 
-                      {/* Right: Action Buttons (Responsive Mobile Layout) */}
+                      {/* Right: Action Buttons */}
                       <div className="flex items-center justify-between sm:justify-end gap-1.5 w-full md:w-auto pt-2.5 md:pt-0 border-t md:border-t-0 border-white/10 shrink-0">
                         <div className="flex items-center gap-1.5">
                           <button
+                            onClick={() => handleOpenEdit(proj)}
+                            className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-[#C3EA39] text-white/80 hover:text-black text-xs font-mono font-bold flex items-center gap-1.5 border border-white/10 transition-all cursor-pointer shadow-sm active:scale-95"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                            <span>Sửa</span>
+                          </button>
+
+                          <button
                             onClick={() => moveLocalProject(idx, 'up')}
                             disabled={idx === 0}
-                            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/80 transition-colors cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
-                            title="Di chuyển lên trên"
+                            className="p-1.5 rounded-xl bg-white/5 hover:bg-white/15 disabled:opacity-20 text-white/70 hover:text-white transition-colors cursor-pointer border border-white/10"
+                            title="Di chuyển lên trước"
                           >
                             <ArrowUp className="w-3.5 h-3.5" />
                           </button>
@@ -1278,32 +1199,21 @@ export default function CMSPage({ onBackToPortfolio }) {
                           <button
                             onClick={() => moveLocalProject(idx, 'down')}
                             disabled={idx === localProjects.length - 1}
-                            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/80 transition-colors cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
-                            title="Di chuyển xuống dưới"
+                            className="p-1.5 rounded-xl bg-white/5 hover:bg-white/15 disabled:opacity-20 text-white/70 hover:text-white transition-colors cursor-pointer border border-white/10"
+                            title="Di chuyển ra sau"
                           >
                             <ArrowDown className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-
-                        <div className="flex items-center gap-1.5 flex-1 sm:flex-initial justify-end">
-                          <button
-                            onClick={() => handleOpenEdit(proj)}
-                            className="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-white/10 hover:bg-[#C3EA39] hover:text-black text-white text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm min-h-[36px]"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                            <span>Sửa</span>
                           </button>
 
                           <button
                             onClick={() => handleDeleteProject(proj)}
-                            className="p-2 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white transition-colors cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
+                            className="p-1.5 rounded-xl bg-white/5 hover:bg-red-500 text-white/70 hover:text-white transition-colors cursor-pointer border border-white/10"
                             title="Xoá dự án"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </div>
-
                     </div>
                   );
                 })}
@@ -1321,385 +1231,314 @@ export default function CMSPage({ onBackToPortfolio }) {
           </div>
         )}
 
-        {/* Tab 2: Slide Banner Cover (Hỗ trợ Ảnh 21:9 & Juxtapose Before/After Embed) */}
-        {activeTab === 'banner' && (
-          <div className="space-y-4 sm:space-y-5">
+        {/* Tab 2: Trang Chủ & Banner (Tích hợp: Slide Banner + Tùm Lum Tà La + Chữ Chạy + Hiệu Ứng) */}
+        {activeTab === 'home' && (
+          <div className="space-y-6 sm:space-y-8">
             
-            {/* Top Action Controls Bar */}
-            <div className="p-3.5 sm:p-4 rounded-2xl bg-[#121216] border border-white/10 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-[#C3EA39]/15 text-[#C3EA39] flex items-center justify-center shrink-0">
-                  <SlidersHorizontal className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-display font-bold text-white">
-                    Quản Lý Banner Cover & Juxtapose
-                  </h3>
-                  <p className="text-[11px] font-mono text-white/50">
-                    Ảnh tĩnh góc rộng (21:9) và Before / After
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
-                <button
-                  onClick={() => coverBannerFileInputRef.current?.click()}
-                  className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer min-h-[38px]"
-                >
-                  <Upload className="w-3.5 h-3.5 text-[#C3EA39]" />
-                  <span>+ Tải Ảnh (21:9)</span>
-                </button>
-
-                <button
-                  onClick={handleOpenAddEmbedBanner}
-                  className="px-3.5 py-2 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black text-xs font-display font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-[1.02] cursor-pointer min-h-[38px]"
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>+ Juxtapose</span>
-                </button>
-
-                <button
-                  onClick={handleAddCoverBannerUrl}
-                  className="col-span-2 sm:col-span-1 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 text-xs font-mono transition-colors cursor-pointer flex items-center justify-center gap-1 min-h-[38px]"
-                  title="Nhập trực tiếp URL ảnh"
-                >
-                  <span>🔗 URL Ảnh</span>
-                </button>
-              </div>
-            </div>
-
-            {localCoverBanners.length === 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Option 1: Upload 21:9 Image */}
-                <div
-                  onClick={() => coverBannerFileInputRef.current?.click()}
-                  className="p-8 sm:p-10 rounded-3xl border-2 border-dashed border-white/15 hover:border-[#C3EA39]/50 bg-[#121216]/50 hover:bg-[#121216] transition-all flex flex-col items-center justify-center text-center cursor-pointer group"
-                >
-                  <div className="w-12 h-12 rounded-2xl bg-white/5 text-white/70 group-hover:text-[#C3EA39] flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                    <Upload className="w-6 h-6" />
+            {/* 1. SLIDE BANNER (21:9 & Juxtapose) */}
+            <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#121216] border border-white/10 space-y-4 sm:space-y-5">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-[#C3EA39]/15 text-[#C3EA39] flex items-center justify-center shrink-0">
+                    <SlidersHorizontal className="w-4 h-4" />
                   </div>
-                  <p className="font-display font-bold text-white text-base">Tải Ảnh Slide Banner (21:9)</p>
-                  <p className="text-xs text-white/50 mt-1 font-mono max-w-xs">
-                    Tải ảnh cover định dạng 21:9 chuẩn góc nhìn rộng.
-                  </p>
-                </div>
-
-                {/* Option 2: Add Juxtapose Embed */}
-                <div
-                  onClick={handleOpenAddEmbedBanner}
-                  className="p-8 sm:p-10 rounded-3xl border-2 border-dashed border-[#C3EA39]/30 hover:border-[#C3EA39] bg-[#C3EA39]/5 hover:bg-[#C3EA39]/10 transition-all flex flex-col items-center justify-center text-center cursor-pointer group"
-                >
-                  <div className="w-12 h-12 rounded-2xl bg-[#C3EA39]/20 text-[#C3EA39] flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                    <SlidersHorizontal className="w-6 h-6" />
+                  <div>
+                    <h3 className="text-sm sm:text-base font-display font-bold text-white">
+                      1. Slide Banner Trang Chủ (21:9 & Juxtapose)
+                    </h3>
+                    <p className="text-[11px] font-mono text-white/50">
+                      Banner góc rộng đầu trang chủ & thanh trượt Before/After
+                    </p>
                   </div>
-                  <p className="font-display font-bold text-white text-base">Thêm Juxtapose Before / After</p>
-                  <p className="text-xs text-white/50 mt-1 font-mono max-w-xs">
-                    Tạo slider so sánh 2 ảnh Before / After mượt mà.
-                  </p>
                 </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
-                {localCoverBanners.map((banner, idx) => {
-                  const isEmbed = banner.type === 'embed' || Boolean(banner.embedCode || banner.embedUrl);
-                  const embedSrc = extractEmbedSrc(banner.embedUrl || banner.embedCode || banner.image);
 
-                  return (
-                    <div
-                      key={banner.id || idx}
-                      className="relative rounded-2xl overflow-hidden border border-white/10 bg-[#121216] group flex flex-col hover:border-[#C3EA39]/40 transition-all shadow-xl"
-                    >
-                      {/* Widescreen Cover Preview (Locked 21:9 Aspect Ratio) */}
-                      <div className="relative aspect-[21/9] w-full overflow-hidden bg-black border-b border-white/5">
-                        {banner.beforeImage && banner.afterImage ? (
-                          <BeforeAfterSlider
-                            beforeImage={banner.beforeImage}
-                            afterImage={banner.afterImage}
-                            beforeLabel={banner.beforeLabel}
-                            afterLabel={banner.afterLabel}
-                          />
-                        ) : isEmbed && embedSrc ? (
-                          <div className="relative w-full h-full overflow-hidden">
-                            <iframe
-                              src={embedSrc}
-                              title={banner.title || 'Juxtapose'}
-                              className="absolute -top-2 left-0 w-full h-[120%] border-0 pointer-events-auto bg-[#0a0a0c]"
-                              allowFullScreen
-                              loading="lazy"
-                            />
-                            {/* Corner Shield */}
-                            <div className="absolute bottom-0 right-0 w-24 h-7 bg-[#0a0a0c] z-20 pointer-events-none" />
-                          </div>
-                        ) : (
-                          <img
-                            src={banner.image}
-                            alt={banner.title || `Cover Banner ${idx + 1}`}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          />
-                        )}
-
-                        {/* Top Left: Badge Type */}
-                        <div className="absolute top-2 left-2 sm:top-2.5 sm:left-2.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg bg-black/85 backdrop-blur-md text-[10px] sm:text-xs font-mono font-bold text-[#C3EA39] border border-white/15 flex items-center gap-1.5 shadow-md z-20">
-                          {isEmbed ? (
-                            <>
-                              <SlidersHorizontal className="w-3 h-3 text-[#C3EA39]" />
-                              <span>Juxtapose #{idx + 1 < 10 ? `0${idx + 1}` : idx + 1}</span>
-                            </>
-                          ) : (
-                            <>
-                              <ImageIcon className="w-3 h-3 text-white/70" />
-                              <span>Ảnh #{idx + 1 < 10 ? `0${idx + 1}` : idx + 1}</span>
-                            </>
-                          )}
-                        </div>
-
-                        {/* Top Right: Actions */}
-                        <div className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 flex items-center gap-1.5 z-20">
-                          <button
-                            onClick={() => isEmbed ? handleOpenEditEmbedBanner(banner, idx) : handleOpenEditBanner(banner, idx)}
-                            className="px-2.5 py-1 sm:px-3 sm:py-1 rounded-lg bg-black/80 hover:bg-[#C3EA39] text-[#C3EA39] hover:text-black text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer border border-[#C3EA39]/40 shadow-md active:scale-95"
-                            title="Chỉnh sửa thông tin, ảnh & căn chỉnh"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                            <span>Sửa</span>
-                          </button>
-
-                          <button
-                            onClick={() => handleDeleteCoverBanner(banner, idx)}
-                            className="p-1 sm:p-1.5 rounded-lg bg-black/75 hover:bg-red-500 text-white/80 hover:text-white transition-colors cursor-pointer border border-white/10 shadow-md active:scale-95"
-                            title="Xoá banner"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Bottom Info & Reorder Controls (Clean & compact, no duplicate inputs) */}
-                      <div className="p-3 sm:p-3.5 bg-[#121216] flex items-center justify-between gap-3">
-                        <div className="min-w-0 flex-1">
-                          <h4 className="text-xs sm:text-sm font-display font-bold text-white truncate">
-                            {banner.title || `Slide Banner #${idx + 1 < 10 ? `0${idx + 1}` : idx + 1}`}
-                          </h4>
-                          {banner.subtitle && (
-                            <p className="text-[11px] text-white/50 font-light truncate mt-0.5">
-                              {banner.subtitle}
-                            </p>
-                          )}
-                        </div>
-
-                        {/* Reorder Buttons */}
-                        <div className="flex items-center gap-1 shrink-0">
-                          <button
-                            onClick={() => moveLocalCoverBanner(idx, 'up')}
-                            disabled={idx === 0}
-                            className="p-1.5 sm:p-2 rounded-xl bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/70 hover:text-white transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center"
-                            title="Di chuyển lên trước"
-                          >
-                            <ArrowUp className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => moveLocalCoverBanner(idx, 'down')}
-                            disabled={idx === localCoverBanners.length - 1}
-                            className="p-1.5 sm:p-2 rounded-xl bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/70 hover:text-white transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center"
-                            title="Di chuyển ra sau"
-                          >
-                            <ArrowDown className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Sticky Bottom Save Bar for Slide Banner */}
-            <StickySaveBar
-              isSaved={savedAlerts.banner}
-              onSave={handleSaveBannersTab}
-              isSyncing={isCloudSyncing}
-              label="Lưu Danh Sách Banner"
-              hint="Nhớ bấm lưu để cập nhật danh sách và nội dung banner"
-            />
-          </div>
-        )}
-
-        {/* Tab 3: Tùm Lum Tà La (Square Rotating Works) */}
-        {activeTab === 'random' && (
-          <div className="space-y-4 sm:space-y-5">
-            {/* Top Action Controls Bar */}
-            <div className="p-3.5 sm:p-4 rounded-2xl bg-[#121216] border border-white/10 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-[#C3EA39]/15 text-[#C3EA39] flex items-center justify-center shrink-0">
-                  <Sparkles className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-display font-bold text-white">
-                    Quản Lý Tùm Lum Tà La (1:1)
-                  </h3>
-                  <p className="text-[11px] font-mono text-white/50">
-                    Artwork vuông & GIF xoay vòng ở Section 01
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => randomWorkFileInputRef.current?.click()}
-                  className="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black text-xs font-display font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-[1.02] cursor-pointer min-h-[38px]"
-                >
-                  <Upload className="w-3.5 h-3.5" />
-                  <span>+ Tải Ảnh (1:1)</span>
-                </button>
-
-                <button
-                  onClick={handleAddRandomWorkUrl}
-                  className="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 text-xs font-mono transition-colors cursor-pointer flex items-center justify-center gap-1 min-h-[38px]"
-                  title="Nhập trực tiếp URL ảnh"
-                >
-                  <span>🔗 URL</span>
-                </button>
-              </div>
-            </div>
-
-            {localRandomWorks.length === 0 ? (
-              <div
-                onClick={() => randomWorkFileInputRef.current?.click()}
-                className="p-8 sm:p-16 rounded-3xl border-2 border-dashed border-white/15 hover:border-[#C3EA39]/50 bg-[#121216]/50 hover:bg-[#121216] transition-all flex flex-col items-center justify-center text-center cursor-pointer group"
-              >
-                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#C3EA39]/10 text-[#C3EA39] flex items-center justify-center mb-3.5 group-hover:scale-110 transition-transform">
-                  <Upload className="w-6 h-6 sm:w-7 sm:h-7" />
-                </div>
-                <p className="font-display font-bold text-white text-base sm:text-lg">Chưa có Artwork Tùm Lum Tà La nào</p>
-                <p className="text-xs sm:text-sm text-white/50 mt-1 font-mono max-w-md">
-                  Bấm vào đây để tải ảnh vuông hoặc GIF hiển thị trong khung xoay Section 01 Tùm lum tà la.
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
-                {localRandomWorks.map((work, idx) => (
-                  <div
-                    key={work.id || idx}
-                    className="relative rounded-2xl overflow-hidden border border-white/10 bg-[#121216] group flex flex-col hover:border-[#C3EA39]/40 transition-all shadow-xl"
+                <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full sm:w-auto">
+                  <button
+                    onClick={() => coverBannerFileInputRef.current?.click()}
+                    className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer min-h-[38px]"
                   >
-                    {/* Square Artwork Thumbnail */}
-                    <div className="relative aspect-square w-full overflow-hidden bg-black border-b border-white/5">
-                      <img
-                        src={work.image}
-                        alt={work.title || `Artwork ${idx + 1}`}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
+                    <Upload className="w-3.5 h-3.5 text-[#C3EA39]" />
+                    <span>+ Tải Ảnh (21:9)</span>
+                  </button>
 
-                      {/* Top Left: Artwork Number Tag */}
-                      <div className="absolute top-2 left-2 sm:top-2.5 sm:left-2.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg bg-black/75 backdrop-blur-md text-[10px] sm:text-xs font-mono font-bold text-[#C3EA39] border border-white/10 flex items-center gap-1.5 z-20">
-                        <Sparkles className="w-3 h-3" />
-                        <span>Artwork #{idx + 1 < 10 ? `0${idx + 1}` : idx + 1}</span>
-                      </div>
+                  <button
+                    onClick={handleOpenAddEmbedBanner}
+                    className="px-3.5 py-2 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black text-xs font-display font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-[1.02] cursor-pointer min-h-[38px]"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>+ Juxtapose</span>
+                  </button>
 
-                      {/* Top Right: Actions */}
-                      <div className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 flex items-center gap-1.5 z-20">
-                        <button
-                          onClick={() => handleOpenEditRandomWork(work, idx)}
-                          className="px-2.5 py-1 sm:px-3 sm:py-1 rounded-lg bg-black/80 hover:bg-[#C3EA39] text-[#C3EA39] hover:text-black text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer border border-[#C3EA39]/40 shadow-md active:scale-95"
-                          title="Chỉnh sửa tác phẩm, ảnh & căn chỉnh"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                          <span>Sửa</span>
-                        </button>
+                  <button
+                    onClick={handleAddCoverBannerUrl}
+                    className="col-span-2 sm:col-span-1 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 text-xs font-mono transition-colors cursor-pointer flex items-center justify-center gap-1 min-h-[38px]"
+                    title="Nhập trực tiếp URL ảnh"
+                  >
+                    <span>🔗 URL Ảnh</span>
+                  </button>
+                </div>
+              </div>
 
-                        <button
-                          onClick={() => handleDeleteRandomWork(work, idx)}
-                          className="p-1 sm:p-1.5 rounded-lg bg-black/75 hover:bg-red-500 text-white/80 hover:text-white transition-colors cursor-pointer border border-white/10 active:scale-95"
-                          title="Xoá artwork"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Bottom Info & Reorder Controls */}
-                    <div className="p-3 sm:p-3.5 bg-[#121216] flex items-center justify-between gap-3">
-                      <div className="min-w-0 flex-1">
-                        <h4 className="text-xs sm:text-sm font-display font-bold text-white truncate">
-                          {work.title || `Artwork #${idx + 1 < 10 ? `0${idx + 1}` : idx + 1}`}
-                        </h4>
-                        {work.subtitle && (
-                          <p className="text-[11px] text-white/50 font-light truncate mt-0.5">
-                            {work.subtitle}
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Position Reorder */}
-                      <div className="flex items-center gap-1 shrink-0">
-                        <button
-                          onClick={() => moveLocalRandomWork(idx, 'up')}
-                          disabled={idx === 0}
-                          className="p-1 sm:p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-white/70 hover:text-white disabled:opacity-20 disabled:pointer-events-none transition-colors cursor-pointer"
-                          title="Di chuyển lên trước"
-                        >
-                          <ArrowUp className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => moveLocalRandomWork(idx, 'down')}
-                          disabled={idx === localRandomWorks.length - 1}
-                          className="p-1 sm:p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-white/70 hover:text-white disabled:opacity-20 disabled:pointer-events-none transition-colors cursor-pointer"
-                          title="Di chuyển ra sau"
-                        >
-                          <ArrowDown className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-
+              {localCoverBanners.length === 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div
+                    onClick={() => coverBannerFileInputRef.current?.click()}
+                    className="p-8 sm:p-10 rounded-2xl border-2 border-dashed border-white/15 hover:border-[#C3EA39]/50 bg-black/30 hover:bg-black/50 transition-all flex flex-col items-center justify-center text-center cursor-pointer group"
+                  >
+                    <Upload className="w-8 h-8 text-[#C3EA39] mb-2 group-hover:scale-110 transition-transform" />
+                    <p className="font-display font-bold text-white text-sm">Tải Ảnh Slide Banner (21:9)</p>
+                    <p className="text-xs text-white/40 mt-1 font-mono">Tải ảnh cover góc nhìn rộng 21:9</p>
                   </div>
-                ))}
-              </div>
-            )}
 
-            {/* Sticky Bottom Save Bar for Random Works */}
-            <StickySaveBar
-              isSaved={savedAlerts.random}
-              onSave={handleSaveRandomWorksTab}
-              isSyncing={isCloudSyncing}
-              label="Lưu Danh Sách Artwork"
-              hint="Nhớ bấm lưu để cập nhật danh sách và thông tin tác phẩm"
-            />
-          </div>
-        )}
+                  <div
+                    onClick={handleOpenAddEmbedBanner}
+                    className="p-8 sm:p-10 rounded-2xl border-2 border-dashed border-[#C3EA39]/30 hover:border-[#C3EA39] bg-[#C3EA39]/5 hover:bg-[#C3EA39]/10 transition-all flex flex-col items-center justify-center text-center cursor-pointer group"
+                  >
+                    <SlidersHorizontal className="w-8 h-8 text-[#C3EA39] mb-2 group-hover:scale-110 transition-transform" />
+                    <p className="font-display font-bold text-white text-sm">Thêm Juxtapose Before / After</p>
+                    <p className="text-xs text-white/40 mt-1 font-mono">Slider so sánh Before & After</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {localCoverBanners.map((banner, idx) => {
+                    const isEmbed = banner.type === 'embed' || Boolean(banner.embedCode || banner.embedUrl);
+                    const embedSrc = extractEmbedSrc(banner.embedUrl || banner.embedCode || banner.image);
 
-        {/* Tab 4: Chữ Chạy Slide (Marquee) */}
-        {activeTab === 'marquee' && (
-          <div className="space-y-4 sm:space-y-6">
-            
-            {/* Live Ticker Preview */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs font-mono text-white/50">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-[#C3EA39] animate-ping" />
-                  <span>Dòng chữ chạy trực tiếp:</span>
-                </span>
-                <span>{localMarqueeItems.length} cụm từ</span>
-              </div>
+                    return (
+                      <div
+                        key={banner.id || idx}
+                        className="relative rounded-2xl overflow-hidden border border-white/10 bg-black/40 group flex flex-col hover:border-[#C3EA39]/40 transition-all shadow-xl"
+                      >
+                        <div className="relative aspect-[21/9] w-full overflow-hidden bg-black border-b border-white/5">
+                          {banner.beforeImage && banner.afterImage ? (
+                            <BeforeAfterSlider
+                              beforeImage={banner.beforeImage}
+                              afterImage={banner.afterImage}
+                              beforeLabel={banner.beforeLabel}
+                              afterLabel={banner.afterLabel}
+                            />
+                          ) : isEmbed && embedSrc ? (
+                            <div className="relative w-full h-full overflow-hidden">
+                              <iframe
+                                src={embedSrc}
+                                title={banner.title || 'Juxtapose'}
+                                className="absolute -top-2 left-0 w-full h-[120%] border-0 pointer-events-auto bg-[#0a0a0c]"
+                                allowFullScreen
+                                loading="lazy"
+                              />
+                              <div className="absolute bottom-0 right-0 w-24 h-7 bg-[#0a0a0c] z-20 pointer-events-none" />
+                            </div>
+                          ) : (
+                            <img
+                              src={banner.image}
+                              alt={banner.title || `Cover Banner ${idx + 1}`}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
+                          )}
 
-              <div className="py-3 px-4 rounded-2xl bg-[#0D0D12] border border-[#C3EA39]/40 overflow-hidden shadow-lg">
-                {(() => {
-                  const previewList = localMarqueeItems && localMarqueeItems.length > 0 ? localMarqueeItems : defaultMarqueeItems;
-                  const repeatCount = Math.max(2, Math.ceil(16 / (previewList.length || 1)));
-                  const repeated = Array(repeatCount).fill(previewList).flat();
-                  return (
-                    <div className="animate-marquee whitespace-nowrap flex items-center text-[#C3EA39] font-mono font-bold text-xs tracking-wider">
-                      <div className="flex items-center gap-6 pr-6 shrink-0">
-                        {repeated.map((item, idx) => (
-                          <span key={`prev1-${idx}`} className="flex items-center gap-2">
-                            <span className="text-white/40">✦</span>
-                            <span>{item}</span>
-                          </span>
-                        ))}
+                          <div className="absolute top-2 left-2 px-2 py-0.5 rounded-lg bg-black/85 backdrop-blur-md text-[10px] font-mono font-bold text-[#C3EA39] border border-white/15 flex items-center gap-1.5 shadow-md z-20">
+                            {isEmbed ? (
+                              <>
+                                <SlidersHorizontal className="w-3 h-3 text-[#C3EA39]" />
+                                <span>Juxtapose #{idx + 1 < 10 ? `0${idx + 1}` : idx + 1}</span>
+                              </>
+                            ) : (
+                              <>
+                                <ImageIcon className="w-3 h-3 text-white/70" />
+                                <span>Ảnh #{idx + 1 < 10 ? `0${idx + 1}` : idx + 1}</span>
+                              </>
+                            )}
+                          </div>
+
+                          <div className="absolute top-2 right-2 flex items-center gap-1.5 z-20">
+                            <button
+                              onClick={() => isEmbed ? handleOpenEditEmbedBanner(banner, idx) : handleOpenEditBanner(banner, idx)}
+                              className="px-2.5 py-1 rounded-lg bg-black/80 hover:bg-[#C3EA39] text-[#C3EA39] hover:text-black text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer border border-[#C3EA39]/40 shadow-md active:scale-95"
+                              title="Sửa banner"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                              <span>Sửa</span>
+                            </button>
+
+                            <button
+                              onClick={() => handleDeleteCoverBanner(banner, idx)}
+                              className="p-1.5 rounded-lg bg-black/75 hover:bg-red-500 text-white/80 hover:text-white transition-colors cursor-pointer border border-white/10 shadow-md active:scale-95"
+                              title="Xoá banner"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="p-3 bg-[#121216] flex items-center justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <h4 className="text-xs sm:text-sm font-display font-bold text-white truncate">
+                              {banner.title || `Slide Banner #${idx + 1 < 10 ? `0${idx + 1}` : idx + 1}`}
+                            </h4>
+                            {banner.subtitle && (
+                              <p className="text-[11px] text-white/50 font-light truncate mt-0.5">
+                                {banner.subtitle}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              onClick={() => moveLocalCoverBanner(idx, 'up')}
+                              disabled={idx === 0}
+                              className="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/70 hover:text-white transition-colors cursor-pointer"
+                              title="Lên trước"
+                            >
+                              <ArrowUp className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => moveLocalCoverBanner(idx, 'down')}
+                              disabled={idx === localCoverBanners.length - 1}
+                              className="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/70 hover:text-white transition-colors cursor-pointer"
+                              title="Ra sau"
+                            >
+                              <ArrowDown className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
                       </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* 2. TÙM LUM TÀ LA (Artwork Vuông 1:1) */}
+            <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#121216] border border-white/10 space-y-4 sm:space-y-5">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-[#C3EA39]/15 text-[#C3EA39] flex items-center justify-center shrink-0">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm sm:text-base font-display font-bold text-white">
+                      2. Tùm Lum Tà La (Section 01 - Artwork 1:1)
+                    </h3>
+                    <p className="text-[11px] font-mono text-white/50">
+                      Artwork vuông & GIF xoay vòng ở Section 01
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <button
+                    onClick={() => randomWorkFileInputRef.current?.click()}
+                    className="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black text-xs font-display font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-[1.02] cursor-pointer min-h-[38px]"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>+ Tải Ảnh (1:1)</span>
+                  </button>
+
+                  <button
+                    onClick={handleAddRandomWorkUrl}
+                    className="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 text-xs font-mono transition-colors cursor-pointer flex items-center justify-center gap-1 min-h-[38px]"
+                    title="Nhập trực tiếp URL ảnh"
+                  >
+                    <span>🔗 URL</span>
+                  </button>
+                </div>
+              </div>
+
+              {localRandomWorks.length === 0 ? (
+                <div
+                  onClick={() => randomWorkFileInputRef.current?.click()}
+                  className="p-8 sm:p-12 rounded-2xl border-2 border-dashed border-white/15 hover:border-[#C3EA39]/50 bg-black/30 hover:bg-black/50 transition-all flex flex-col items-center justify-center text-center cursor-pointer group"
+                >
+                  <Upload className="w-8 h-8 text-[#C3EA39] mb-2 group-hover:scale-110 transition-transform" />
+                  <p className="font-display font-bold text-white text-sm">Chưa có Artwork Tùm Lum Tà La nào</p>
+                  <p className="text-xs text-white/40 mt-1 font-mono">Bấm để tải ảnh vuông 1:1 hoặc GIF</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+                  {localRandomWorks.map((work, idx) => (
+                    <div
+                      key={work.id || idx}
+                      className="relative rounded-xl overflow-hidden border border-white/10 bg-black/40 group flex flex-col hover:border-[#C3EA39]/40 transition-all shadow-lg"
+                    >
+                      <div className="relative aspect-square w-full overflow-hidden bg-black border-b border-white/5">
+                        <img
+                          src={work.image}
+                          alt={work.title || `Artwork ${idx + 1}`}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+
+                        <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-black/80 backdrop-blur-md text-[9px] font-mono font-bold text-[#C3EA39] border border-white/10 flex items-center gap-1 z-20">
+                          <span>#{idx + 1 < 10 ? `0${idx + 1}` : idx + 1}</span>
+                        </div>
+
+                        <div className="absolute top-1.5 right-1.5 flex items-center gap-1 z-20">
+                          <button
+                            onClick={() => handleOpenEditRandomWork(work, idx)}
+                            className="p-1 rounded-md bg-black/80 hover:bg-[#C3EA39] text-[#C3EA39] hover:text-black transition-colors cursor-pointer border border-[#C3EA39]/30"
+                            title="Sửa ảnh"
+                          >
+                            <Edit2 className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteRandomWork(work, idx)}
+                            className="p-1 rounded-md bg-black/80 hover:bg-red-500 text-white/80 hover:text-white transition-colors cursor-pointer border border-white/10"
+                            title="Xoá artwork"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="p-2 bg-[#121216]">
+                        <h4 className="text-xs font-display font-bold text-white truncate">
+                          {work.title || `Artwork #${idx + 1}`}
+                        </h4>
+                        <p className="text-[10px] text-white/40 truncate mt-0.5">
+                          {work.subtitle || 'Tác phẩm ngẫu hứng'}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* 3. DẢI CHỮ CHẠY (Infinite Marquee) */}
+            <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#121216] border border-white/10 space-y-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-3 border-b border-white/10">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-[#C3EA39]/15 text-[#C3EA39] flex items-center justify-center shrink-0">
+                    <MoveHorizontal className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm sm:text-base font-display font-bold text-white">
+                      3. Dải Chữ Chạy Vô Tận (Infinite Marquee)
+                    </h3>
+                    <p className="text-[11px] font-mono text-white/50">
+                      Các cụm từ kỹ năng, slogan chạy ngang mượt mà giữa các phần
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={resetLocalMarquee}
+                  className="text-xs font-mono text-white/40 hover:text-[#C3EA39] transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  <span>Khôi phục mặc định</span>
+                </button>
+              </div>
+
+              {/* Live Preview */}
+              <div className="p-3 rounded-2xl bg-black/60 border border-white/10 overflow-hidden relative">
+                {(() => {
+                  const repeated = [...localMarqueeItems, ...localMarqueeItems];
+                  return (
+                    <div className="flex whitespace-nowrap overflow-hidden py-1 text-xs font-mono font-bold text-[#C3EA39] tracking-wider uppercase">
                       <div className="flex items-center gap-6 pr-6 shrink-0">
                         {repeated.map((item, idx) => (
-                          <span key={`prev2-${idx}`} className="flex items-center gap-2">
+                          <span key={`prev-${idx}`} className="flex items-center gap-2">
                             <span className="text-white/40">✦</span>
                             <span>{item}</span>
                           </span>
@@ -1709,197 +1548,186 @@ export default function CMSPage({ onBackToPortfolio }) {
                   );
                 })()}
               </div>
+
+              {/* Add New Phrase Form */}
+              <form onSubmit={handleAddNewMarquee} className="flex flex-col sm:flex-row gap-2 p-1.5 rounded-2xl bg-black/40 border border-white/10">
+                <input
+                  type="text"
+                  value={newMarqueeText}
+                  onChange={(e) => setNewMarqueeText(e.target.value)}
+                  placeholder="Nhập cụm từ mới (VD: 3D MOTION DESIGN, TYPOGRAPHY...)..."
+                  className="flex-1 bg-transparent px-3.5 py-2 text-base sm:text-sm text-white placeholder-white/30 focus:outline-none"
+                />
+                <button
+                  type="submit"
+                  disabled={!newMarqueeText.trim()}
+                  className="px-4 py-2 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] disabled:opacity-40 text-black font-display font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer min-h-[38px]"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Thêm Cụm Từ</span>
+                </button>
+              </form>
+
+              {/* List of Phrases */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {localMarqueeItems.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="p-2.5 sm:p-3 rounded-xl bg-black/40 border border-white/10 hover:border-white/20 transition-all flex items-center justify-between gap-2"
+                  >
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <span className="text-xs font-mono font-bold text-[#C3EA39] w-5 text-center shrink-0">
+                        #{idx + 1}
+                      </span>
+                      <input
+                        type="text"
+                        value={item}
+                        onChange={(e) => updateLocalMarqueeItem(idx, e.target.value)}
+                        className="flex-1 bg-transparent text-xs sm:text-sm font-bold text-white focus:outline-none focus:text-[#C3EA39] transition-colors py-0.5"
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => moveLocalMarqueeItem(idx, 'up')}
+                        disabled={idx === 0}
+                        className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/70 hover:text-white transition-colors"
+                        title="Lên"
+                      >
+                        <ArrowUp className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={() => moveLocalMarqueeItem(idx, 'down')}
+                        disabled={idx === localMarqueeItems.length - 1}
+                        className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/70 hover:text-white transition-colors"
+                        title="Xuống"
+                      >
+                        <ArrowDown className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={() => deleteLocalMarqueeItem(idx)}
+                        className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white transition-colors"
+                        title="Xoá"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            {/* Add New Phrase Form */}
-            <form onSubmit={handleAddNewMarquee} className="flex flex-col sm:flex-row gap-2 p-2 rounded-2xl bg-[#121216] border border-white/10">
-              <input
-                type="text"
-                value={newMarqueeText}
-                onChange={(e) => setNewMarqueeText(e.target.value)}
-                placeholder="Nhập cụm từ mới (VD: 3D MOTION DESIGN, TYPOGRAPHY...)..."
-                className="flex-1 bg-transparent px-3.5 py-2.5 text-base sm:text-sm text-white placeholder-white/30 focus:outline-none font-mono"
-              />
-              <button
-                type="submit"
-                disabled={!newMarqueeText.trim()}
-                className="px-5 py-2.5 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] disabled:opacity-40 text-black font-mono font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer min-h-[40px]"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Thêm Cụm Từ</span>
-              </button>
-            </form>
-
-            {/* List of Phrases */}
-            <div className="space-y-2">
-              {localMarqueeItems.map((item, idx) => (
-                <div
-                  key={idx}
-                  className="p-3 sm:p-4 rounded-2xl bg-[#121216] border border-white/10 hover:border-white/20 transition-all flex items-center justify-between gap-2.5 group"
-                >
-                  <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-                    <span className="text-xs font-mono font-bold text-[#C3EA39] w-5 sm:w-6 text-center shrink-0">
-                      #{idx + 1}
-                    </span>
-                    <input
-                      type="text"
-                      value={item}
-                      onChange={(e) => updateLocalMarqueeItem(idx, e.target.value)}
-                      className="flex-1 bg-transparent text-base sm:text-sm font-mono font-bold text-white focus:outline-none focus:text-[#C3EA39] transition-colors py-1"
-                    />
+            {/* 4. HIỆU ỨNG KHÍ QUYỂN (Seasonal Effects) */}
+            <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#121216] border border-white/10 space-y-4">
+              <div className="pb-3 border-b border-white/10">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-[#C3EA39]/15 text-[#C3EA39] flex items-center justify-center shrink-0">
+                    <Sparkles className="w-4 h-4" />
                   </div>
-
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button
-                      onClick={() => moveLocalMarqueeItem(idx, 'up')}
-                      disabled={idx === 0}
-                      className="p-2 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/70 hover:text-white transition-colors min-w-[34px] min-h-[34px] flex items-center justify-center cursor-pointer"
-                      title="Lên"
-                    >
-                      <ArrowUp className="w-3.5 h-3.5" />
-                    </button>
-
-                    <button
-                      onClick={() => moveLocalMarqueeItem(idx, 'down')}
-                      disabled={idx === localMarqueeItems.length - 1}
-                      className="p-2 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/70 hover:text-white transition-colors min-w-[34px] min-h-[34px] flex items-center justify-center cursor-pointer"
-                      title="Xuống"
-                    >
-                      <ArrowDown className="w-3.5 h-3.5" />
-                    </button>
-
-                    <button
-                      onClick={() => deleteLocalMarqueeItem(idx)}
-                      className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white transition-colors min-w-[34px] min-h-[34px] flex items-center justify-center cursor-pointer"
-                      title="Xoá cụm từ"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                  <div>
+                    <h3 className="text-sm sm:text-base font-display font-bold text-white">
+                      4. Hiệu Ứng Lễ Hội & Khí Quyển
+                    </h3>
+                    <p className="text-[11px] font-mono text-white/50">
+                      Hiệu ứng rơi động tăng thêm tính sống động cho website
+                    </p>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
 
-            {/* Quick Reset to Default Terms */}
-            <div className="pt-2 flex justify-end">
-              <button
-                onClick={resetLocalMarquee}
-                className="text-xs font-mono text-white/40 hover:text-[#C3EA39] transition-colors flex items-center gap-1.5 cursor-pointer"
-              >
-                <RefreshCw className="w-3 h-3" />
-                <span>Khôi phục các cụm từ mặc định</span>
-              </button>
-            </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+                {[
+                  {
+                    id: 'none',
+                    title: 'Tắt hiệu ứng',
+                    desc: 'Giao diện nguyên bản, không có hiệu ứng rơi',
+                    icon: '🚫',
+                    badge: 'Mặc định',
+                  },
+                  {
+                    id: 'snow',
+                    title: 'Tuyết Rơi',
+                    desc: 'Bông tuyết trắng pha lê rơi bồng bềnh (Noel & Mùa đông)',
+                    icon: '❄️',
+                    badge: 'Mùa Đông',
+                  },
+                  {
+                    id: 'tet',
+                    title: 'Tết Nguyên Đán',
+                    desc: 'Cánh hoa mai vàng, hoa đào hồng & lộc xuân bay lượn',
+                    icon: '🌸',
+                    badge: 'Tết Âm Lịch',
+                  },
+                  {
+                    id: 'mid_autumn',
+                    title: 'Trung Thu',
+                    desc: 'Đèn lồng phát sáng lung linh, lá thu vàng rơi & ánh trăng',
+                    icon: '🥮',
+                    badge: 'Rằm Tháng 8',
+                  },
+                ].map((opt) => {
+                  const isSelected = localSeasonalEffect === opt.id;
 
-            {/* Sticky Bottom Save Bar for Marquee */}
-            <StickySaveBar
-              isSaved={savedAlerts.marquee}
-              onSave={handleSaveMarqueeTab}
-              isSyncing={isCloudSyncing}
-              label="Lưu Dòng Chữ Chạy"
-              hint="Nhớ bấm lưu để cập nhật nội dung và thứ tự chữ chạy"
-            />
-          </div>
-        )}
-
-        {/* Tab 5: Hiệu Ứng Lễ Hội & Khí Quyển */}
-        {activeTab === 'seasonal' && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                {
-                  id: 'none',
-                  title: 'Tắt hiệu ứng',
-                  desc: 'Giao diện nguyên bản, không có hiệu ứng rơi',
-                  icon: '🚫',
-                  badge: 'Mặc định',
-                },
-                {
-                  id: 'snow',
-                  title: 'Tuyết Rơi',
-                  desc: 'Bông tuyết trắng pha lê rơi bồng bềnh (Noel & Mùa đông)',
-                  icon: '❄️',
-                  badge: 'Mùa Đông',
-                },
-                {
-                  id: 'tet',
-                  title: 'Tết Nguyên Đán',
-                  desc: 'Cánh hoa mai vàng, hoa đào hồng & lộc xuân bay lượn',
-                  icon: '🌸',
-                  badge: 'Tết Âm Lịch',
-                },
-                {
-                  id: 'mid_autumn',
-                  title: 'Trung Thu',
-                  desc: 'Đèn lồng phát sáng lung linh, lá thu vàng rơi & ánh trăng',
-                  icon: '🥮',
-                  badge: 'Rằm Tháng 8',
-                },
-              ].map((opt) => {
-                const isSelected = localSeasonalEffect === opt.id;
-
-                return (
-                  <div
-                    key={opt.id}
-                    onClick={() => setLocalSeasonalEffect(opt.id)}
-                    className={`relative p-5 rounded-3xl border transition-all cursor-pointer flex flex-col justify-between group ${
-                      isSelected
-                        ? 'bg-[#121216] border-[#C3EA39] shadow-lg shadow-[#C3EA39]/10'
-                        : 'bg-[#121216]/60 border-white/10 hover:border-white/25 hover:bg-[#121216]'
-                    }`}
-                  >
-                    {/* Top Row: Icon & Badge */}
-                    <div className="flex items-start justify-between gap-2">
-                      <span className="text-3xl sm:text-4xl select-none group-hover:scale-110 transition-transform">
-                        {opt.icon}
-                      </span>
-                      <span
-                        className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${
-                          isSelected
-                            ? 'bg-[#C3EA39]/20 text-[#C3EA39] border-[#C3EA39]/40 font-bold'
-                            : 'bg-white/5 text-white/50 border-white/10'
-                        }`}
-                      >
-                        {opt.badge}
-                      </span>
-                    </div>
-
-                    {/* Middle Info */}
-                    <div className="space-y-1 my-4">
-                      <h3 className="text-base font-display font-bold text-white">
-                        {opt.title}
-                      </h3>
-                      <p className="text-xs text-white/60 font-light leading-relaxed">
-                        {opt.desc}
-                      </p>
-                    </div>
-
-                    {/* Bottom Status Button */}
-                    <div className="pt-3 border-t border-white/10 flex items-center justify-between">
-                      <span className="text-xs font-mono text-white/40">Trạng thái:</span>
-                      {isSelected ? (
-                        <span className="text-xs font-mono font-bold text-[#C3EA39] flex items-center gap-1">
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>Đang Chọn</span>
+                  return (
+                    <div
+                      key={opt.id}
+                      onClick={() => setLocalSeasonalEffect(opt.id)}
+                      className={`relative p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between group ${
+                        isSelected
+                          ? 'bg-black/60 border-[#C3EA39] shadow-lg shadow-[#C3EA39]/10'
+                          : 'bg-black/30 border-white/10 hover:border-white/25 hover:bg-black/40'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="text-2xl sm:text-3xl select-none group-hover:scale-110 transition-transform">
+                          {opt.icon}
                         </span>
-                      ) : (
-                        <span className="text-xs font-mono text-white/40 group-hover:text-white transition-colors">
-                          Bấm để chọn
+                        <span
+                          className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${
+                            isSelected
+                              ? 'bg-[#C3EA39]/20 text-[#C3EA39] border-[#C3EA39]/40 font-bold'
+                              : 'bg-white/5 text-white/50 border-white/10'
+                          }`}
+                        >
+                          {opt.badge}
                         </span>
-                      )}
+                      </div>
+
+                      <div className="space-y-1 my-3">
+                        <h4 className="text-sm font-display font-bold text-white">
+                          {opt.title}
+                        </h4>
+                        <p className="text-xs text-white/50 font-light leading-relaxed">
+                          {opt.desc}
+                        </p>
+                      </div>
+
+                      <div className="pt-2.5 border-t border-white/10 flex items-center justify-between">
+                        <span className="text-[11px] font-mono text-white/40">Trạng thái:</span>
+                        {isSelected ? (
+                          <span className="text-xs font-mono font-bold text-[#C3EA39] flex items-center gap-1">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Đang Chọn</span>
+                          </span>
+                        ) : (
+                          <span className="text-xs font-mono text-white/40 group-hover:text-white transition-colors">
+                            Chọn
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
 
-            {/* Sticky Bottom Save Bar for Seasonal Effect */}
+            {/* Sticky Bottom Save Bar for Home Tab */}
             <StickySaveBar
-              isSaved={savedAlerts.seasonal}
-              onSave={handleSaveSeasonalTab}
+              isSaved={savedAlerts.home}
+              onSave={handleSaveHomeTab}
               isSyncing={isCloudSyncing}
-              label="Lưu Hiệu Ứng Khí Quyển"
-              hint="Nhớ bấm lưu để áp dụng hiệu ứng cho toàn bộ website"
+              label="Lưu Thay Đổi Trang Chủ"
+              hint="Lưu toàn bộ Banner, Tùm lum tà la, Chữ chạy & Hiệu ứng lên Cloud R2"
             />
           </div>
         )}
