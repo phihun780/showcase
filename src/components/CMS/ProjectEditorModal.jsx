@@ -14,7 +14,7 @@ import {
   Image as ImageIcon,
   FolderOpen
 } from 'lucide-react';
-import { optimizeAndUploadToR2 } from '../../utils/imageOptimizer';
+import { optimizeAndUploadToR2, getProjectFolderPath } from '../../utils/imageOptimizer';
 import { deleteFromR2 } from '../../utils/r2Storage';
 import ImageCropModal from './ImageCropModal';
 
@@ -79,11 +79,12 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
   const processCoverFile = async (file) => {
     if (!file) return;
     const isGif = file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
+    const projectFolder = getProjectFolderPath(formData.title || project?.title, project?.id || formData.id);
     if (isGif) {
       setIsUploading(true);
       try {
         const oldCover = formData.coverImage;
-        const res = await optimizeAndUploadToR2(file, 'projects');
+        const res = await optimizeAndUploadToR2(file, projectFolder);
         if (oldCover && oldCover !== res.url) {
           deleteFromR2(oldCover);
         }
@@ -160,8 +161,9 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
     const files = Array.from(filesList || []);
     if (files.length === 0) return;
     setIsUploading(true);
+    const projectFolder = getProjectFolderPath(formData.title || project?.title, project?.id || formData.id);
     try {
-      const results = await Promise.all(files.map(f => optimizeAndUploadToR2(f, 'projects')));
+      const results = await Promise.all(files.map(f => optimizeAndUploadToR2(f, projectFolder)));
       const newImages = results.map(r => r.url);
       setFormData(prev => ({
         ...prev,
@@ -700,8 +702,7 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
         imageSrc={cropImageSrc}
         mode="project"
         initialAspectRatio={16 / 10}
-        projectTitle={formData.title}
-        projectSubtitle={formData.subtitle}
+        folderPrefix={getProjectFolderPath(formData.title || project?.title, project?.id || formData.id)}
         onCropComplete={handleCropComplete}
         onClose={() => setIsCropOpen(false)}
       />

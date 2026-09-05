@@ -79,7 +79,7 @@ export default function ProfileEditor({ profile, onSave }) {
     if (file) {
       setIsUploading(true);
       try {
-        const res = await optimizeAndUploadToR2(file, 'banner');
+        const res = await optimizeAndUploadToR2(file, 'profile');
         setFormData(prev => ({ ...prev, favicon: res.url }));
         setOptimizeNotice('Favicon đã tải lên thành công ✓');
         setTimeout(() => setOptimizeNotice(''), 3000);
@@ -99,7 +99,7 @@ export default function ProfileEditor({ profile, onSave }) {
     if (file) {
       setIsUploading(true);
       try {
-        const res = await optimizeAndUploadToR2(file, 'banner');
+        const res = await optimizeAndUploadToR2(file, 'profile');
         setFormData(prev => ({ ...prev, ogImage: res.url }));
         setOptimizeNotice('Thumbnail chia sẻ đã tải lên thành công ✓');
         setTimeout(() => setOptimizeNotice(''), 3000);
@@ -121,7 +121,7 @@ export default function ProfileEditor({ profile, onSave }) {
       if (isGif) {
         setIsUploading(true);
         try {
-          const res = await optimizeAndUploadToR2(file, 'avatar');
+          const res = await optimizeAndUploadToR2(file, 'profile');
           setFormData(prev => ({ ...prev, avatar: res.url }));
           setOptimizeNotice('Ảnh GIF đã tải lên Cloudflare R2 ✓');
           setTimeout(() => setOptimizeNotice(''), 3500);
@@ -1197,8 +1197,7 @@ export default function ProfileEditor({ profile, onSave }) {
         imageSrc={cropImageSrc}
         mode="portrait"
         initialAspectRatio={3 / 4}
-        projectTitle={formData.name || 'Ảnh Chân Dung'}
-        projectSubtitle={formData.title || 'Mục Về tui'}
+        folderPrefix="profile"
         onCropComplete={handleCropAvatarComplete}
         onClose={() => setIsCropOpen(false)}
       />

@@ -9,7 +9,7 @@ import BeforeAfterSlider from '../BeforeAfterSlider';
 import CMSAuthGate from './CMSAuthGate';
 import SeasonalAtmosphere from '../SeasonalAtmosphere';
 import { extractEmbedSrc } from '../../utils/juxtaposeUtils';
-import { optimizeAndUploadToR2 } from '../../utils/imageOptimizer';
+import { optimizeAndUploadToR2, getProjectFolderPath } from '../../utils/imageOptimizer';
 import { deleteFromR2, deleteMultipleFromR2 } from '../../utils/r2Storage';
 import {
   FolderKanban,
@@ -444,15 +444,18 @@ export default function CMSPage({ onBackToPortfolio }) {
     if (file) {
       const reader = new FileReader();
       reader.onload = (loadEvent) => {
+        const title = file.name.replace(/\.[^/.]+$/, "") || "Dự án mới";
+        const folderPrefix = getProjectFolderPath(title, Date.now().toString());
         setCropModalConfig({
           isOpen: true,
           imageSrc: loadEvent.target.result,
           mode: 'project',
           actionType: 'add',
           targetIndex: null,
-          title: file.name.replace(/\.[^/.]+$/, "") || "Dự án mới",
+          title: title,
           subtitle: "Dự án thiết kế sáng tạo",
           initialAspectRatio: 16 / 10,
+          folderPrefix: folderPrefix,
         });
       };
       reader.readAsDataURL(file);
@@ -461,6 +464,7 @@ export default function CMSPage({ onBackToPortfolio }) {
   };
 
   const handleAdjustProjectCover = (proj, idx) => {
+    const folderPrefix = getProjectFolderPath(proj.title, proj.id);
     setCropModalConfig({
       isOpen: true,
       imageSrc: proj.coverImage,
@@ -470,6 +474,7 @@ export default function CMSPage({ onBackToPortfolio }) {
       title: proj.title || `Dự án ${idx + 1}`,
       subtitle: proj.subtitle || "",
       initialAspectRatio: 16 / 10,
+      folderPrefix: folderPrefix,
     });
   };
 
@@ -488,6 +493,7 @@ export default function CMSPage({ onBackToPortfolio }) {
           title: file.name.replace(/\.[^/.]+$/, "") || "Slide Banner",
           subtitle: "",
           initialAspectRatio: 21 / 9,
+          folderPrefix: 'cover_banners',
         });
       };
       reader.readAsDataURL(file);
@@ -516,6 +522,7 @@ export default function CMSPage({ onBackToPortfolio }) {
           title: currentBanner?.title || file.name.replace(/\.[^/.]+$/, ""),
           subtitle: currentBanner?.subtitle || "",
           initialAspectRatio: 21 / 9,
+          folderPrefix: 'cover_banners',
         });
       };
       reader.readAsDataURL(file);
@@ -579,6 +586,7 @@ export default function CMSPage({ onBackToPortfolio }) {
       title: banner.title || `Slide Banner ${idx + 1}`,
       subtitle: banner.subtitle || "",
       initialAspectRatio: 21 / 9,
+      folderPrefix: 'cover_banners',
     });
   };
 
@@ -699,6 +707,7 @@ export default function CMSPage({ onBackToPortfolio }) {
           title: file.name.replace(/\.[^/.]+$/, "") || "Artwork mới",
           subtitle: "Tác phẩm lúc rảnh rỗi",
           initialAspectRatio: 1,
+          folderPrefix: 'random_works',
         });
       };
       reader.readAsDataURL(file);
@@ -727,6 +736,7 @@ export default function CMSPage({ onBackToPortfolio }) {
           title: currentWork?.title || file.name.replace(/\.[^/.]+$/, ""),
           subtitle: currentWork?.subtitle || "Tác phẩm lúc rảnh rỗi",
           initialAspectRatio: 1,
+          folderPrefix: 'random_works',
         });
       };
       reader.readAsDataURL(file);
@@ -745,6 +755,7 @@ export default function CMSPage({ onBackToPortfolio }) {
       title: work.title || `Artwork ${idx + 1}`,
       subtitle: work.subtitle || "Tác phẩm lúc rảnh rỗi",
       initialAspectRatio: 1,
+      folderPrefix: 'random_works',
     });
   };
 
@@ -1941,6 +1952,7 @@ export default function CMSPage({ onBackToPortfolio }) {
           onCropComplete={handleUnifiedCropComplete}
           mode={cropModalConfig.mode}
           initialAspectRatio={cropModalConfig.initialAspectRatio}
+          folderPrefix={cropModalConfig.folderPrefix}
         />
       )}
 

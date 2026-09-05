@@ -42,6 +42,7 @@ export default function ImageCropModal({
   onClose,
   mode = 'project', // 'banner' | 'project' | 'portrait' | 'avatar' | 'random'
   initialAspectRatio = null,
+  folderPrefix = null,
 }) {
   const isBannerMode = mode === 'banner';
   const isRandomMode = mode === 'random';
@@ -361,14 +362,17 @@ export default function ImageCropModal({
         dataUrl = exportCanvas.toDataURL('image/jpeg', 0.92);
       }
 
-      const prefix = isBannerMode
-        ? 'cover_banners/banner'
-        : isRandomMode
-        ? 'random/artwork'
-        : isPortraitMode
-        ? 'profile/avatar'
-        : 'projects/cover';
-      const key = `${prefix}_${Date.now()}.webp`;
+      let finalPrefix = folderPrefix;
+      if (!finalPrefix) {
+        finalPrefix = isBannerMode
+          ? 'cover_banners'
+          : isRandomMode
+          ? 'random_works'
+          : isPortraitMode
+          ? 'profile'
+          : 'projects';
+      }
+      const key = `${finalPrefix}/${Date.now()}_cropped.webp`;
 
       exportCanvas.toBlob(
         async (blob) => {

@@ -111,9 +111,50 @@ export async function optimizeImageFile(file) {
 }
 
 /**
+ * Convert Vietnamese / special text to clean URL-safe and folder-safe slug
+ * e.g. "Dự án Thiết Kế Bao Bì #01" -> "du-an-thiet-ke-bao-bi-01"
+ */
+export function slugify(text) {
+  if (!text) return '';
+  return text
+    .toString()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove Vietnamese accent marks
+    .replace(/[đĐ]/g, 'd')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-') // Replace non-alphanumeric with hyphen
+    .replace(/^-+|-+$/g, '');
+}
+
+/**
+ * Generate organized R2 folder path for a specific project
+ * e.g. "projects/du-an-thiet-ke-bao-bi" or "projects/project_174123456"
+ */
+export function getProjectFolderPath(projectOrTitle, id = null) {
+  let title = '';
+  let projId = id;
+  if (typeof projectOrTitle === 'object' && projectOrTitle !== null) {
+    title = projectOrTitle.title || '';
+    projId = projectOrTitle.id || id;
+  } else if (typeof projectOrTitle === 'string') {
+    title = projectOrTitle;
+  }
+
+  const slug = slugify(title);
+  if (slug) {
+    return `projects/${slug}`;
+  }
+  if (projId) {
+    return `projects/project_${projId}`;
+  }
+  return `projects/project_${Date.now()}`;
+}
+
+/**
  * Optimize image and upload directly to Cloudflare R2
  * @param {File} file 
- * @param {string} folderPrefix ('projects' | 'random' | 'avatar')
+ * @param {string} folderPrefix ('projects/du-an-1' | 'cover_banners' | 'random_works' | 'profile')
  * @returns {Promise<{url: string, isR2: boolean, isGif: boolean}>}
  */
 export async function optimizeAndUploadToR2(file, folderPrefix = 'uploads') {

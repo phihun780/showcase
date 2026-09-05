@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   X,
   Check,
@@ -336,6 +336,7 @@ export default function MediaItemEditorModal({
           imageSrc={cropConfig.imageSrc}
           mode={cropConfig.mode}
           initialAspectRatio={cropConfig.initialAspectRatio}
+          folderPrefix={isBanner ? 'cover_banners' : 'random_works'}
           onCropComplete={handleCropComplete}
           onClose={() => setCropConfig(null)}
         />
