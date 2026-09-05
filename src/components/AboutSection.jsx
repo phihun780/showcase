@@ -311,12 +311,9 @@ export default function AboutSection() {
               {/* Button Label & Status Icon */}
               <div className="relative z-10 flex items-center justify-center gap-2 text-center">
                 {downloadStatus === 'maintenance' ? (
-                  <>
-                    <Sparkles className="w-4 h-4 text-[#C3EA39] shrink-0 animate-pulse" />
-                    <span className="font-mono font-bold text-white text-xs sm:text-sm leading-tight">
-                      CV đang được làm lại, vui lòng quay lại sau
-                    </span>
-                  </>
+                  <span className="font-mono font-bold text-white text-xs sm:text-sm leading-tight">
+                    CV đang được làm lại, vui lòng quay lại sau
+                  </span>
                 ) : downloadStatus === 'success' ? (
                   <>
                     <Check className="w-4 h-4 text-black stroke-[3] animate-bounce shrink-0" />
