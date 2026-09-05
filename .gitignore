@@ -15,6 +15,7 @@ dist-ssr
 .env.local
 .env.*.local
 !.env.example
+THONG_TIN_CAI_DAT_R2.txt
 
 # Editor directories and files
 .vscode/*
