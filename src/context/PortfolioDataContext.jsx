@@ -172,11 +172,7 @@ export function PortfolioDataProvider({ children }) {
 
   // Explicit Save to Cloudflare R2 function
   const saveToCloud = async (customPayload = null) => {
-    if (!isInitialCloudSyncDone.current) {
-      console.warn("Skipping R2 save: Initial sync is still running");
-      return { success: false, error: 'Initial sync running' };
-    }
-
+    isInitialCloudSyncDone.current = true;
     setIsCloudSyncing(true);
     setSyncStatus('syncing');
 
@@ -189,6 +185,34 @@ export function PortfolioDataProvider({ children }) {
       marqueeItems,
       seasonalEffect,
     };
+
+    // Immediately synchronize context state & localStorage with payload values
+    if (customPayload) {
+      if (customPayload.profile) {
+        setProfile(customPayload.profile);
+        try { localStorage.setItem(STORAGE_PROFILE_KEY, JSON.stringify(customPayload.profile)); } catch (e) {}
+      }
+      if (Array.isArray(customPayload.projects)) {
+        setProjects(customPayload.projects);
+        try { localStorage.setItem(STORAGE_PROJECTS_KEY, JSON.stringify(customPayload.projects)); } catch (e) {}
+      }
+      if (Array.isArray(customPayload.coverBanners)) {
+        setCoverBanners(customPayload.coverBanners);
+        try { localStorage.setItem(STORAGE_COVER_BANNERS_KEY, JSON.stringify(customPayload.coverBanners)); } catch (e) {}
+      }
+      if (Array.isArray(customPayload.randomWorks)) {
+        setRandomWorks(customPayload.randomWorks);
+        try { localStorage.setItem(STORAGE_RANDOM_WORKS_KEY, JSON.stringify(customPayload.randomWorks)); } catch (e) {}
+      }
+      if (Array.isArray(customPayload.marqueeItems)) {
+        setMarqueeItems(customPayload.marqueeItems);
+        try { localStorage.setItem(STORAGE_MARQUEE_KEY, JSON.stringify(customPayload.marqueeItems)); } catch (e) {}
+      }
+      if (customPayload.seasonalEffect) {
+        setSeasonalEffect(customPayload.seasonalEffect);
+        try { localStorage.setItem(STORAGE_SEASONAL_EFFECT_KEY, customPayload.seasonalEffect); } catch (e) {}
+      }
+    }
 
     try {
       const res = await savePortfolioDataToR2(payload);

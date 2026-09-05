@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Check, Upload, Image as ImageIcon, Sparkles, Loader2, Crop, GripVertical, Edit3 } from 'lucide-react';
 import { optimizeAndUploadToR2 } from '../../utils/imageOptimizer';
 import { deleteFromR2 } from '../../utils/r2Storage';
@@ -6,49 +6,49 @@ import ImageCropModal from './ImageCropModal';
 
 export default function ProfileEditor({ profile, onSave }) {
   const [formData, setFormData] = useState({
-    name: profile.name || 'Phi Hùng',
-    title: profile.title || 'Graphic Designer',
-    avatar: profile.avatar || profile.image || '',
-    subtitle: profile.subtitle || 'Đây là nơi mình lưu giữ các sản phẩm được làm ra trong thời gian qua, bạn ghé rồi thì xem qua thử nhaaa ^^',
-    cvUrl: profile.cvUrl || profile.resumeUrl || '',
-    location: profile.location || 'Tp. Buôn Ma Thuột, Đắk Lắk',
-    email: profile.email || 'phihung.contact@example.com',
-    tabTitle: profile.tabTitle || 'Phi Hùng — Showcase | Portfolio',
-    metaDescription: profile.metaDescription || 'Thiết kế không chỉ là thiết kế, mà còn là thiết kế...',
-    experienceTitle: profile.experienceTitle || 'Quá Khứ Của Tui',
-    socialsTitle: profile.socialsTitle || 'Những Nơi Khác',
-    favicon: profile.favicon || 'https://pub-0ad262edfb6a4345a3bd61b2110c549c.r2.dev/profile/favicon.png',
-    ogImage: profile.ogImage || 'https://pub-0ad262edfb6a4345a3bd61b2110c549c.r2.dev/profile/og-image.png',
+    name: profile?.name || 'Phi Hùng',
+    title: profile?.title || 'Graphic Designer',
+    avatar: profile?.avatar || profile?.image || '',
+    subtitle: profile?.subtitle || 'Đây là nơi mình lưu giữ các sản phẩm được làm ra trong thời gian qua, bạn ghé rồi thì xem qua thử nhaaa ^^',
+    cvUrl: profile?.cvUrl || profile?.resumeUrl || '',
+    location: profile?.location || 'Tp. Buôn Ma Thuột, Đắk Lắk',
+    email: profile?.email || 'phihung.contact@example.com',
+    tabTitle: profile?.tabTitle || 'Phi Hùng — Showcase | Portfolio',
+    metaDescription: profile?.metaDescription || 'Thiết kế không chỉ là thiết kế, mà còn là thiết kế...',
+    experienceTitle: profile?.experienceTitle || 'Quá Khứ Của Tui',
+    socialsTitle: profile?.socialsTitle || 'Những Nơi Khác',
+    favicon: profile?.favicon || 'https://pub-0ad262edfb6a4345a3bd61b2110c549c.r2.dev/profile/favicon.png',
+    ogImage: profile?.ogImage || 'https://pub-0ad262edfb6a4345a3bd61b2110c549c.r2.dev/profile/og-image.png',
 
     // Header Customization
-    headerTitle1: profile.headerTitle1 || 'PORTFOLIO // SHOWCASE',
-    headerTitle2: profile.headerTitle2 || 'GRAPHIC DESIGNER',
-    headerNavWork: profile.headerNavWork || 'Dự án của tui',
-    headerNavAbout: profile.headerNavAbout || 'Về tui',
+    headerTitle1: profile?.headerTitle1 || 'PORTFOLIO // SHOWCASE',
+    headerTitle2: profile?.headerTitle2 || 'GRAPHIC DESIGNER',
+    headerNavWork: profile?.headerNavWork || 'Dự án của tui',
+    headerNavAbout: profile?.headerNavAbout || 'Về tui',
 
     // Hero Customization
-    heroTitleRow1: profile.heroTitleRow1 || 'SHOW',
-    heroTitleRow2: profile.heroTitleRow2 || 'CASE.',
-    heroCtaText: profile.heroCtaText || 'Dạo xem 1 vòng',
+    heroTitleRow1: profile?.heroTitleRow1 || 'SHOW',
+    heroTitleRow2: profile?.heroTitleRow2 || 'CASE.',
+    heroCtaText: profile?.heroCtaText || 'Dạo xem 1 vòng',
 
     // Section Headings Customization
-    section01Number: profile.section01Number || '01',
-    section01Title: profile.section01Title || 'Tùm lum tà la',
-    section01Subtitle: profile.section01Subtitle || 'Những sản phẩm này được làm ra lúc rảnh rỗi và có hứng làm gì đó...',
+    section01Number: profile?.section01Number || '01',
+    section01Title: profile?.section01Title || 'Tùm lum tà la',
+    section01Subtitle: profile?.section01Subtitle || 'Những sản phẩm này được làm ra lúc rảnh rỗi và có hứng làm gì đó...',
 
-    section02Number: profile.section02Number || '02',
-    section02Title: profile.section02Title || 'Dự án của tui',
+    section02Number: profile?.section02Number || '02',
+    section02Title: profile?.section02Title || 'Dự án của tui',
 
-    section03Number: profile.section03Number || '03',
-    section03Title: profile.section03Title || 'Về tui',
-    cvButtonText: profile.cvButtonText || 'TẢI CV / RESUME (PDF)',
+    section03Number: profile?.section03Number || '03',
+    section03Title: profile?.section03Title || 'Về tui',
+    cvButtonText: profile?.cvButtonText || 'TẢI CV / RESUME (PDF)',
 
     // Footer Customization
-    footerCopyright: profile.footerCopyright || profile.name || 'Phi Hùng',
-    footerTagline: profile.footerTagline || 'Graphic Designer Portfolio',
+    footerCopyright: profile?.footerCopyright || profile?.name || 'Phi Hùng',
+    footerTagline: profile?.footerTagline || 'Graphic Designer Portfolio',
 
-    socials: Array.isArray(profile.socials) ? [...profile.socials] : [],
-    experience: Array.isArray(profile.experience)
+    socials: Array.isArray(profile?.socials) ? [...profile.socials] : [],
+    experience: Array.isArray(profile?.experience)
       ? profile.experience.map((e) => ({
           ...e,
           company: e.company === 'Tên Công Ty' ? '' : (e.company || ''),
@@ -57,6 +57,54 @@ export default function ProfileEditor({ profile, onSave }) {
         }))
       : [],
   });
+
+  // Keep formData in sync when profile updates from R2 or parent
+  useEffect(() => {
+    if (profile) {
+      setFormData(prev => ({
+        ...prev,
+        name: profile.name ?? prev.name,
+        title: profile.title ?? prev.title,
+        avatar: profile.avatar || profile.image || prev.avatar,
+        subtitle: profile.subtitle ?? prev.subtitle,
+        cvUrl: profile.cvUrl || profile.resumeUrl || prev.cvUrl,
+        location: profile.location ?? prev.location,
+        email: profile.email ?? prev.email,
+        tabTitle: profile.tabTitle ?? prev.tabTitle,
+        metaDescription: profile.metaDescription ?? prev.metaDescription,
+        experienceTitle: profile.experienceTitle ?? prev.experienceTitle,
+        socialsTitle: profile.socialsTitle ?? prev.socialsTitle,
+        favicon: profile.favicon ?? prev.favicon,
+        ogImage: profile.ogImage ?? prev.ogImage,
+        headerTitle1: profile.headerTitle1 ?? prev.headerTitle1,
+        headerTitle2: profile.headerTitle2 ?? prev.headerTitle2,
+        headerNavWork: profile.headerNavWork ?? prev.headerNavWork,
+        headerNavAbout: profile.headerNavAbout ?? prev.headerNavAbout,
+        heroTitleRow1: profile.heroTitleRow1 ?? prev.heroTitleRow1,
+        heroTitleRow2: profile.heroTitleRow2 ?? prev.heroTitleRow2,
+        heroCtaText: profile.heroCtaText ?? prev.heroCtaText,
+        section01Number: profile.section01Number ?? prev.section01Number,
+        section01Title: profile.section01Title ?? prev.section01Title,
+        section01Subtitle: profile.section01Subtitle ?? prev.section01Subtitle,
+        section02Number: profile.section02Number ?? prev.section02Number,
+        section02Title: profile.section02Title ?? prev.section02Title,
+        section03Number: profile.section03Number ?? prev.section03Number,
+        section03Title: profile.section03Title ?? prev.section03Title,
+        cvButtonText: profile.cvButtonText ?? prev.cvButtonText,
+        footerCopyright: profile.footerCopyright ?? prev.footerCopyright,
+        footerTagline: profile.footerTagline ?? prev.footerTagline,
+        socials: Array.isArray(profile.socials) ? [...profile.socials] : prev.socials,
+        experience: Array.isArray(profile.experience)
+          ? profile.experience.map((e) => ({
+              ...e,
+              company: e.company === 'Tên Công Ty' ? '' : (e.company || ''),
+              role: e.role === 'Chức vụ / Vị trí' ? '' : (e.role || ''),
+              url: e.url || e.link || e.companyUrl || '',
+            }))
+          : prev.experience,
+      }));
+    }
+  }, [profile]);
 
   const [savedAlert, setSavedAlert] = useState(false);
   const [optimizeNotice, setOptimizeNotice] = useState('');
@@ -312,7 +360,10 @@ export default function ProfileEditor({ profile, onSave }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave(formData);
+    onSave({
+      ...profile,
+      ...formData,
+    });
     setSavedAlert(true);
     setTimeout(() => setSavedAlert(false), 2500);
   };

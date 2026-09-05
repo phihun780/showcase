@@ -310,17 +310,27 @@ export default function CMSPage({ onBackToPortfolio }) {
   };
 
   const handleSaveProject = (formData) => {
+    let updated;
     if (editingProject) {
-      setLocalProjects(prev =>
-        prev.map(p => (p.id === editingProject.id ? { ...formData, id: editingProject.id } : p))
-      );
+      updated = localProjects.map(p => (p.id === editingProject.id ? { ...formData, id: editingProject.id } : p));
     } else {
       const newProj = {
         ...formData,
         id: Date.now().toString(),
       };
-      setLocalProjects(prev => [newProj, ...prev]);
+      updated = [newProj, ...localProjects];
     }
+    setLocalProjects(updated);
+    updateProjectsList(updated);
+    saveToCloud({
+      updatedAt: new Date().toISOString(),
+      profile,
+      projects: updated,
+      coverBanners: localCoverBanners,
+      randomWorks: localRandomWorks,
+      marqueeItems: localMarqueeItems,
+      seasonalEffect: localSeasonalEffect,
+    });
     setIsEditorOpen(false);
   };
 
@@ -336,8 +346,19 @@ export default function CMSPage({ onBackToPortfolio }) {
       const projectFolder = getProjectFolderPath(proj.title, proj.id);
       await deleteFolderFromR2(projectFolder);
 
-      // 3. Remove from local projects list
-      setLocalProjects(prev => prev.filter(p => p.id !== proj.id));
+      // 3. Remove from local projects list & save immediately
+      const updated = localProjects.filter(p => p.id !== proj.id);
+      setLocalProjects(updated);
+      updateProjectsList(updated);
+      await saveToCloud({
+        updatedAt: new Date().toISOString(),
+        profile,
+        projects: updated,
+        coverBanners: localCoverBanners,
+        randomWorks: localRandomWorks,
+        marqueeItems: localMarqueeItems,
+        seasonalEffect: localSeasonalEffect,
+      });
     }
   };
 
@@ -1732,15 +1753,19 @@ export default function CMSPage({ onBackToPortfolio }) {
           </div>
         )}
 
-        {/* Tab 6: Thông tin cá nhân */}
+        {/* Tab 3: Thông tin cá nhân */}
         {activeTab === 'profile' && (
           <ProfileEditor
             profile={profile}
             onSave={async (updatedProfile) => {
-              updateProfile(updatedProfile);
+              const fullProfile = {
+                ...profile,
+                ...updatedProfile,
+              };
+              updateProfile(fullProfile);
               await saveToCloud({
                 updatedAt: new Date().toISOString(),
-                profile: updatedProfile,
+                profile: fullProfile,
                 projects: localProjects,
                 coverBanners: localCoverBanners,
                 randomWorks: localRandomWorks,
