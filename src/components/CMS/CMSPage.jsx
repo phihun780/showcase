@@ -346,7 +346,97 @@ export default function CMSPage({ onBackToPortfolio }) {
     });
   };
 
-  // 0. Project Handlers (Immediate Crop on Upload + Re-crop)
+  // --- Unified Framing / Preview Modal Completion Handler ---
+  const handleUnifiedCropComplete = (croppedUrl) => {
+    if (!cropModalConfig) return;
+    const { mode, actionType, targetIndex, title, subtitle } = cropModalConfig;
+
+    if (mode === 'banner') {
+      if (actionType === 'add') {
+        const newBanner = {
+          id: Date.now().toString(),
+          type: 'image',
+          title: title || 'Slide Banner',
+          subtitle: subtitle || '',
+          image: croppedUrl,
+        };
+        setLocalCoverBanners(prev => [...prev, newBanner]);
+      } else if (actionType === 'replace' || actionType === 'adjust') {
+        if (targetIndex !== null && targetIndex !== undefined) {
+          setLocalCoverBanners(prev => {
+            const updated = [...prev];
+            const oldImg = updated[targetIndex]?.image;
+            if (oldImg && oldImg !== croppedUrl && updated[targetIndex]?.type !== 'embed') {
+              deleteFromR2(oldImg);
+            }
+            updated[targetIndex] = {
+              ...updated[targetIndex],
+              image: croppedUrl,
+            };
+            return updated;
+          });
+        }
+      }
+    } else if (mode === 'random') {
+      if (actionType === 'add') {
+        const newWork = {
+          id: Date.now().toString(),
+          title: title || 'Artwork mới',
+          subtitle: subtitle || 'Tác phẩm lúc rảnh rỗi',
+          image: croppedUrl,
+        };
+        setLocalRandomWorks(prev => [...prev, newWork]);
+      } else if (actionType === 'replace' || actionType === 'adjust') {
+        if (targetIndex !== null && targetIndex !== undefined) {
+          setLocalRandomWorks(prev => {
+            const updated = [...prev];
+            const oldImg = updated[targetIndex]?.image;
+            if (oldImg && oldImg !== croppedUrl) {
+              deleteFromR2(oldImg);
+            }
+            updated[targetIndex] = {
+              ...updated[targetIndex],
+              image: croppedUrl,
+            };
+            return updated;
+          });
+        }
+      }
+    } else if (mode === 'project') {
+      if (actionType === 'add') {
+        const newProj = {
+          id: Date.now().toString(),
+          title: title || 'Dự án mới',
+          subtitle: subtitle || 'Dự án thiết kế sáng tạo',
+          category: 'Graphic Design',
+          year: new Date().getFullYear().toString(),
+          coverImage: croppedUrl,
+          gallery: [],
+          description: '',
+        };
+        setLocalProjects(prev => [newProj, ...prev]);
+      } else if (actionType === 'replace' || actionType === 'adjust') {
+        if (targetIndex !== null && targetIndex !== undefined) {
+          setLocalProjects(prev => {
+            const updated = [...prev];
+            const oldImg = updated[targetIndex]?.coverImage;
+            if (oldImg && oldImg !== croppedUrl) {
+              deleteFromR2(oldImg);
+            }
+            updated[targetIndex] = {
+              ...updated[targetIndex],
+              coverImage: croppedUrl,
+            };
+            return updated;
+          });
+        }
+      }
+    }
+
+    setCropModalConfig(null);
+  };
+
+  // 0. Project Handlers (Framing Preview on Upload & Adjustment)
   const handleUploadNewProject = (e) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -356,9 +446,11 @@ export default function CMSPage({ onBackToPortfolio }) {
           isOpen: true,
           imageSrc: loadEvent.target.result,
           mode: 'project',
-          editingIndex: null,
+          actionType: 'add',
+          targetIndex: null,
           title: file.name.replace(/\.[^/.]+$/, "") || "Dự án mới",
           subtitle: "Dự án thiết kế sáng tạo",
+          initialAspectRatio: 16 / 10,
         });
       };
       reader.readAsDataURL(file);
@@ -366,23 +458,37 @@ export default function CMSPage({ onBackToPortfolio }) {
     e.target.value = '';
   };
 
-  // 1. Cover Banners Handlers (Direct R2 optimization upload & quick replace)
-  const handleUploadCoverBanner = async (e) => {
+  const handleAdjustProjectCover = (proj, idx) => {
+    setCropModalConfig({
+      isOpen: true,
+      imageSrc: proj.coverImage,
+      mode: 'project',
+      actionType: 'adjust',
+      targetIndex: idx,
+      title: proj.title || `Dự án ${idx + 1}`,
+      subtitle: proj.subtitle || "",
+      initialAspectRatio: 16 / 10,
+    });
+  };
+
+  // 1. Cover Banners Handlers (Framing Preview 21:9 on Upload & Adjustment)
+  const handleUploadCoverBanner = (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      try {
-        const res = await optimizeAndUploadToR2(file, 'cover_banners');
-        const newBanner = {
-          id: Date.now().toString(),
-          type: 'image',
+      const reader = new FileReader();
+      reader.onload = (loadEvent) => {
+        setCropModalConfig({
+          isOpen: true,
+          imageSrc: loadEvent.target.result,
+          mode: 'banner',
+          actionType: 'add',
+          targetIndex: null,
           title: file.name.replace(/\.[^/.]+$/, "") || "Slide Banner",
           subtitle: "",
-          image: res.url,
-        };
-        setLocalCoverBanners(prev => [...prev, newBanner]);
-      } catch (err) {
-        console.error("Error uploading banner:", err);
-      }
+          initialAspectRatio: 21 / 9,
+        });
+      };
+      reader.readAsDataURL(file);
     }
     e.target.value = '';
   };
@@ -392,29 +498,41 @@ export default function CMSPage({ onBackToPortfolio }) {
     replaceBannerFileInputRef.current?.click();
   };
 
-  const handleReplaceBannerFile = async (e) => {
+  const handleReplaceBannerFile = (e) => {
     const file = e.target.files?.[0];
     if (file && replacingBannerIndex !== null) {
-      try {
-        const res = await optimizeAndUploadToR2(file, 'cover_banners');
-        setLocalCoverBanners(prev => {
-          const updated = [...prev];
-          const oldImg = updated[replacingBannerIndex]?.image;
-          if (oldImg && oldImg !== res.url && updated[replacingBannerIndex]?.type !== 'embed') {
-            deleteFromR2(oldImg);
-          }
-          updated[replacingBannerIndex] = {
-            ...updated[replacingBannerIndex],
-            image: res.url,
-          };
-          return updated;
+      const targetIdx = replacingBannerIndex;
+      const currentBanner = localCoverBanners[targetIdx];
+      const reader = new FileReader();
+      reader.onload = (loadEvent) => {
+        setCropModalConfig({
+          isOpen: true,
+          imageSrc: loadEvent.target.result,
+          mode: 'banner',
+          actionType: 'replace',
+          targetIndex: targetIdx,
+          title: currentBanner?.title || file.name.replace(/\.[^/.]+$/, ""),
+          subtitle: currentBanner?.subtitle || "",
+          initialAspectRatio: 21 / 9,
         });
-      } catch (err) {
-        console.error("Error replacing banner image:", err);
-      }
+      };
+      reader.readAsDataURL(file);
     }
     setReplacingBannerIndex(null);
     e.target.value = '';
+  };
+
+  const handleAdjustBanner = (banner, idx) => {
+    setCropModalConfig({
+      isOpen: true,
+      imageSrc: banner.image,
+      mode: 'banner',
+      actionType: 'adjust',
+      targetIndex: idx,
+      title: banner.title || `Slide Banner ${idx + 1}`,
+      subtitle: banner.subtitle || "",
+      initialAspectRatio: 21 / 9,
+    });
   };
 
   const handleEditImageBannerInfo = (banner, idx) => {
@@ -537,22 +655,24 @@ export default function CMSPage({ onBackToPortfolio }) {
     }
   };
 
-  // 2. Random Works Handlers (Direct R2 optimization upload & quick replace)
-  const handleUploadRandomWork = async (e) => {
+  // 2. Random Works Handlers (Framing Preview 1:1 on Upload & Adjustment)
+  const handleUploadRandomWork = (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      try {
-        const res = await optimizeAndUploadToR2(file, 'random');
-        const newWork = {
-          id: Date.now().toString(),
+      const reader = new FileReader();
+      reader.onload = (loadEvent) => {
+        setCropModalConfig({
+          isOpen: true,
+          imageSrc: loadEvent.target.result,
+          mode: 'random',
+          actionType: 'add',
+          targetIndex: null,
           title: file.name.replace(/\.[^/.]+$/, "") || "Artwork mới",
           subtitle: "Tác phẩm lúc rảnh rỗi",
-          image: res.url,
-        };
-        setLocalRandomWorks(prev => [...prev, newWork]);
-      } catch (err) {
-        console.error("Error uploading artwork to R2:", err);
-      }
+          initialAspectRatio: 1,
+        });
+      };
+      reader.readAsDataURL(file);
     }
     e.target.value = '';
   };
@@ -562,27 +682,59 @@ export default function CMSPage({ onBackToPortfolio }) {
     replaceRandomFileInputRef.current?.click();
   };
 
-  const handleReplaceRandomFile = async (e) => {
+  const handleReplaceRandomFile = (e) => {
     const file = e.target.files?.[0];
     if (file && replacingRandomIndex !== null) {
-      try {
-        const res = await optimizeAndUploadToR2(file, 'random');
-        setLocalRandomWorks(prev => {
-          const updated = [...prev];
-          const oldImg = updated[replacingRandomIndex]?.image;
-          if (oldImg && oldImg !== res.url) deleteFromR2(oldImg);
-          updated[replacingRandomIndex] = {
-            ...updated[replacingRandomIndex],
-            image: res.url,
-          };
-          return updated;
+      const targetIdx = replacingRandomIndex;
+      const currentWork = localRandomWorks[targetIdx];
+      const reader = new FileReader();
+      reader.onload = (loadEvent) => {
+        setCropModalConfig({
+          isOpen: true,
+          imageSrc: loadEvent.target.result,
+          mode: 'random',
+          actionType: 'replace',
+          targetIndex: targetIdx,
+          title: currentWork?.title || file.name.replace(/\.[^/.]+$/, ""),
+          subtitle: currentWork?.subtitle || "Tác phẩm lúc rảnh rỗi",
+          initialAspectRatio: 1,
         });
-      } catch (err) {
-        console.error("Error replacing artwork image:", err);
-      }
+      };
+      reader.readAsDataURL(file);
     }
     setReplacingRandomIndex(null);
     e.target.value = '';
+  };
+
+  const handleAdjustRandomWork = (work, idx) => {
+    setCropModalConfig({
+      isOpen: true,
+      imageSrc: work.image,
+      mode: 'random',
+      actionType: 'adjust',
+      targetIndex: idx,
+      title: work.title || `Artwork ${idx + 1}`,
+      subtitle: work.subtitle || "Tác phẩm lúc rảnh rỗi",
+      initialAspectRatio: 1,
+    });
+  };
+
+  const handleEditRandomWorkInfo = (work, idx) => {
+    const newTitle = window.prompt("Nhập tên tác phẩm:", work.title || "");
+    if (newTitle !== null) {
+      const newSubtitle = window.prompt("Nhập mô tả phụ:", work.subtitle || "");
+      if (newSubtitle !== null) {
+        setLocalRandomWorks(prev => {
+          const updated = [...prev];
+          updated[idx] = {
+            ...updated[idx],
+            title: newTitle.trim(),
+            subtitle: newSubtitle.trim(),
+          };
+          return updated;
+        });
+      }
+    }
   };
 
   const handleAddRandomWorkUrl = () => {
@@ -618,88 +770,7 @@ export default function CMSPage({ onBackToPortfolio }) {
     }
   };
 
-  // Unified Crop Modal Save Handler
-  const handleUnifiedCropComplete = (croppedUrl) => {
-    if (!cropModalConfig) return;
 
-    if (cropModalConfig.mode === 'project') {
-      if (cropModalConfig.editingIndex !== null) {
-        setLocalProjects(prev => {
-          const newArr = [...prev];
-          const oldImg = newArr[cropModalConfig.editingIndex]?.coverImage;
-          if (oldImg && oldImg !== croppedUrl) {
-            deleteFromR2(oldImg);
-          }
-          newArr[cropModalConfig.editingIndex] = {
-            ...newArr[cropModalConfig.editingIndex],
-            coverImage: croppedUrl,
-          };
-          return newArr;
-        });
-      } else {
-        const newProj = {
-          id: Date.now().toString(),
-          title: cropModalConfig.title || "Dự án mới",
-          subtitle: cropModalConfig.subtitle || "Mô tả dự án",
-          coverImage: croppedUrl,
-          category: "Graphic Design",
-          tags: ["Graphic Design", "Branding"],
-          year: `${new Date().getFullYear()}`,
-          gallery: [],
-        };
-        setLocalProjects(prev => [newProj, ...prev]);
-      }
-    } else if (cropModalConfig.mode === 'banner') {
-      if (cropModalConfig.editingIndex !== null) {
-        setLocalCoverBanners(prev => {
-          const newArr = [...prev];
-          const oldImg = newArr[cropModalConfig.editingIndex]?.image;
-          if (oldImg && oldImg !== croppedUrl) {
-            deleteFromR2(oldImg);
-          }
-          newArr[cropModalConfig.editingIndex] = {
-            ...newArr[cropModalConfig.editingIndex],
-            image: croppedUrl,
-          };
-          return newArr;
-        });
-      } else {
-        const newBanner = {
-          id: Date.now().toString(),
-          type: 'image',
-          title: cropModalConfig.title || "Slide Banner",
-          subtitle: cropModalConfig.subtitle || "Showcase banner",
-          image: croppedUrl,
-        };
-        setLocalCoverBanners(prev => [...prev, newBanner]);
-      }
-    } else if (cropModalConfig.mode === 'random') {
-      if (cropModalConfig.editingIndex !== null) {
-        setLocalRandomWorks(prev => {
-          const newArr = [...prev];
-          const oldImg = newArr[cropModalConfig.editingIndex]?.image;
-          if (oldImg && oldImg !== croppedUrl) {
-            deleteFromR2(oldImg);
-          }
-          newArr[cropModalConfig.editingIndex] = {
-            ...newArr[cropModalConfig.editingIndex],
-            image: croppedUrl,
-          };
-          return newArr;
-        });
-      } else {
-        const newWork = {
-          id: Date.now().toString(),
-          title: cropModalConfig.title || "Artwork mới",
-          subtitle: cropModalConfig.subtitle || "Tác phẩm lúc rảnh rỗi",
-          image: croppedUrl,
-        };
-        setLocalRandomWorks(prev => [...prev, newWork]);
-      }
-    }
-
-    setCropModalConfig(null);
-  };
 
   const moveLocalMarqueeItem = (index, direction) => {
     setLocalMarqueeItems(prev => {
@@ -1364,9 +1435,17 @@ export default function CMSPage({ onBackToPortfolio }) {
                           ) : (
                             <>
                               <button
-                                onClick={() => handleTriggerReplaceBanner(idx)}
+                                onClick={() => handleAdjustBanner(banner, idx)}
                                 className="px-2 py-1 rounded-lg bg-black/80 hover:bg-[#C3EA39] text-[#C3EA39] hover:text-black text-[10px] sm:text-[11px] font-mono font-bold flex items-center gap-1 transition-colors cursor-pointer border border-[#C3EA39]/30"
-                                title="Đổi ảnh mới cho banner này"
+                                title="Căn chỉnh khung preview, zoom & filter"
+                              >
+                                <SlidersHorizontal className="w-3 h-3" />
+                                <span>Căn chỉnh</span>
+                              </button>
+                              <button
+                                onClick={() => handleTriggerReplaceBanner(idx)}
+                                className="px-2 py-1 rounded-lg bg-black/80 hover:bg-white text-white/80 hover:text-black text-[10px] sm:text-[11px] font-mono flex items-center gap-1 transition-colors cursor-pointer border border-white/10"
+                                title="Chọn ảnh mới để thay thế và căn chỉnh"
                               >
                                 <Upload className="w-3 h-3" />
                                 <span>Đổi ảnh</span>
@@ -1525,12 +1604,28 @@ export default function CMSPage({ onBackToPortfolio }) {
                       {/* Top Right: Actions */}
                       <div className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 flex items-center gap-1 sm:gap-1.5 z-20">
                         <button
-                          onClick={() => handleTriggerReplaceRandom(idx)}
+                          onClick={() => handleAdjustRandomWork(work, idx)}
                           className="px-2 py-1 rounded-lg bg-black/80 hover:bg-[#C3EA39] text-[#C3EA39] hover:text-black text-[10px] sm:text-[11px] font-mono font-bold flex items-center gap-1 transition-colors cursor-pointer border border-[#C3EA39]/30"
-                          title="Đổi ảnh mới cho artwork này"
+                          title="Căn chỉnh khung preview, zoom & filter (1:1)"
+                        >
+                          <SlidersHorizontal className="w-3 h-3" />
+                          <span>Căn chỉnh</span>
+                        </button>
+                        <button
+                          onClick={() => handleTriggerReplaceRandom(idx)}
+                          className="px-2 py-1 rounded-lg bg-black/80 hover:bg-white text-white/80 hover:text-black text-[10px] sm:text-[11px] font-mono flex items-center gap-1 transition-colors cursor-pointer border border-white/10"
+                          title="Chọn ảnh mới để thay thế và căn chỉnh"
                         >
                           <Upload className="w-3 h-3" />
                           <span>Đổi ảnh</span>
+                        </button>
+                        <button
+                          onClick={() => handleEditRandomWorkInfo(work, idx)}
+                          className="px-2 py-1 rounded-lg bg-black/80 hover:bg-white text-white/80 hover:text-black text-[10px] sm:text-[11px] font-mono flex items-center gap-1 transition-colors cursor-pointer border border-white/10"
+                          title="Đổi tên tác phẩm & mô tả phụ"
+                        >
+                          <Edit2 className="w-3 h-3" />
+                          <span>Tên</span>
                         </button>
                         <button
                           onClick={() => setPreviewingImage(work.image)}
@@ -1549,73 +1644,37 @@ export default function CMSPage({ onBackToPortfolio }) {
                       </div>
                     </div>
 
-                    {/* Bottom Form Fields & Reorder Controls */}
-                    <div className="p-3.5 sm:p-4 space-y-3 bg-[#121216] flex-1 flex flex-col justify-between">
-                      <div className="space-y-2.5">
-                        <div>
-                          <label className="text-[10px] font-mono text-white/40 block mb-1 uppercase tracking-wider">
-                            Tên tác phẩm
-                          </label>
-                          <input
-                            type="text"
-                            value={work.title || ''}
-                            placeholder="Nhập tên tác phẩm..."
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              setLocalRandomWorks(prev => {
-                                const newArr = [...prev];
-                                newArr[idx] = { ...newArr[idx], title: val };
-                                return newArr;
-                              });
-                            }}
-                            className="w-full px-3 py-2 sm:py-1.5 rounded-xl bg-white/5 border border-white/10 text-base sm:text-xs font-medium text-white placeholder-white/20 focus:outline-none focus:border-[#C3EA39] focus:text-[#C3EA39] transition-all"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="text-[10px] font-mono text-white/40 block mb-1 uppercase tracking-wider">
-                            Mô tả phụ
-                          </label>
-                          <input
-                            type="text"
-                            value={work.subtitle || ''}
-                            placeholder="VD: 3D Blender, Typography..."
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              setLocalRandomWorks(prev => {
-                                const newArr = [...prev];
-                                newArr[idx] = { ...newArr[idx], subtitle: val };
-                                return newArr;
-                              });
-                            }}
-                            className="w-full px-3 py-2 sm:py-1.5 rounded-xl bg-white/5 border border-white/10 text-base sm:text-xs font-light text-white/80 placeholder-white/20 focus:outline-none focus:border-[#C3EA39] transition-all"
-                          />
-                        </div>
+                    {/* Bottom Info & Reorder Controls */}
+                    <div className="p-3 sm:p-3.5 bg-[#121216] flex items-center justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-xs sm:text-sm font-display font-bold text-white truncate">
+                          {work.title || `Artwork #${idx + 1 < 10 ? `0${idx + 1}` : idx + 1}`}
+                        </h4>
+                        {work.subtitle && (
+                          <p className="text-[11px] text-white/50 font-light truncate mt-0.5">
+                            {work.subtitle}
+                          </p>
+                        )}
                       </div>
 
-                      {/* Footer: Position Reorder */}
-                      <div className="flex items-center justify-between pt-2.5 border-t border-white/5 text-xs font-mono">
-                        <span className="text-[11px] text-white/40">Thứ tự:</span>
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            onClick={() => moveLocalRandomWork(idx, 'up')}
-                            disabled={idx === 0}
-                            className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/80 hover:text-white transition-colors flex items-center gap-1 text-[11px] cursor-pointer min-h-[32px]"
-                            title="Di chuyển lên trước"
-                          >
-                            <ArrowUp className="w-3 h-3" />
-                            <span>Trước</span>
-                          </button>
-                          <button
-                            onClick={() => moveLocalRandomWork(idx, 'down')}
-                            disabled={idx === localRandomWorks.length - 1}
-                            className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/80 hover:text-white transition-colors flex items-center gap-1 text-[11px] cursor-pointer min-h-[32px]"
-                            title="Di chuyển ra sau"
-                          >
-                            <span>Sau</span>
-                            <ArrowDown className="w-3 h-3" />
-                          </button>
-                        </div>
+                      {/* Position Reorder */}
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          onClick={() => moveLocalRandomWork(idx, 'up')}
+                          disabled={idx === 0}
+                          className="p-1 sm:p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-white/70 hover:text-white disabled:opacity-20 disabled:pointer-events-none transition-colors cursor-pointer"
+                          title="Di chuyển lên trước"
+                        >
+                          <ArrowUp className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => moveLocalRandomWork(idx, 'down')}
+                          disabled={idx === localRandomWorks.length - 1}
+                          className="p-1 sm:p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-white/70 hover:text-white disabled:opacity-20 disabled:pointer-events-none transition-colors cursor-pointer"
+                          title="Di chuyển ra sau"
+                        >
+                          <ArrowDown className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </div>
 
@@ -1902,7 +1961,7 @@ export default function CMSPage({ onBackToPortfolio }) {
         />
       )}
 
-      {/* Unified Image Crop Modal */}
+      {/* Unified Image Framing / Crop Modal */}
       {cropModalConfig && (
         <ImageCropModal
           isOpen={Boolean(cropModalConfig.isOpen)}
@@ -1910,8 +1969,7 @@ export default function CMSPage({ onBackToPortfolio }) {
           onClose={() => setCropModalConfig(null)}
           onCropComplete={handleUnifiedCropComplete}
           mode={cropModalConfig.mode}
-          projectTitle={cropModalConfig.title}
-          projectSubtitle={cropModalConfig.subtitle}
+          initialAspectRatio={cropModalConfig.initialAspectRatio}
         />
       )}
 

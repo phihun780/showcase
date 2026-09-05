@@ -441,11 +441,11 @@ export default function ImageCropModal({
         <div className="flex items-center justify-between pb-3 border-b border-white/10 shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-[#C3EA39]/10 border border-[#C3EA39]/30 flex items-center justify-center text-[#C3EA39]">
-              <Crop className="w-4 h-4" />
+              <Maximize2 className="w-4 h-4" />
             </div>
             <div>
               <h3 className="text-sm sm:text-base font-display font-bold text-white flex items-center gap-2">
-                <span>Căn Chỉnh & Cắt Ảnh</span>
+                <span>Khung Xem Trước & Căn Chỉnh</span>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[#C3EA39]">
                   {aspectName}
                 </span>
@@ -645,7 +645,7 @@ export default function ImageCropModal({
               ) : (
                 <>
                   <Check className="w-3.5 h-3.5" />
-                  <span>Cắt & Áp Dụng</span>
+                  <span>Áp Dụng & Lưu Ảnh</span>
                 </>
               )}
             </button>
