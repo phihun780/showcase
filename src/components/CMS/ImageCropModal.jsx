@@ -72,27 +72,61 @@ export default function ImageCropModal({
     }
   }, [isOpen, mode, initialAspectRatio]);
 
-  // Load Image Object
+  // Load Image Object with robust CORS and fallback handling
   useEffect(() => {
     if (!imageSrc || !isOpen) return;
+    let isMounted = true;
     const img = new Image();
-    img.crossOrigin = 'anonymous';
+
+    const isDataOrBlob = imageSrc.startsWith('data:') || imageSrc.startsWith('blob:');
+    if (!isDataOrBlob && (imageSrc.startsWith('http://') || imageSrc.startsWith('https://'))) {
+      img.crossOrigin = 'anonymous';
+    }
+
     img.onload = () => {
+      if (!isMounted) return;
       setImageObj(img);
       setScale(1);
       setOffset({ x: 0, y: 0 });
     };
+
+    img.onerror = () => {
+      if (!isMounted) return;
+      if (img.crossOrigin) {
+        // Retry without crossOrigin if CORS was rejected by remote server
+        const fallback = new Image();
+        fallback.onload = () => {
+          if (!isMounted) return;
+          setImageObj(fallback);
+          setScale(1);
+          setOffset({ x: 0, y: 0 });
+        };
+        fallback.onerror = (e) => {
+          console.error("Failed to load image in ImageCropModal:", e);
+        };
+        fallback.src = imageSrc;
+      } else {
+        console.error("Failed to load image in ImageCropModal:", imageSrc);
+      }
+    };
+
     img.src = imageSrc;
+
+    return () => {
+      isMounted = false;
+    };
   }, [imageSrc, isOpen]);
 
   // Core Render Function: draws both main interactive canvas and secondary preview canvas
   const drawCanvases = useCallback(() => {
     if (!imageObj) return;
 
-    const baseHeight = Math.round(BASE_WIDTH / aspectRatio);
+    const baseHeight = Math.round(BASE_WIDTH / (aspectRatio || (16 / 10)));
 
-    // Calculate Cover Fit Dimensions
-    const imgRatio = imageObj.width / imageObj.height;
+    // Calculate Cover Fit Dimensions using natural dimensions
+    const imgW = imageObj.naturalWidth || imageObj.width || BASE_WIDTH;
+    const imgH = imageObj.naturalHeight || imageObj.height || baseHeight;
+    const imgRatio = (imgW > 0 && imgH > 0) ? (imgW / imgH) : (aspectRatio || 1);
     const targetRatio = BASE_WIDTH / baseHeight;
 
     let renderW, renderH;
@@ -104,11 +138,14 @@ export default function ImageCropModal({
       renderH = BASE_WIDTH / imgRatio;
     }
 
-    renderW *= scale;
-    renderH *= scale;
+    const currentScale = scale || 1;
+    renderW *= currentScale;
+    renderH *= currentScale;
 
-    const renderX = (BASE_WIDTH - renderW) / 2 + offset.x;
-    const renderY = (baseHeight - renderH) / 2 + offset.y;
+    const currentOffsetX = offset?.x || 0;
+    const currentOffsetY = offset?.y || 0;
+    const renderX = (BASE_WIDTH - renderW) / 2 + currentOffsetX;
+    const renderY = (baseHeight - renderH) / 2 + currentOffsetY;
 
     // 1. Draw Main Interactive Canvas
     if (canvasRef.current) {
@@ -235,19 +272,25 @@ export default function ImageCropModal({
 
   // High-Resolution WebP Exporter
   const handleConfirmCrop = async () => {
-    if (!imageObj) return;
+    if (!imageObj) {
+      if (imageSrc) onCropComplete(imageSrc);
+      onClose();
+      return;
+    }
     setIsSaving(true);
 
     try {
       const exportW = 1920;
-      const exportH = Math.round(exportW / aspectRatio);
+      const exportH = Math.round(exportW / (aspectRatio || (16 / 10)));
 
       const exportCanvas = document.createElement('canvas');
       exportCanvas.width = exportW;
       exportCanvas.height = exportH;
       const ctx = exportCanvas.getContext('2d');
 
-      const imgRatio = imageObj.width / imageObj.height;
+      const imgW = imageObj.naturalWidth || imageObj.width || exportW;
+      const imgH = imageObj.naturalHeight || imageObj.height || exportH;
+      const imgRatio = (imgW > 0 && imgH > 0) ? (imgW / imgH) : (exportW / exportH);
       const targetRatio = exportW / exportH;
 
       let renderW, renderH;
@@ -259,41 +302,55 @@ export default function ImageCropModal({
         renderH = exportW / imgRatio;
       }
 
-      renderW *= scale;
-      renderH *= scale;
+      const currentScale = scale || 1;
+      renderW *= currentScale;
+      renderH *= currentScale;
 
       const ratioScale = exportW / BASE_WIDTH;
-      const renderX = (exportW - renderW) / 2 + offset.x * ratioScale;
-      const renderY = (exportH - renderH) / 2 + offset.y * ratioScale;
+      const currentOffsetX = offset?.x || 0;
+      const currentOffsetY = offset?.y || 0;
+      const renderX = (exportW - renderW) / 2 + currentOffsetX * ratioScale;
+      const renderY = (exportH - renderH) / 2 + currentOffsetY * ratioScale;
 
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
       ctx.drawImage(imageObj, renderX, renderY, renderW, renderH);
 
+      let dataUrl;
+      try {
+        dataUrl = exportCanvas.toDataURL('image/webp', 0.92);
+        if (!dataUrl || dataUrl === 'data:,' || !dataUrl.startsWith('data:image/')) {
+          dataUrl = exportCanvas.toDataURL('image/jpeg', 0.92);
+        }
+      } catch (err) {
+        dataUrl = exportCanvas.toDataURL('image/jpeg', 0.92);
+      }
+
+      const prefix = isBannerMode
+        ? 'cover_banners/banner'
+        : isRandomMode
+        ? 'random/artwork'
+        : isPortraitMode
+        ? 'profile/avatar'
+        : 'projects/cover';
+      const key = `${prefix}_${Date.now()}.webp`;
+
       exportCanvas.toBlob(
         async (blob) => {
-          if (!blob) {
-            setIsSaving(false);
-            return;
+          if (blob) {
+            try {
+              const res = await uploadToR2(blob, key, 'image/webp');
+              if (res && res.url) {
+                onCropComplete(res.url);
+                setIsSaving(false);
+                onClose();
+                return;
+              }
+            } catch (err) {
+              console.warn('R2 upload fallback to dataUrl:', err);
+            }
           }
-
-          const dataUrl = exportCanvas.toDataURL('image/webp', 0.92);
-          const prefix = isBannerMode
-            ? 'cover_banners/banner'
-            : isRandomMode
-            ? 'random/artwork'
-            : isPortraitMode
-            ? 'profile/avatar'
-            : 'projects/cover';
-          const key = `${prefix}_${Date.now()}.webp`;
-
-          try {
-            const res = await uploadToR2(blob, key, 'image/webp');
-            onCropComplete(res.url);
-          } catch (err) {
-            console.warn('R2 upload fallback to dataUrl:', err);
-            onCropComplete(dataUrl);
-          }
+          onCropComplete(dataUrl || imageSrc);
           setIsSaving(false);
           onClose();
         },
@@ -303,6 +360,8 @@ export default function ImageCropModal({
     } catch (err) {
       console.error('Crop export error:', err);
       setIsSaving(false);
+      if (imageSrc) onCropComplete(imageSrc);
+      onClose();
     }
   };
 
@@ -352,13 +411,8 @@ export default function ImageCropModal({
     : 'Tỉ lệ chuẩn 16:10 giống 100% khung dự án ngoài trang chủ. Kéo thả & zoom để căn lề ảnh.';
 
   return (
-    <div className="fixed inset-0 z-[100000] flex items-center justify-center p-3 sm:p-6 bg-black/90 backdrop-blur-xl overflow-y-auto animate-fadeIn">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 15 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        className="relative w-full max-w-5xl bg-[#121216] border border-white/20 rounded-2xl sm:rounded-3xl shadow-2xl p-4 sm:p-6 flex flex-col max-h-[94vh] text-white overflow-hidden"
-      >
+    <div className="fixed inset-0 z-[100000] flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md overflow-y-auto animate-fadeIn">
+      <div className="relative w-full max-w-5xl bg-[#121216] border border-white/20 rounded-2xl sm:rounded-3xl shadow-2xl p-4 sm:p-6 flex flex-col max-h-[94vh] text-white overflow-hidden animate-fadeIn">
         {/* Sticky Header */}
         <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-white/10 shrink-0">
           <div className="flex items-center gap-2.5 min-w-0">
@@ -466,7 +520,7 @@ export default function ImageCropModal({
                 {/* Live Mockup Overlay on Stage */}
                 {showLiveMockup && (
                   <>
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent pointer-events-none transition-opacity" />
+                    <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none transition-opacity" />
                     
                     {/* Top Left Slide Tag Mockup for Banner */}
                     {isBannerMode && (
@@ -482,7 +536,7 @@ export default function ImageCropModal({
                         Preview Trực Tiếp
                       </span>
                       <h3 className="text-sm sm:text-xl font-bold uppercase text-white tracking-tight leading-tight drop-shadow-md truncate">
-                        {projectTitle || (isBannerMode ? 'Slide Banner' : 'Tên Dự Án')}
+                        {projectTitle || (isBannerMode ? 'Slide Banner' : isPortraitMode ? 'Ảnh Chân Dung' : 'Tên Dự Án')}
                       </h3>
                       {projectSubtitle && (
                         <p className="text-[10px] sm:text-xs text-white/80 font-light drop-shadow line-clamp-1">
@@ -580,8 +634,8 @@ export default function ImageCropModal({
                   className="absolute inset-0 w-full h-full object-cover pointer-events-none"
                 />
 
-                {/* Gradient Vignette */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent pointer-events-none" />
+                {/* Gradient Vignette at bottom */}
+                <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
 
                 {/* Top Left Tag Mockup */}
                 {isBannerMode && (
@@ -649,7 +703,7 @@ export default function ImageCropModal({
             )}
           </button>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }

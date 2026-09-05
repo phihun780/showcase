@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { PortfolioDataProvider, usePortfolioData } from './context/PortfolioDataContext';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -109,12 +109,14 @@ function PortfolioApp() {
     if (typeof window === 'undefined') return '/';
     const rawPath = (window.location.pathname || '').toLowerCase().replace(/\/+$/, '') || '/';
     const hash = (window.location.hash || '').toLowerCase().replace(/\/+$/, '') || '';
+    const search = (window.location.search || '').toLowerCase();
     if (
       rawPath === '/cms' || 
       rawPath.endsWith('/cms') || 
       hash === '#/cms' || 
       hash === '#cms' || 
-      hash.includes('cms')
+      hash.includes('cms') ||
+      search.includes('cms')
     ) {
       return '/cms';
     }
@@ -124,6 +126,13 @@ function PortfolioApp() {
   const [currentPath, setCurrentPath] = useState(getCleanPath);
 
   const [activeSection, setActiveSection] = useState('work');
+
+  // Disable browser automatic scroll restoration to avoid being stuck at old scroll coordinates
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+  }, []);
 
   // Dynamic Tab Title, Favicon & Social Preview Meta Tags sync
   useEffect(() => {
@@ -179,7 +188,9 @@ function PortfolioApp() {
     const handleLocationChange = () => {
       const clean = getCleanPath();
       setCurrentPath(clean);
-      window.scrollTo(0, 0);
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      if (document.documentElement) document.documentElement.scrollTop = 0;
+      if (document.body) document.body.scrollTop = 0;
 
       // Auto-normalize any extra path like /phihun or /phihun/ back to clean /
       if (typeof window !== 'undefined') {
@@ -205,19 +216,24 @@ function PortfolioApp() {
     };
   }, []);
 
-  // Ensure scroll is at top whenever path changes
-  useEffect(() => {
-    window.scrollTo(0, 0);
+  // Ensure scroll is instantly at top whenever path changes
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    if (document.documentElement) document.documentElement.scrollTop = 0;
+    if (document.body) document.body.scrollTop = 0;
   }, [currentPath]);
 
   const navigateTo = (path) => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    if (document.documentElement) document.documentElement.scrollTop = 0;
+    if (document.body) document.body.scrollTop = 0;
+
     if (path === '/cms') {
       window.history.pushState({}, '', '/cms');
     } else {
       window.history.pushState({}, '', '/');
     }
     setCurrentPath(path);
-    window.scrollTo(0, 0);
   };
 
   // If on /cms, show full CMS Dashboard

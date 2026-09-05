@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Lock, ShieldCheck, ArrowLeft, Delete, KeyRound, Sparkles } from 'lucide-react';
 
@@ -14,9 +14,9 @@ export default function CMSAuthGate({ onAuthenticated, onBackToPortfolio }) {
   const [errorMsg, setErrorMsg] = useState('');
   const [infoMsg, setInfoMsg] = useState('');
 
-  // Always reset scroll to top when mounting CMS Auth Gate
-  useEffect(() => {
-    window.scrollTo(0, 0);
+  // Always reset scroll to top immediately when mounting CMS Auth Gate
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     if (document.documentElement) document.documentElement.scrollTop = 0;
     if (document.body) document.body.scrollTop = 0;
   }, []);
@@ -137,14 +137,14 @@ export default function CMSAuthGate({ onAuthenticated, onBackToPortfolio }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#08080A] text-white flex flex-col justify-between items-center p-6 relative overflow-hidden select-none">
+    <div className="min-h-[100dvh] w-full bg-[#08080A] text-white flex flex-col justify-between items-center p-4 sm:p-6 relative select-none">
       
       {/* Ambient background glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#C3EA39]/10 blur-[180px] rounded-full pointer-events-none" />
       <div className="fixed inset-0 pointer-events-none bg-grid-pattern z-0 opacity-100" />
 
       {/* Top bar */}
-      <div className="w-full max-w-md flex items-center justify-between relative z-10">
+      <div className="w-full max-w-md flex items-center justify-between relative z-10 shrink-0 mb-4 sm:mb-6">
         <button
           onClick={onBackToPortfolio}
           className="px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs font-mono flex items-center gap-1.5 border border-white/10 transition-colors cursor-pointer"
@@ -161,18 +161,12 @@ export default function CMSAuthGate({ onAuthenticated, onBackToPortfolio }) {
 
       {/* Main Lock Card */}
       <motion.div
-        initial={false}
-        animate={{
-          opacity: 1,
-          scale: 1,
-          y: 0,
-          x: isError ? [-10, 10, -8, 8, -4, 4, 0] : 0,
-        }}
+        animate={isError ? { x: [-10, 10, -8, 8, -4, 4, 0] } : { x: 0 }}
         transition={{
-          duration: isError ? 0.4 : 0.25,
+          duration: 0.4,
           ease: [0.16, 1, 0.3, 1],
         }}
-        className="relative z-10 w-full max-w-sm rounded-3xl bg-[#121216]/95 border border-white/15 backdrop-blur-2xl p-7 sm:p-8 shadow-2xl flex flex-col items-center text-center space-y-6"
+        className="relative z-10 w-full max-w-sm my-auto shrink-0 rounded-3xl bg-[#121216]/95 border border-white/15 backdrop-blur-2xl p-6 sm:p-8 shadow-2xl flex flex-col items-center text-center space-y-5 sm:space-y-6"
       >
         
         {/* Lock Icon Badge */}

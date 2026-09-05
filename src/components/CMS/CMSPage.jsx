@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { usePortfolioData, defaultMarqueeItems } from '../../context/PortfolioDataContext';
 import ProjectEditorModal from './ProjectEditorModal';
 import ProfileEditor from './ProfileEditor';
@@ -80,9 +80,9 @@ export default function CMSPage({ onBackToPortfolio }) {
     setIsAuthenticated(false);
   };
 
-  // Ensure scroll is at top when CMSPage loads
-  useEffect(() => {
-    window.scrollTo(0, 0);
+  // Ensure scroll is at top immediately when CMSPage loads
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     if (document.documentElement) document.documentElement.scrollTop = 0;
     if (document.body) document.body.scrollTop = 0;
   }, []);

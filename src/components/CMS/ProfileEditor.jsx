@@ -85,7 +85,9 @@ export default function ProfileEditor({ profile, onSave }) {
       } else {
         const reader = new FileReader();
         reader.onload = (loadEvt) => {
-          setCropImageSrc(loadEvt.target.result);
+          const dataUrl = loadEvt.target.result;
+          setFormData(prev => ({ ...prev, avatar: dataUrl }));
+          setCropImageSrc(dataUrl);
           setIsCropOpen(true);
         };
         reader.readAsDataURL(file);
@@ -182,7 +184,7 @@ export default function ProfileEditor({ profile, onSave }) {
                   <img
                     src={formData.avatar}
                     alt={formData.name}
-                    className="w-full h-full object-cover grayscale contrast-125 group-hover:scale-105 transition-all duration-500"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
                   />
                   <button
                     type="button"
@@ -204,7 +206,7 @@ export default function ProfileEditor({ profile, onSave }) {
                 </div>
               )}
 
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent flex flex-col justify-end p-3 pointer-events-none">
+              <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-3 pointer-events-none">
                 <span className="text-xs font-display font-bold text-white truncate">
                   {formData.name}
                 </span>

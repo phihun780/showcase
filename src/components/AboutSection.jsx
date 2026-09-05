@@ -94,14 +94,14 @@ export default function AboutSection() {
             className="lg:col-span-5 h-full"
           >
             {/* Visual Photo Card */}
-            <div className="relative rounded-3xl overflow-hidden h-full min-h-[380px] sm:min-h-[440px] bg-black border border-white/10 group flex flex-col justify-end">
+            <div className="relative rounded-3xl overflow-hidden h-full min-h-[380px] sm:min-h-[440px] bg-[#121216] border border-white/10 group flex flex-col justify-end">
               {profile.avatar || profile.image ? (
                 <img
                   src={profile.avatar || profile.image}
                   alt={profile.name}
                   onContextMenu={(e) => e.preventDefault()}
                   onDragStart={(e) => e.preventDefault()}
-                  className="w-full h-full object-cover grayscale contrast-125 group-hover:scale-105 transition-all duration-700 select-none"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700 select-none"
                 />
               ) : (
                 <div className="absolute inset-0 bg-gradient-to-b from-[#16161C] to-[#0A0A0D] flex flex-col items-center justify-center p-6 text-center">
@@ -111,7 +111,7 @@ export default function AboutSection() {
                   <span className="text-xs text-white/50 font-mono font-medium">Chưa có ảnh đại diện</span>
                 </div>
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent flex flex-col justify-end p-6 sm:p-8 pointer-events-none">
+              <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/85 via-black/30 to-transparent flex flex-col justify-end p-6 sm:p-8 pointer-events-none">
                 <span className="text-3xl font-display font-black text-white tracking-tight">
                   {profile.name}
                 </span>

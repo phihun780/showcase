@@ -1,4 +1,4 @@
-﻿import { uploadToR2 } from './r2Storage';
+import { uploadToR2 } from './r2Storage';
 
 /**
  * Client-Side High-Fidelity Image Optimizer
@@ -37,8 +37,8 @@ export async function optimizeImageFile(file) {
 
         const MAX_WIDTH = 2560;
         const MAX_HEIGHT = 2560;
-        let width = img.width;
-        let height = img.height;
+        let width = img.naturalWidth || img.width || 1200;
+        let height = img.naturalHeight || img.height || 800;
 
         // Resize proportionally if image is larger than 2560px
         if (width > height) {
@@ -53,40 +53,56 @@ export async function optimizeImageFile(file) {
           }
         }
 
-        canvas.width = width;
-        canvas.height = height;
+        canvas.width = Math.max(1, width);
+        canvas.height = Math.max(1, height);
 
         // High quality rendering
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
-        ctx.drawImage(img, 0, 0, width, height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
         // Convert to high-quality WebP (or JPEG fallback)
         let mimeType = 'image/webp';
         let quality = 0.90;
 
-        let optimizedDataUrl = canvas.toDataURL(mimeType, quality);
-        
-        if (!optimizedDataUrl.startsWith('data:image/webp')) {
+        let optimizedDataUrl;
+        try {
+          optimizedDataUrl = canvas.toDataURL(mimeType, quality);
+          if (!optimizedDataUrl || !optimizedDataUrl.startsWith('data:image/webp')) {
+            mimeType = 'image/jpeg';
+            optimizedDataUrl = canvas.toDataURL(mimeType, quality);
+          }
+        } catch (e) {
           mimeType = 'image/jpeg';
           optimizedDataUrl = canvas.toDataURL(mimeType, quality);
         }
 
         canvas.toBlob((blob) => {
           resolve({
-            dataUrl: optimizedDataUrl,
+            dataUrl: optimizedDataUrl || event.target.result,
             blob: blob || file,
             format: mimeType,
             isGif: false,
-            width,
-            height,
+            width: canvas.width,
+            height: canvas.height,
             originalSize: file.size,
             optimizedSize: blob ? blob.size : file.size,
             fileName: file.name,
           });
         }, mimeType, quality);
       };
-      img.onerror = reject;
+      img.onerror = () => {
+        // Fallback directly to original file if image decoding fails
+        resolve({
+          dataUrl: event.target.result,
+          blob: file,
+          format: file.type || 'image/jpeg',
+          isGif: false,
+          originalSize: file.size,
+          optimizedSize: file.size,
+          fileName: file.name,
+        });
+      };
       img.src = event.target.result;
     };
     reader.onerror = reject;
