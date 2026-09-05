@@ -457,16 +457,6 @@ export default function ProfileEditor({ profile, onSave }) {
                   className="w-full px-3.5 py-2.5 rounded-xl bg-black/50 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm"
                 />
               </div>
-
-              <div className="sm:col-span-2 space-y-1">
-                <label className="text-xs font-mono text-white/70 uppercase block">Email</label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/50 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm"
-                />
-              </div>
             </div>
           </div>
 
