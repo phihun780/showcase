@@ -86,7 +86,6 @@ export default function ProfileEditor({ profile, onSave }) {
         const reader = new FileReader();
         reader.onload = (loadEvt) => {
           const dataUrl = loadEvt.target.result;
-          setFormData(prev => ({ ...prev, avatar: dataUrl }));
           setCropImageSrc(dataUrl);
           setIsCropOpen(true);
         };

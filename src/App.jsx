@@ -10,6 +10,7 @@ import Footer from './components/Footer';
 import CursorSpotlight from './components/CursorSpotlight';
 import SeasonalAtmosphere from './components/SeasonalAtmosphere';
 import CMSPage from './components/CMS/CMSPage';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Multi-layer Anti-Theft & Content Protection Shield (Active on live production domains)
 function SecurityShield() {
@@ -280,9 +281,11 @@ function PortfolioApp() {
 
 export default function App() {
   return (
-    <PortfolioDataProvider>
-      <PortfolioApp />
-    </PortfolioDataProvider>
+    <ErrorBoundary>
+      <PortfolioDataProvider>
+        <PortfolioApp />
+      </PortfolioDataProvider>
+    </ErrorBoundary>
   );
 }
 

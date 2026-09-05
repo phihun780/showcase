@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
 import { X, Check, ZoomIn, ZoomOut, RotateCcw, Crop, Sparkles, Loader2, Maximize2, Eye, EyeOff, Image as ImageIcon } from 'lucide-react';
 import { uploadToR2 } from '../../utils/r2Storage';
 
@@ -8,7 +7,7 @@ export default function ImageCropModal({
   imageSrc,
   onCropComplete,
   onClose,
-  mode = 'project', // 'banner' | 'project'
+  mode = 'project', // 'banner' | 'project' | 'portrait' | 'avatar' | 'random'
   initialAspectRatio = null,
   projectTitle = 'Tên Dự Án',
   projectSubtitle = 'Mô tả ngắn dự án'
@@ -16,7 +15,6 @@ export default function ImageCropModal({
   const isBannerMode = mode === 'banner';
   const isRandomMode = mode === 'random';
   const isPortraitMode = mode === 'portrait' || mode === 'avatar';
-  const isProjectMode = !isBannerMode && !isRandomMode && !isPortraitMode;
 
   const defaultRatio = initialAspectRatio || (
     isBannerMode ? 21 / 9 :
@@ -32,6 +30,7 @@ export default function ImageCropModal({
     '16:10'
   );
 
+  // 1. All State Hooks (Unconditionally at top)
   const [aspectRatio, setAspectRatio] = useState(defaultRatio);
   const [aspectName, setAspectName] = useState(defaultRatioName);
   const [scale, setScale] = useState(1);
@@ -41,6 +40,7 @@ export default function ImageCropModal({
   const [isSaving, setIsSaving] = useState(false);
   const [showLiveMockup, setShowLiveMockup] = useState(true);
 
+  // 2. All Ref Hooks (Unconditionally at top)
   const canvasRef = useRef(null);
   const previewCanvasRef = useRef(null);
   const containerRef = useRef(null);
@@ -48,7 +48,7 @@ export default function ImageCropModal({
 
   const BASE_WIDTH = 720;
 
-  // Reset or initialize on open
+  // 3. Reset / initialize on open
   useEffect(() => {
     if (isOpen) {
       const ratio = initialAspectRatio || (
@@ -72,9 +72,12 @@ export default function ImageCropModal({
     }
   }, [isOpen, mode, initialAspectRatio]);
 
-  // Load Image Object with robust CORS and fallback handling
+  // 4. Load Image Object safely
   useEffect(() => {
-    if (!imageSrc || !isOpen) return;
+    if (!imageSrc || !isOpen) {
+      setImageObj(null);
+      return;
+    }
     let isMounted = true;
     const img = new Image();
 
@@ -93,7 +96,6 @@ export default function ImageCropModal({
     img.onerror = () => {
       if (!isMounted) return;
       if (img.crossOrigin) {
-        // Retry without crossOrigin if CORS was rejected by remote server
         const fallback = new Image();
         fallback.onload = () => {
           if (!isMounted) return;
@@ -102,11 +104,11 @@ export default function ImageCropModal({
           setOffset({ x: 0, y: 0 });
         };
         fallback.onerror = (e) => {
-          console.error("Failed to load image in ImageCropModal:", e);
+          console.warn("Failed to load fallback image in ImageCropModal:", e);
         };
         fallback.src = imageSrc;
       } else {
-        console.error("Failed to load image in ImageCropModal:", imageSrc);
+        console.warn("Failed to load image in ImageCropModal:", imageSrc);
       }
     };
 
@@ -117,124 +119,76 @@ export default function ImageCropModal({
     };
   }, [imageSrc, isOpen]);
 
-  // Core Render Function: draws both main interactive canvas and secondary preview canvas
+  // 5. Safe Canvas Drawing Callback
   const drawCanvases = useCallback(() => {
     if (!imageObj) return;
+    if (!imageObj.complete || !imageObj.naturalWidth || imageObj.naturalWidth <= 0) return;
 
-    const baseHeight = Math.round(BASE_WIDTH / (aspectRatio || (16 / 10)));
+    try {
+      const baseHeight = Math.max(1, Math.round(BASE_WIDTH / (aspectRatio || (16 / 10))));
+      const imgW = imageObj.naturalWidth || imageObj.width || BASE_WIDTH;
+      const imgH = imageObj.naturalHeight || imageObj.height || baseHeight;
+      const imgRatio = (imgW > 0 && imgH > 0) ? (imgW / imgH) : (aspectRatio || 1);
+      const targetRatio = BASE_WIDTH / baseHeight;
 
-    // Calculate Cover Fit Dimensions using natural dimensions
-    const imgW = imageObj.naturalWidth || imageObj.width || BASE_WIDTH;
-    const imgH = imageObj.naturalHeight || imageObj.height || baseHeight;
-    const imgRatio = (imgW > 0 && imgH > 0) ? (imgW / imgH) : (aspectRatio || 1);
-    const targetRatio = BASE_WIDTH / baseHeight;
+      let renderW, renderH;
+      if (imgRatio > targetRatio) {
+        renderH = baseHeight;
+        renderW = baseHeight * imgRatio;
+      } else {
+        renderW = BASE_WIDTH;
+        renderH = BASE_WIDTH / imgRatio;
+      }
 
-    let renderW, renderH;
-    if (imgRatio > targetRatio) {
-      renderH = baseHeight;
-      renderW = baseHeight * imgRatio;
-    } else {
-      renderW = BASE_WIDTH;
-      renderH = BASE_WIDTH / imgRatio;
-    }
+      const currentScale = scale || 1;
+      renderW *= currentScale;
+      renderH *= currentScale;
 
-    const currentScale = scale || 1;
-    renderW *= currentScale;
-    renderH *= currentScale;
+      const currentOffsetX = offset?.x || 0;
+      const currentOffsetY = offset?.y || 0;
+      const renderX = (BASE_WIDTH - renderW) / 2 + currentOffsetX;
+      const renderY = (baseHeight - renderH) / 2 + currentOffsetY;
 
-    const currentOffsetX = offset?.x || 0;
-    const currentOffsetY = offset?.y || 0;
-    const renderX = (BASE_WIDTH - renderW) / 2 + currentOffsetX;
-    const renderY = (baseHeight - renderH) / 2 + currentOffsetY;
+      // 1. Draw Main Interactive Canvas
+      if (canvasRef.current) {
+        const canvas = canvasRef.current;
+        canvas.width = BASE_WIDTH;
+        canvas.height = baseHeight;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.clearRect(0, 0, BASE_WIDTH, baseHeight);
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(imageObj, renderX, renderY, renderW, renderH);
+        }
+      }
 
-    // 1. Draw Main Interactive Canvas
-    if (canvasRef.current) {
-      const canvas = canvasRef.current;
-      canvas.width = BASE_WIDTH;
-      canvas.height = baseHeight;
-      const ctx = canvas.getContext('2d');
-      ctx.clearRect(0, 0, BASE_WIDTH, baseHeight);
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(imageObj, renderX, renderY, renderW, renderH);
-    }
-
-    // 2. Draw Live Preview Mirror Canvas
-    if (previewCanvasRef.current) {
-      const pCanvas = previewCanvasRef.current;
-      pCanvas.width = BASE_WIDTH;
-      pCanvas.height = baseHeight;
-      const pCtx = pCanvas.getContext('2d');
-      pCtx.clearRect(0, 0, BASE_WIDTH, baseHeight);
-      pCtx.imageSmoothingEnabled = true;
-      pCtx.imageSmoothingQuality = 'high';
-      pCtx.drawImage(imageObj, renderX, renderY, renderW, renderH);
+      // 2. Draw Live Preview Mirror Canvas
+      if (previewCanvasRef.current) {
+        const pCanvas = previewCanvasRef.current;
+        pCanvas.width = BASE_WIDTH;
+        pCanvas.height = baseHeight;
+        const pCtx = pCanvas.getContext('2d');
+        if (pCtx) {
+          pCtx.clearRect(0, 0, BASE_WIDTH, baseHeight);
+          pCtx.imageSmoothingEnabled = true;
+          pCtx.imageSmoothingQuality = 'high';
+          pCtx.drawImage(imageObj, renderX, renderY, renderW, renderH);
+        }
+      }
+    } catch (err) {
+      console.warn('Canvas render error in ImageCropModal:', err);
     }
   }, [imageObj, scale, offset, aspectRatio]);
 
+  // 6. Draw whenever state changes
   useEffect(() => {
-    drawCanvases();
-  }, [drawCanvases]);
-
-  if (!isOpen || !imageSrc) return null;
-
-  // 1:1 Hardware-Accurate Mouse Drag
-  const handleMouseDown = (e) => {
-    setIsDragging(true);
-    dragStartRef.current = {
-      clientX: e.clientX,
-      clientY: e.clientY,
-      offsetX: offset.x,
-      offsetY: offset.y,
-    };
-  };
-
-  const handleMouseMove = (e) => {
-    if (!isDragging || !containerRef.current) return;
-    const containerRect = containerRef.current.getBoundingClientRect();
-    const scaleRatio = BASE_WIDTH / containerRect.width;
-
-    const deltaX = (e.clientX - dragStartRef.current.clientX) * scaleRatio;
-    const deltaY = (e.clientY - dragStartRef.current.clientY) * scaleRatio;
-
-    setOffset({
-      x: dragStartRef.current.offsetX + deltaX,
-      y: dragStartRef.current.offsetY + deltaY,
-    });
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
-  // 1:1 Hardware-Accurate Touch Drag
-  const handleTouchStart = (e) => {
-    if (e.touches.length === 1) {
-      setIsDragging(true);
-      dragStartRef.current = {
-        clientX: e.touches[0].clientX,
-        clientY: e.touches[0].clientY,
-        offsetX: offset.x,
-        offsetY: offset.y,
-      };
+    if (isOpen && imageObj) {
+      drawCanvases();
     }
-  };
+  }, [drawCanvases, isOpen, imageObj]);
 
-  const handleTouchMove = (e) => {
-    if (!isDragging || e.touches.length !== 1 || !containerRef.current) return;
-    const containerRect = containerRef.current.getBoundingClientRect();
-    const scaleRatio = BASE_WIDTH / containerRect.width;
-
-    const deltaX = (e.touches[0].clientX - dragStartRef.current.clientX) * scaleRatio;
-    const deltaY = (e.touches[0].clientY - dragStartRef.current.clientY) * scaleRatio;
-
-    setOffset({
-      x: dragStartRef.current.offsetX + deltaX,
-      y: dragStartRef.current.offsetY + deltaY,
-    });
-  };
-
-  // Lock body scroll while Crop Modal is active
+  // 7. Lock body scroll while Crop Modal is active
   useEffect(() => {
     if (!isOpen) return;
     const prevOverflow = document.body.style.overflow;
@@ -244,10 +198,11 @@ export default function ImageCropModal({
     };
   }, [isOpen]);
 
-  // Isolated Non-Passive Wheel Zooming (Strictly prevents popup/modal scroll)
+  // 8. Isolated Non-Passive Wheel Zooming
   useEffect(() => {
+    if (!isOpen) return;
     const container = containerRef.current;
-    if (!container || !isOpen) return;
+    if (!container) return;
 
     const handleNonPassiveWheel = (e) => {
       e.preventDefault();
@@ -265,6 +220,61 @@ export default function ImageCropModal({
     };
   }, [isOpen]);
 
+  // 9. Interaction Handlers
+  const handleMouseDown = (e) => {
+    setIsDragging(true);
+    dragStartRef.current = {
+      clientX: e.clientX,
+      clientY: e.clientY,
+      offsetX: offset.x,
+      offsetY: offset.y,
+    };
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging || !containerRef.current) return;
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const scaleRatio = BASE_WIDTH / (containerRect.width || BASE_WIDTH);
+
+    const deltaX = (e.clientX - dragStartRef.current.clientX) * scaleRatio;
+    const deltaY = (e.clientY - dragStartRef.current.clientY) * scaleRatio;
+
+    setOffset({
+      x: dragStartRef.current.offsetX + deltaX,
+      y: dragStartRef.current.offsetY + deltaY,
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleTouchStart = (e) => {
+    if (e.touches.length === 1) {
+      setIsDragging(true);
+      dragStartRef.current = {
+        clientX: e.touches[0].clientX,
+        clientY: e.touches[0].clientY,
+        offsetX: offset.x,
+        offsetY: offset.y,
+      };
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isDragging || e.touches.length !== 1 || !containerRef.current) return;
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const scaleRatio = BASE_WIDTH / (containerRect.width || BASE_WIDTH);
+
+    const deltaX = (e.touches[0].clientX - dragStartRef.current.clientX) * scaleRatio;
+    const deltaY = (e.touches[0].clientY - dragStartRef.current.clientY) * scaleRatio;
+
+    setOffset({
+      x: dragStartRef.current.offsetX + deltaX,
+      y: dragStartRef.current.offsetY + deltaY,
+    });
+  };
+
   const handleReset = () => {
     setScale(1);
     setOffset({ x: 0, y: 0 });
@@ -281,7 +291,7 @@ export default function ImageCropModal({
 
     try {
       const exportW = 1920;
-      const exportH = Math.round(exportW / (aspectRatio || (16 / 10)));
+      const exportH = Math.max(1, Math.round(exportW / (aspectRatio || (16 / 10))));
 
       const exportCanvas = document.createElement('canvas');
       exportCanvas.width = exportW;
@@ -312,9 +322,11 @@ export default function ImageCropModal({
       const renderX = (exportW - renderW) / 2 + currentOffsetX * ratioScale;
       const renderY = (exportH - renderH) / 2 + currentOffsetY * ratioScale;
 
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(imageObj, renderX, renderY, renderW, renderH);
+      if (ctx) {
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(imageObj, renderX, renderY, renderW, renderH);
+      }
 
       let dataUrl;
       try {
@@ -365,7 +377,10 @@ export default function ImageCropModal({
     }
   };
 
-  // Aspect ratio presets list prioritized by mode
+  // 10. UNCONDITIONAL RETURN CHECK (Guaranteed AFTER all hooks)
+  if (!isOpen || !imageSrc) return null;
+
+  // Presets configuration
   const presets = isBannerMode
     ? [
         { label: '21:9 (Chuẩn Cover Banner ⭐)', value: 21 / 9, name: '21:9' },
