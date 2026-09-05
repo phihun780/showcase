@@ -22,6 +22,7 @@ export default function ProfileEditor({ profile, onSave }) {
           ...e,
           company: e.company === 'Tên Công Ty' ? '' : (e.company || ''),
           role: e.role === 'Chức vụ / Vị trí' ? '' : (e.role || ''),
+          url: e.url || e.link || e.companyUrl || '',
         }))
       : [],
   });
@@ -141,7 +142,7 @@ export default function ProfileEditor({ profile, onSave }) {
     setFormData(prev => ({
       ...prev,
       experience: [
-        { period: `${new Date().getFullYear()}`, company: '', role: '', isCurrent: false },
+        { period: `${new Date().getFullYear()}`, company: '', role: '', url: '', isCurrent: false },
         ...prev.experience,
       ]
     }));
@@ -337,15 +338,22 @@ export default function ProfileEditor({ profile, onSave }) {
             return (
               <div
                 key={idx}
-                className="p-3.5 rounded-xl bg-black/40 border border-white/10 flex flex-col sm:grid sm:grid-cols-12 gap-2.5 items-stretch sm:items-center"
+                className="p-3.5 rounded-xl bg-black/40 border border-white/10 flex flex-col sm:grid sm:grid-cols-12 gap-2.5 items-stretch sm:items-start"
               >
-                <div className="sm:col-span-4">
+                <div className="sm:col-span-4 space-y-1.5">
                   <input
                     type="text"
                     placeholder="Tên công ty"
                     value={exp.company || ''}
                     onChange={(e) => handleExpChange(idx, 'company', e.target.value)}
                     className="w-full px-3 py-2 sm:py-1.5 rounded-lg bg-black/60 border border-white/10 text-white text-base sm:text-xs font-bold placeholder-white/30"
+                  />
+                  <input
+                    type="text"
+                    placeholder="🔗 Link web cty (tuỳ chọn)"
+                    value={exp.url || ''}
+                    onChange={(e) => handleExpChange(idx, 'url', e.target.value)}
+                    className="w-full px-2.5 py-1 rounded-lg bg-black/30 border border-white/5 focus:border-[#C3EA39]/50 text-white/80 text-[11px] font-mono placeholder-white/20"
                   />
                 </div>
 

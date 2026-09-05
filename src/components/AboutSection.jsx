@@ -159,11 +159,26 @@ export default function AboutSection() {
                     >
                       <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
                         <div className="flex items-center gap-2">
-                          <h4 className={`text-sm sm:text-base font-bold transition-colors ${
-                            isCurrent ? 'text-white drop-shadow-sm' : 'text-white/80'
-                          }`}>
-                            {exp.company}
-                          </h4>
+                          {exp.url ? (
+                            <a
+                              href={exp.url.startsWith('http') ? exp.url : `https://${exp.url}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`group/link inline-flex items-center gap-1 text-sm sm:text-base font-bold transition-all hover:text-[#C3EA39] hover:underline underline-offset-4 cursor-pointer ${
+                                isCurrent ? 'text-white drop-shadow-sm' : 'text-white/80'
+                              }`}
+                              title={`Ghé thăm website ${exp.company}`}
+                            >
+                              <span>{exp.company}</span>
+                              <ArrowUpRight className="w-3.5 h-3.5 text-white/40 group-hover/link:text-[#C3EA39] group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-all inline-block" />
+                            </a>
+                          ) : (
+                            <h4 className={`text-sm sm:text-base font-bold transition-colors ${
+                              isCurrent ? 'text-white drop-shadow-sm' : 'text-white/80'
+                            }`}>
+                              {exp.company}
+                            </h4>
+                          )}
                           {isCurrent && (
                             <span 
                               className="relative flex h-2 w-2"
