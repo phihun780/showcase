@@ -117,37 +117,103 @@ export function PortfolioDataProvider({ children }) {
     return 'none';
   });
 
-  // 1. Initial Sync from Cloudflare R2
+  // Cloud sync tracking refs & states
+  const isInitialCloudSyncDone = React.useRef(false);
+  const hasUserEditedRef = React.useRef(false);
+  const [isCloudSyncing, setIsCloudSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState('idle'); // 'idle' | 'syncing' | 'saved' | 'error'
+  const [lastSavedTime, setLastSavedTime] = useState(null);
+
+  // 1. Initial Sync from Cloudflare R2 (Guaranteed non-destructive read)
   useEffect(() => {
     let isMounted = true;
     async function syncFromCloudflareR2() {
+      setIsCloudSyncing(true);
       try {
         const cloudData = await fetchPortfolioDataFromR2();
         if (cloudData && isMounted) {
-          if (Array.isArray(cloudData.projects)) setProjects(cloudData.projects);
-          if (cloudData.profile && cloudData.profile.name) setProfile(cloudData.profile);
-          if (Array.isArray(cloudData.coverBanners)) setCoverBanners(cloudData.coverBanners);
-          if (Array.isArray(cloudData.randomWorks)) setRandomWorks(cloudData.randomWorks);
-          if (Array.isArray(cloudData.marqueeItems)) setMarqueeItems(cloudData.marqueeItems);
-          if (cloudData.seasonalEffect) setSeasonalEffect(cloudData.seasonalEffect);
-          console.log("Cloudflare R2 synchronized ✓");
+          if (Array.isArray(cloudData.projects) && cloudData.projects.length > 0) {
+            setProjects(cloudData.projects);
+          }
+          if (cloudData.profile && cloudData.profile.name) {
+            setProfile(cloudData.profile);
+          }
+          if (Array.isArray(cloudData.coverBanners) && cloudData.coverBanners.length > 0) {
+            setCoverBanners(cloudData.coverBanners);
+          }
+          if (Array.isArray(cloudData.randomWorks) && cloudData.randomWorks.length > 0) {
+            setRandomWorks(cloudData.randomWorks);
+          }
+          if (Array.isArray(cloudData.marqueeItems) && cloudData.marqueeItems.length > 0) {
+            setMarqueeItems(cloudData.marqueeItems);
+          }
+          if (cloudData.seasonalEffect) {
+            setSeasonalEffect(cloudData.seasonalEffect);
+          }
+          if (cloudData.updatedAt) {
+            setLastSavedTime(cloudData.updatedAt);
+          }
+          setSyncStatus('saved');
+          console.log("Cloudflare R2 synchronized successfully ✓");
         }
       } catch (err) {
         console.warn("R2 initial fetch error:", err);
+        if (isMounted) setSyncStatus('error');
+      } finally {
+        if (isMounted) {
+          isInitialCloudSyncDone.current = true;
+          setIsCloudSyncing(false);
+        }
       }
     }
     syncFromCloudflareR2();
     return () => { isMounted = false; };
   }, []);
 
+  // Explicit Save to Cloudflare R2 function
+  const saveToCloud = async (customPayload = null) => {
+    if (!isInitialCloudSyncDone.current) {
+      console.warn("Skipping R2 save: Initial sync is still running");
+      return { success: false, error: 'Initial sync running' };
+    }
+
+    setIsCloudSyncing(true);
+    setSyncStatus('syncing');
+
+    const payload = customPayload || {
+      updatedAt: new Date().toISOString(),
+      profile,
+      projects,
+      coverBanners,
+      randomWorks,
+      marqueeItems,
+      seasonalEffect,
+    };
+
+    try {
+      const res = await savePortfolioDataToR2(payload);
+      if (res && res.success) {
+        setSyncStatus('saved');
+        setLastSavedTime(new Date().toLocaleTimeString());
+        setIsCloudSyncing(false);
+        return { success: true };
+      } else {
+        throw new Error(res?.error || 'Save to R2 failed');
+      }
+    } catch (err) {
+      console.error("Save to R2 failed:", err);
+      setSyncStatus('error');
+      setIsCloudSyncing(false);
+      return { success: false, error: err.message };
+    }
+  };
+
   // 2. Save to LocalStorage safely (handles quota limit without crashing)
   useEffect(() => {
     const safeSet = (key, val) => {
       try {
         localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val));
-      } catch (e) {
-        // If quota exceeded, try cleaning up or skip
-      }
+      } catch (e) {}
     };
 
     safeSet(STORAGE_MARQUEE_KEY, marqueeItems);
@@ -158,24 +224,23 @@ export function PortfolioDataProvider({ children }) {
     safeSet(STORAGE_PROFILE_KEY, profile);
   }, [marqueeItems, seasonalEffect, coverBanners, randomWorks, projects, profile]);
 
-  // 3. Auto-sync entire portfolio database to Cloudflare R2 (Debounced 1.5s)
+  // 3. Auto-sync to Cloudflare R2 ONLY when user has made real edits in CMS
   useEffect(() => {
+    // Only auto-save if user explicitly edited data and initial sync has completed
+    if (!hasUserEditedRef.current || !isInitialCloudSyncDone.current) {
+      return;
+    }
+
     const timer = setTimeout(() => {
-      savePortfolioDataToR2({
-        updatedAt: new Date().toISOString(),
-        profile,
-        projects,
-        coverBanners,
-        randomWorks,
-        marqueeItems,
-        seasonalEffect,
-      }).catch(err => console.warn('R2 auto-sync warning:', err));
+      saveToCloud().catch(err => console.warn('R2 auto-sync warning:', err));
     }, 1500);
+
     return () => clearTimeout(timer);
   }, [projects, profile, coverBanners, randomWorks, marqueeItems, seasonalEffect]);
 
   // Project CRUD Actions
   const addProject = (newProjectData) => {
+    hasUserEditedRef.current = true;
     const generatedId = `proj-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
     const newProject = {
       ...newProjectData,
@@ -197,20 +262,24 @@ export function PortfolioDataProvider({ children }) {
   };
 
   const updateProject = (id, updatedData) => {
+    hasUserEditedRef.current = true;
     setProjects(prev => prev.map(p => (p.id === id ? { ...p, ...updatedData } : p)));
   };
 
   const updateProjectsList = (newList) => {
     if (Array.isArray(newList)) {
+      hasUserEditedRef.current = true;
       setProjects(newList);
     }
   };
 
   const deleteProject = (id) => {
+    hasUserEditedRef.current = true;
     setProjects(prev => prev.filter(p => p.id !== id));
   };
 
   const moveProject = (index, direction) => {
+    hasUserEditedRef.current = true;
     setProjects(prev => {
       const newArr = [...prev];
       const targetIndex = direction === 'up' ? index - 1 : index + 1;
@@ -224,11 +293,13 @@ export function PortfolioDataProvider({ children }) {
 
   // Profile Update Actions
   const updateProfileData = (newProfileData) => {
+    hasUserEditedRef.current = true;
     setProfile(prev => ({ ...prev, ...newProfileData }));
   };
 
   // Cover Banners CRUD Actions (Top Standalone Cover Slider)
   const addCoverBanner = (imgData) => {
+    hasUserEditedRef.current = true;
     const newItem = typeof imgData === 'string' ? {
       id: `banner-${Date.now()}`,
       title: '',
@@ -246,14 +317,17 @@ export function PortfolioDataProvider({ children }) {
   };
 
   const updateCoverBanner = (id, updatedData) => {
+    hasUserEditedRef.current = true;
     setCoverBanners(prev => prev.map(item => (item.id === id ? { ...item, ...updatedData } : item)));
   };
 
   const deleteCoverBanner = (idOrIdx) => {
+    hasUserEditedRef.current = true;
     setCoverBanners(prev => prev.filter((item, idx) => item.id !== idOrIdx && idx !== idOrIdx));
   };
 
   const moveCoverBanner = (index, direction) => {
+    hasUserEditedRef.current = true;
     setCoverBanners(prev => {
       const newArr = [...prev];
       const targetIndex = direction === 'up' ? index - 1 : index + 1;
@@ -266,11 +340,13 @@ export function PortfolioDataProvider({ children }) {
   };
 
   const updateCoverBannersList = (newList) => {
+    hasUserEditedRef.current = true;
     setCoverBanners(newList);
   };
 
   // Random Works CRUD Actions (Section 01 Tùm Lum Tà La)
   const addRandomWork = (imgData) => {
+    hasUserEditedRef.current = true;
     const newItem = typeof imgData === 'string' ? {
       id: `rand-${Date.now()}`,
       title: 'Artwork ngẫu hứng',
@@ -288,14 +364,17 @@ export function PortfolioDataProvider({ children }) {
   };
 
   const updateRandomWork = (id, updatedData) => {
+    hasUserEditedRef.current = true;
     setRandomWorks(prev => prev.map(item => (item.id === id ? { ...item, ...updatedData } : item)));
   };
 
   const deleteRandomWork = (idOrIdx) => {
+    hasUserEditedRef.current = true;
     setRandomWorks(prev => prev.filter((item, idx) => item.id !== idOrIdx && idx !== idOrIdx));
   };
 
   const moveRandomWork = (index, direction) => {
+    hasUserEditedRef.current = true;
     setRandomWorks(prev => {
       const newArr = [...prev];
       const targetIndex = direction === 'up' ? index - 1 : index + 1;
@@ -308,29 +387,35 @@ export function PortfolioDataProvider({ children }) {
   };
 
   const updateRandomWorksList = (newList) => {
+    hasUserEditedRef.current = true;
     setRandomWorks(newList);
   };
 
   // Marquee Actions
   const addMarqueeItem = (text) => {
     if (!text || !text.trim()) return;
+    hasUserEditedRef.current = true;
     setMarqueeItems(prev => [...prev, text.trim().toUpperCase()]);
   };
 
   const deleteMarqueeItem = (index) => {
+    hasUserEditedRef.current = true;
     setMarqueeItems(prev => prev.filter((_, idx) => idx !== index));
   };
 
   const updateMarqueeItem = (index, newText) => {
+    hasUserEditedRef.current = true;
     setMarqueeItems(prev => prev.map((item, idx) => (idx === index ? newText.toUpperCase() : item)));
   };
 
   const updateMarqueeItems = (newList) => {
+    hasUserEditedRef.current = true;
     setMarqueeItems(newList);
   };
 
   // Seasonal Effect Setter
   const updateSeasonalEffect = (effect) => {
+    hasUserEditedRef.current = true;
     setSeasonalEffect(effect);
   };
 
@@ -441,6 +526,10 @@ export function PortfolioDataProvider({ children }) {
         updateMarqueeItems,
         updateSeasonalEffect,
         setSeasonalEffect,
+        saveToCloud,
+        isCloudSyncing,
+        syncStatus,
+        lastSavedTime,
         resetToDefault,
         exportDataJSON,
         importDataJSON,

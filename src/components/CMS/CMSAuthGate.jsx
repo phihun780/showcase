@@ -14,6 +14,13 @@ export default function CMSAuthGate({ onAuthenticated, onBackToPortfolio }) {
   const [errorMsg, setErrorMsg] = useState('');
   const [infoMsg, setInfoMsg] = useState('');
 
+  // Always reset scroll to top when mounting CMS Auth Gate
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    if (document.documentElement) document.documentElement.scrollTop = 0;
+    if (document.body) document.body.scrollTop = 0;
+  }, []);
+
   // Check if automatically logged out due to 30 min inactivity
   useEffect(() => {
     try {
@@ -154,7 +161,7 @@ export default function CMSAuthGate({ onAuthenticated, onBackToPortfolio }) {
 
       {/* Main Lock Card */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        initial={false}
         animate={{
           opacity: 1,
           scale: 1,
@@ -162,10 +169,10 @@ export default function CMSAuthGate({ onAuthenticated, onBackToPortfolio }) {
           x: isError ? [-10, 10, -8, 8, -4, 4, 0] : 0,
         }}
         transition={{
-          duration: isError ? 0.4 : 0.6,
+          duration: isError ? 0.4 : 0.25,
           ease: [0.16, 1, 0.3, 1],
         }}
-        className="relative z-10 w-full max-w-sm rounded-3xl bg-[#121216]/90 border border-white/15 backdrop-blur-2xl p-7 sm:p-8 shadow-2xl flex flex-col items-center text-center space-y-6"
+        className="relative z-10 w-full max-w-sm rounded-3xl bg-[#121216]/95 border border-white/15 backdrop-blur-2xl p-7 sm:p-8 shadow-2xl flex flex-col items-center text-center space-y-6"
       >
         
         {/* Lock Icon Badge */}

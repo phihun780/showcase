@@ -129,9 +129,15 @@ function PortfolioApp() {
 
   const getCleanPath = () => {
     if (typeof window === 'undefined') return '/';
-    const path = window.location.pathname.replace(/\/+$/, '') || '/';
-    const hash = window.location.hash.replace(/\/+$/, '') || '';
-    if (path === '/cms' || hash === '#/cms' || hash === '#cms') {
+    const rawPath = (window.location.pathname || '').toLowerCase().replace(/\/+$/, '') || '/';
+    const hash = (window.location.hash || '').toLowerCase().replace(/\/+$/, '') || '';
+    if (
+      rawPath === '/cms' || 
+      rawPath.endsWith('/cms') || 
+      hash === '#/cms' || 
+      hash === '#cms' || 
+      hash.includes('cms')
+    ) {
       return '/cms';
     }
     return '/';
@@ -190,15 +196,22 @@ function PortfolioApp() {
     }
   }, [profile?.tabTitle, profile?.name, profile?.title, profile?.favicon, profile?.ogImage]);
 
+  // Route Synchronization & Scroll Reset
   useEffect(() => {
     const handleLocationChange = () => {
       const clean = getCleanPath();
       setCurrentPath(clean);
+      window.scrollTo(0, 0);
 
       // Auto-normalize any extra path like /phihun or /phihun/ back to clean /
       if (typeof window !== 'undefined') {
-        const path = window.location.pathname.replace(/\/+$/, '') || '/';
-        if (path !== '/' && path !== '/cms' && !path.startsWith('/api')) {
+        const rawPath = (window.location.pathname || '').toLowerCase().replace(/\/+$/, '') || '/';
+        if (
+          rawPath !== '/' && 
+          rawPath !== '/cms' && 
+          !rawPath.endsWith('/cms') && 
+          !rawPath.startsWith('/api')
+        ) {
           window.history.replaceState({}, '', '/');
         }
       }
@@ -214,6 +227,11 @@ function PortfolioApp() {
     };
   }, []);
 
+  // Ensure scroll is at top whenever path changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [currentPath]);
+
   const navigateTo = (path) => {
     if (path === '/cms') {
       window.history.pushState({}, '', '/cms');
@@ -221,7 +239,7 @@ function PortfolioApp() {
       window.history.pushState({}, '', '/');
     }
     setCurrentPath(path);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo(0, 0);
   };
 
   // If on /cms, show full CMS Dashboard

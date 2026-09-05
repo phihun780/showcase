@@ -80,6 +80,13 @@ export default function CMSPage({ onBackToPortfolio }) {
     setIsAuthenticated(false);
   };
 
+  // Ensure scroll is at top when CMSPage loads
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    if (document.documentElement) document.documentElement.scrollTop = 0;
+    if (document.body) document.body.scrollTop = 0;
+  }, []);
+
   // 30-Minute Inactivity Auto-Logout Tracker
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -157,6 +164,10 @@ export default function CMSPage({ onBackToPortfolio }) {
     updateMarqueeItem,
     updateMarqueeItems,
     updateSeasonalEffect,
+    saveToCloud,
+    isCloudSyncing,
+    syncStatus,
+    lastSavedTime,
     resetToDefault,
     exportDataJSON,
     importDataJSON,
@@ -536,11 +547,36 @@ export default function CMSPage({ onBackToPortfolio }) {
 
           {/* Right actions */}
           <div className="flex items-center gap-2 text-xs font-mono">
-            {/* Live Cloudflare R2 Connected Indicator */}
-            <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#C3EA39]/10 border border-[#C3EA39]/30 text-[#C3EA39] font-mono text-xs shadow-sm">
-              <span className="w-2 h-2 rounded-full bg-[#C3EA39] animate-pulse" />
-              <span className="font-bold">Cloudflare R2 ✓</span>
-            </div>
+            {/* Interactive Cloudflare R2 Sync Button / Status */}
+            <button
+              onClick={async () => {
+                const res = await saveToCloud();
+                if (res.success) {
+                  alert("Đã lưu và đồng bộ toàn bộ website lên Cloudflare R2 thành công! ✓");
+                } else {
+                  alert("Lỗi lưu lên Cloud: " + (res.error || 'Vui lòng thử lại'));
+                }
+              }}
+              disabled={isCloudSyncing}
+              className={`px-3 py-1.5 rounded-xl font-mono text-xs flex items-center gap-1.5 border transition-all cursor-pointer shadow-sm hover:scale-[1.02] ${
+                isCloudSyncing
+                  ? 'bg-[#C3EA39]/20 border-[#C3EA39] text-[#C3EA39] animate-pulse'
+                  : 'bg-[#C3EA39]/15 border-[#C3EA39]/40 hover:bg-[#C3EA39] hover:text-black text-[#C3EA39]'
+              }`}
+              title={lastSavedTime ? `Đã lưu lúc ${lastSavedTime}. Bấm để đồng bộ ngay lập tức.` : 'Bấm để lưu và đồng bộ toàn bộ website lên Cloudflare R2'}
+            >
+              {isCloudSyncing ? (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#C3EA39]" />
+                  <span>Đang lưu...</span>
+                </>
+              ) : (
+                <>
+                  <span className="w-2 h-2 rounded-full bg-[#C3EA39]" />
+                  <span className="font-bold">Lưu lên Cloud ✓</span>
+                </>
+              )}
+            </button>
 
             <button
               onClick={exportDataJSON}
