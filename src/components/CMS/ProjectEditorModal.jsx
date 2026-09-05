@@ -1,5 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { X, Upload, Plus, Trash2, ArrowUp, ArrowDown, Check, Sparkles, Loader2, Crop } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  X,
+  Upload,
+  Plus,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  Check,
+  Sparkles,
+  Loader2,
+  Crop,
+  Link as LinkIcon,
+  Image as ImageIcon,
+  FolderOpen
+} from 'lucide-react';
 import { optimizeAndUploadToR2 } from '../../utils/imageOptimizer';
 import { deleteFromR2 } from '../../utils/r2Storage';
 import ImageCropModal from './ImageCropModal';
@@ -14,16 +28,24 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
     tags: 'Graphic Design, Branding',
   });
 
+  const [showCoverUrlInput, setShowCoverUrlInput] = useState(false);
+  const [showGalleryUrlInput, setShowGalleryUrlInput] = useState(false);
   const [newGalleryUrl, setNewGalleryUrl] = useState('');
   const [optimizeNotice, setOptimizeNotice] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [isCoverDragging, setIsCoverDragging] = useState(false);
+  const [isGalleryDragging, setIsGalleryDragging] = useState(false);
+
   const [cropImageSrc, setCropImageSrc] = useState(null);
   const [isCropOpen, setIsCropOpen] = useState(false);
   const [cropTarget, setCropTarget] = useState({ type: 'cover', index: null });
 
-  const showOptimizedToast = (msg = 'Hình ảnh đã được tối ưu dung lượng (chất lượng cao) ✓') => {
+  const coverFileInputRef = useRef(null);
+  const galleryFileInputRef = useRef(null);
+
+  const showToast = (msg) => {
     setOptimizeNotice(msg);
-    setTimeout(() => setOptimizeNotice(''), 3500);
+    setTimeout(() => setOptimizeNotice(''), 3000);
   };
 
   useEffect(() => {
@@ -46,41 +68,54 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
         tags: 'Graphic Design, Branding',
       });
     }
+    setShowCoverUrlInput(false);
+    setShowGalleryUrlInput(false);
+    setNewGalleryUrl('');
   }, [project, isOpen]);
 
   if (!isOpen) return null;
 
-  const handleCoverUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const isGif = file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
-      if (isGif) {
-        setIsUploading(true);
-        try {
-          const oldCover = formData.coverImage;
-          const res = await optimizeAndUploadToR2(file, 'projects');
-          if (oldCover && oldCover !== res.url) {
-            deleteFromR2(oldCover);
-          }
-          setFormData(prev => ({ ...prev, coverImage: res.url }));
-          showOptimizedToast('Ảnh GIF đã tải lên Cloudflare R2 ✓');
-        } catch (err) {
-          console.error("Error uploading GIF cover:", err);
-        } finally {
-          setIsUploading(false);
+  // Process Cover File Upload
+  const processCoverFile = async (file) => {
+    if (!file) return;
+    const isGif = file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
+    if (isGif) {
+      setIsUploading(true);
+      try {
+        const oldCover = formData.coverImage;
+        const res = await optimizeAndUploadToR2(file, 'projects');
+        if (oldCover && oldCover !== res.url) {
+          deleteFromR2(oldCover);
         }
-      } else {
-        // Read file and open Crop Tool
-        const reader = new FileReader();
-        reader.onload = (loadEvt) => {
-          setCropTarget({ type: 'cover', index: null });
-          setCropImageSrc(loadEvt.target.result);
-          setIsCropOpen(true);
-        };
-        reader.readAsDataURL(file);
+        setFormData(prev => ({ ...prev, coverImage: res.url }));
+        showToast('Ảnh GIF đã tải lên Cloudflare R2 ✓');
+      } catch (err) {
+        console.error("Error uploading GIF cover:", err);
+      } finally {
+        setIsUploading(false);
       }
+    } else {
+      const reader = new FileReader();
+      reader.onload = (loadEvt) => {
+        setCropTarget({ type: 'cover', index: null });
+        setCropImageSrc(loadEvt.target.result);
+        setIsCropOpen(true);
+      };
+      reader.readAsDataURL(file);
     }
+  };
+
+  const handleCoverUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (file) processCoverFile(file);
     e.target.value = '';
+  };
+
+  const handleCoverDrop = (e) => {
+    e.preventDefault();
+    setIsCoverDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) processCoverFile(file);
   };
 
   const handleOpenCropForCurrentCover = () => {
@@ -107,7 +142,7 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
         deleteFromR2(oldCover);
       }
       setFormData(prev => ({ ...prev, coverImage: croppedUrl }));
-      showOptimizedToast('Ảnh bìa đã được cắt chuẩn tỷ lệ 16:10 & lưu R2 ✓');
+      showToast('Ảnh bìa đã cắt tỷ lệ 16:10 & lưu R2 ✓');
     } else if (cropTarget.type === 'gallery' && cropTarget.index !== null) {
       const newGallery = [...formData.gallery];
       const oldImg = newGallery[cropTarget.index];
@@ -116,30 +151,41 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
       }
       newGallery[cropTarget.index] = croppedUrl;
       setFormData(prev => ({ ...prev, gallery: newGallery }));
-      showOptimizedToast('Ảnh chi tiết đã được cắt & cập nhật ✓');
+      showToast('Ảnh chi tiết đã cập nhật ✓');
     }
   };
 
-  const handleGalleryUpload = async (e) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length > 0) {
-      setIsUploading(true);
-      try {
-        const results = await Promise.all(files.map(f => optimizeAndUploadToR2(f, 'projects')));
-        const newImages = results.map(r => r.url);
-        setFormData(prev => ({
-          ...prev,
-          gallery: [...prev.gallery, ...newImages]
-        }));
-        const anyR2 = results.some(r => r.isR2);
-        showOptimizedToast(anyR2 ? 'Thư viện ảnh đã tải lên Cloudflare R2 & tối ưu ✓' : 'Hình ảnh đã được tối ưu dung lượng (chất lượng cao) ✓');
-      } catch (err) {
-        console.error("Error optimizing gallery images:", err);
-      } finally {
-        setIsUploading(false);
-      }
+  // Process Gallery Files
+  const processGalleryFiles = async (filesList) => {
+    const files = Array.from(filesList || []);
+    if (files.length === 0) return;
+    setIsUploading(true);
+    try {
+      const results = await Promise.all(files.map(f => optimizeAndUploadToR2(f, 'projects')));
+      const newImages = results.map(r => r.url);
+      setFormData(prev => ({
+        ...prev,
+        gallery: [...prev.gallery, ...newImages]
+      }));
+      showToast(`Đã thêm ${newImages.length} ảnh chi tiết ✓`);
+    } catch (err) {
+      console.error("Error optimizing gallery images:", err);
+    } finally {
+      setIsUploading(false);
     }
+  };
+
+  const handleGalleryUpload = (e) => {
+    processGalleryFiles(e.target.files);
     e.target.value = '';
+  };
+
+  const handleGalleryDrop = (e) => {
+    e.preventDefault();
+    setIsGalleryDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      processGalleryFiles(e.dataTransfer.files);
+    }
   };
 
   const handleAddGalleryUrl = () => {
@@ -149,6 +195,8 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
         gallery: [...prev.gallery, newGalleryUrl.trim()]
       }));
       setNewGalleryUrl('');
+      setShowGalleryUrlInput(false);
+      showToast('Đã thêm URL ảnh vào thư viện ✓');
     }
   };
 
@@ -166,7 +214,7 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
   const handleMoveGalleryItem = (idx, direction) => {
     setFormData(prev => {
       const newGallery = [...prev.gallery];
-      const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+      const targetIdx = direction === 'left' ? idx - 1 : idx + 1;
       if (targetIdx < 0 || targetIdx >= newGallery.length) return prev;
       const temp = newGallery[idx];
       newGallery[idx] = newGallery[targetIdx];
@@ -203,278 +251,445 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
     onClose();
   };
 
+  const isCoverGif = formData.coverImage && (
+    formData.coverImage.startsWith('data:image/gif') ||
+    formData.coverImage.toLowerCase().endsWith('.gif')
+  );
+
   return (
-    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md overflow-y-auto animate-fadeIn">
-      <div className="relative w-full max-w-2xl bg-[#121216] border border-white/15 rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[92vh] text-white overflow-hidden">
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-2.5 sm:p-5 bg-black/85 backdrop-blur-md animate-fadeIn">
+      <div className="relative w-full max-w-5xl bg-[#121216] border border-white/10 rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[92vh] text-white overflow-hidden">
         
-        {/* Sticky Header */}
+        {/* Header */}
         <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-white/10 bg-[#16161c] flex items-center justify-between shrink-0">
-          <h3 className="text-base sm:text-xl font-display font-bold text-white">
-            {project ? 'Sửa Dự Án' : 'Thêm Dự Án Mới'}
-          </h3>
+          <div className="flex items-center gap-2.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#C3EA39]" />
+            <h3 className="text-base sm:text-lg font-display font-bold text-white tracking-wide">
+              {project ? 'Sửa Dự Án' : 'Thêm Dự Án Mới'}
+            </h3>
+            {optimizeNotice && (
+              <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#C3EA39]/10 text-[#C3EA39] text-xs font-mono font-medium animate-fadeIn">
+                <Sparkles className="w-3 h-3" />
+                <span>{optimizeNotice}</span>
+              </span>
+            )}
+          </div>
 
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-white/10 hover:bg-[#C3EA39] hover:text-black flex items-center justify-center transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-xl bg-white/5 hover:bg-[#C3EA39] text-white/70 hover:text-black flex items-center justify-center transition-all cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Scrollable Form Body */}
-        <form onSubmit={handleSubmit} id="project-editor-form" className="p-4 sm:p-6 overflow-y-auto custom-scrollbar flex-1 space-y-4 text-xs">
-          
-          {/* Optimized Notice Toast */}
+        <form
+          onSubmit={handleSubmit}
+          id="project-editor-form"
+          className="p-4 sm:p-6 overflow-y-auto custom-scrollbar flex-1 space-y-5"
+        >
+          {/* Mobile Toast Notice */}
           {optimizeNotice && (
-            <div className="p-3 rounded-xl bg-[#C3EA39]/10 border border-[#C3EA39]/30 text-[#C3EA39] text-xs font-mono font-bold flex items-center gap-2 animate-fadeIn">
-              <Sparkles className="w-4 h-4 shrink-0" />
+            <div className="sm:hidden p-2.5 rounded-xl bg-[#C3EA39]/10 border border-[#C3EA39]/20 text-[#C3EA39] text-xs font-mono flex items-center gap-1.5 animate-fadeIn">
+              <Sparkles className="w-3.5 h-3.5 shrink-0" />
               <span>{optimizeNotice}</span>
             </div>
           )}
 
-          {/* Title */}
-          <div className="space-y-1">
-            <label className="text-xs font-mono text-white/70 uppercase block">
-              Tên Dự Án <span className="text-[#C3EA39]">*</span>
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="VD: Brand Identity 2024, Visual Design..."
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-black/50 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm"
-            />
-          </div>
-
-          {/* Subtitle */}
-          <div className="space-y-1">
-            <label className="text-xs font-mono text-white/70 uppercase block">
-              Mô Tả Ngắn
-            </label>
-            <textarea
-              rows={2}
-              placeholder="Mô tả tóm tắt về dự án..."
-              value={formData.subtitle}
-              onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
-              className="w-full px-3.5 py-2 rounded-xl bg-black/50 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm"
-            />
-          </div>
-
-          {/* Year and Tags */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label className="text-xs font-mono text-white/70 uppercase block">
-                Năm Thực Hiện
+          {/* Top Section: General Info (Compact Inputs) */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-[#16161c]/80 border border-white/5 space-y-3.5">
+            {/* Project Title */}
+            <div>
+              <label className="text-[11px] font-mono text-white/50 block mb-1 uppercase tracking-wider">
+                Tên dự án <span className="text-[#C3EA39]">*</span>
               </label>
               <input
                 type="text"
-                placeholder="VD: 2024"
-                value={formData.year}
-                onChange={(e) => setFormData({ ...formData, year: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-black/50 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs font-mono"
+                required
+                placeholder="VD: AKFOOD | Shopee Setup 2025"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                className="w-full px-3.5 py-2 rounded-xl bg-black/40 border border-white/10 focus:border-[#C3EA39] focus:text-white text-white text-sm font-medium focus:outline-none transition-colors"
               />
             </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-mono text-white/70 uppercase block">
-                Thẻ / Tags (cách nhau bởi dấu phẩy)
-              </label>
-              <input
-                type="text"
-                placeholder="VD: Graphic Design, Branding"
-                value={formData.tags}
-                onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-black/50 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs font-mono"
-              />
-            </div>
-          </div>
-
-          {/* Cover Image */}
-          <div className="space-y-2 p-3 sm:p-3.5 rounded-2xl bg-black/30 border border-white/10">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <label className="text-xs font-mono text-white/80 uppercase block">
-                Ảnh Bìa / GIF
-              </label>
-              <label className="cursor-pointer text-xs font-mono text-black bg-[#C3EA39] hover:bg-[#d4f854] px-3 py-1.5 rounded-lg font-bold inline-flex items-center justify-center gap-1.5 transition-colors">
-                <Upload className="w-3.5 h-3.5" />
-                <span>Chọn ảnh / GIF từ máy</span>
+            {/* Year & Tags (2 Columns) */}
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+              <div className="sm:col-span-4">
+                <label className="text-[11px] font-mono text-white/50 block mb-1 uppercase tracking-wider">
+                  Năm thực hiện
+                </label>
                 <input
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,.gif,image/*"
-                  onChange={handleCoverUpload}
-                  className="hidden"
+                  type="text"
+                  placeholder="2025"
+                  value={formData.year}
+                  onChange={(e) => setFormData({ ...formData, year: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl bg-black/40 border border-white/10 focus:border-[#C3EA39] text-white text-sm font-mono focus:outline-none transition-colors"
                 />
-              </label>
+              </div>
+
+              <div className="sm:col-span-8">
+                <label className="text-[11px] font-mono text-white/50 block mb-1 uppercase tracking-wider">
+                  Thẻ / Tags
+                </label>
+                <input
+                  type="text"
+                  placeholder="E-Commerce, Branding, Packaging"
+                  value={formData.tags}
+                  onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl bg-black/40 border border-white/10 focus:border-[#C3EA39] text-white text-sm font-mono focus:outline-none transition-colors"
+                />
+              </div>
             </div>
 
-            <input
-              type="text"
-              placeholder="Hoặc dán URL ảnh / GIF (https://...)"
-              value={formData.coverImage}
-              onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg bg-black/50 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs font-mono"
-            />
+            {/* Short Description */}
+            <div>
+              <label className="text-[11px] font-mono text-white/50 block mb-1 uppercase tracking-wider">
+                Mô tả ngắn
+              </label>
+              <textarea
+                rows={2}
+                placeholder="Mô tả tóm tắt về dự án..."
+                value={formData.subtitle}
+                onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
+                className="w-full px-3.5 py-2 rounded-xl bg-black/40 border border-white/10 focus:border-[#C3EA39] text-white text-sm focus:outline-none transition-colors resize-none"
+              />
+            </div>
+          </div>
 
-            {formData.coverImage && (
-              <div className="space-y-2 mt-1">
-                <div className="relative aspect-[16/10] rounded-xl overflow-hidden border border-white/15 bg-black max-h-[180px] group">
-                  <img
-                    src={formData.coverImage}
-                    alt="Cover"
-                    className="w-full h-full object-cover"
-                  />
-                  {(formData.coverImage.startsWith('data:image/gif') || formData.coverImage.toLowerCase().endsWith('.gif')) ? (
-                    <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded bg-black/80 text-[#C3EA39] text-[10px] font-mono font-bold border border-[#C3EA39]/40">
-                      GIF
-                    </span>
-                  ) : (
-                    <span className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/80 text-white/80 text-[10px] font-mono border border-white/20">
-                      Tỷ lệ 16:10
-                    </span>
-                  )}
-
-                  {/* Re-crop button */}
+          {/* Bottom Section: Media (Cover on Left, Gallery on Right) */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+            
+            {/* Left Card (5 cols): Ảnh Bìa Chính */}
+            <div className="lg:col-span-5 p-4 rounded-2xl bg-[#16161c]/80 border border-white/5 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-mono font-bold text-white flex items-center gap-1.5">
+                  <ImageIcon className="w-3.5 h-3.5 text-[#C3EA39]" />
+                  <span>Ảnh Bìa (16:10)</span>
+                </span>
+                
+                <div className="flex items-center gap-1">
                   <button
                     type="button"
-                    onClick={handleOpenCropForCurrentCover}
-                    className="absolute top-2 right-2 px-2.5 py-1 rounded-lg bg-black/80 hover:bg-[#C3EA39] text-white hover:text-black text-xs font-mono font-bold flex items-center gap-1.5 border border-white/20 transition-all cursor-pointer shadow-lg"
+                    onClick={() => setShowCoverUrlInput(prev => !prev)}
+                    className="p-1 rounded-lg hover:bg-white/10 text-white/50 hover:text-[#C3EA39] text-xs font-mono transition-colors"
+                    title="Dán link ảnh"
                   >
-                    <Crop className="w-3.5 h-3.5" />
-                    <span>Cắt / Căn chỉnh</span>
+                    <LinkIcon className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => coverFileInputRef.current?.click()}
+                    className="px-2.5 py-1 rounded-lg bg-[#C3EA39] hover:bg-[#d4f854] text-black text-xs font-mono font-bold flex items-center gap-1 transition-all cursor-pointer"
+                  >
+                    <Upload className="w-3 h-3" />
+                    <span>Tải ảnh</span>
                   </button>
                 </div>
               </div>
-            )}
-          </div>
 
-          {/* Gallery Images / GIFs */}
-          <div className="space-y-2.5 p-3 sm:p-3.5 rounded-2xl bg-black/30 border border-white/10">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <label className="text-xs font-mono text-white/80 uppercase block">
-                Ảnh & GIF Chi Tiết ({formData.gallery.length})
-              </label>
+              {/* Cover URL Toggle Input */}
+              {showCoverUrlInput && (
+                <div className="animate-fadeIn">
+                  <input
+                    type="text"
+                    placeholder="Dán link ảnh bìa (https://...)"
+                    value={formData.coverImage}
+                    onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
+                    className="w-full px-3 py-1.5 rounded-lg bg-black/60 border border-white/10 focus:border-[#C3EA39] text-xs font-mono text-white focus:outline-none"
+                  />
+                </div>
+              )}
 
-              <label className="cursor-pointer text-xs font-mono text-white bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-1.5 rounded-lg font-medium inline-flex items-center justify-center gap-1.5 transition-colors">
-                <Upload className="w-3.5 h-3.5 text-[#C3EA39]" />
-                <span>Chọn nhiều ảnh / GIF</span>
-                <input
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,.gif,image/*"
-                  multiple
-                  onChange={handleGalleryUpload}
-                  className="hidden"
-                />
-              </label>
-            </div>
+              {/* Cover Image Preview or Dropzone */}
+              {formData.coverImage ? (
+                <div className="relative aspect-[16/10] rounded-xl overflow-hidden border border-white/10 bg-black group shadow-lg">
+                  <img
+                    src={formData.coverImage}
+                    alt="Cover Preview"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
 
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Hoặc dán URL ảnh chi tiết (https://...)"
-                value={newGalleryUrl}
-                onChange={(e) => setNewGalleryUrl(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddGalleryUrl();
-                  }
-                }}
-                className="flex-1 px-3 py-2 rounded-lg bg-black/50 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs font-mono"
-              />
-              <button
-                type="button"
-                onClick={handleAddGalleryUrl}
-                className="px-3.5 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-mono flex items-center justify-center gap-1 min-h-[38px] shrink-0"
-              >
-                <Plus className="w-3.5 h-3.5 text-[#C3EA39]" />
-                <span>Thêm</span>
-              </button>
-            </div>
+                  {/* Top Badge */}
+                  <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/80 backdrop-blur-md text-[#C3EA39] text-[10px] font-mono font-bold border border-white/15">
+                    {isCoverGif ? 'GIF' : '16:10'}
+                  </div>
 
-            {/* Gallery Thumbnails List */}
-            {formData.gallery.length > 0 && (
-              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mt-2">
-                {formData.gallery.map((img, idx) => (
-                  <div
-                    key={idx}
-                    className="relative aspect-video rounded-lg overflow-hidden border border-white/10 bg-black group"
-                  >
-                    <img
-                      src={img}
-                      alt={`Gallery ${idx + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-
-                    {(img.startsWith('data:image/gif') || img.toLowerCase().endsWith('.gif')) && (
-                      <span className="absolute top-1 left-1 px-1 py-0.2 rounded bg-black/80 text-[#C3EA39] text-[8px] font-mono font-bold border border-[#C3EA39]/40 z-10 pointer-events-none">
-                        GIF
-                      </span>
+                  {/* Hover Actions Toolbar */}
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 p-2 backdrop-blur-xs">
+                    {!isCoverGif && (
+                      <button
+                        type="button"
+                        onClick={handleOpenCropForCurrentCover}
+                        className="px-3 py-1.5 rounded-lg bg-[#C3EA39] hover:bg-[#d4f854] text-black text-xs font-mono font-bold flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
+                        title="Cắt / Căn chỉnh ảnh bìa"
+                      >
+                        <Crop className="w-3.5 h-3.5" />
+                        <span>Cắt lại</span>
+                      </button>
                     )}
 
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1 z-20">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenCropForGalleryItem(idx)}
-                        className="p-1 rounded bg-white/20 hover:bg-[#C3EA39] hover:text-black text-white min-w-[26px] min-h-[26px] flex items-center justify-center"
-                        title="Cắt / Căn chỉnh ảnh này"
-                      >
-                        <Crop className="w-3 h-3" />
-                      </button>
-                      {idx > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => handleMoveGalleryItem(idx, 'up')}
-                          className="p-1 rounded bg-white/20 hover:bg-[#C3EA39] hover:text-black text-white min-w-[26px] min-h-[26px] flex items-center justify-center"
-                          title="Lên trước"
-                        >
-                          <ArrowUp className="w-3 h-3" />
-                        </button>
-                      )}
-                      {idx < formData.gallery.length - 1 && (
-                        <button
-                          type="button"
-                          onClick={() => handleMoveGalleryItem(idx, 'down')}
-                          className="p-1 rounded bg-white/20 hover:bg-[#C3EA39] hover:text-black text-white min-w-[26px] min-h-[26px] flex items-center justify-center"
-                          title="Xuống sau"
-                        >
-                          <ArrowDown className="w-3 h-3" />
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveGalleryItem(idx)}
-                        className="p-1 rounded bg-red-500/40 hover:bg-red-500 text-white min-w-[26px] min-h-[26px] flex items-center justify-center"
-                        title="Xoá ảnh"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => coverFileInputRef.current?.click()}
+                      className="p-1.5 rounded-lg bg-white/20 hover:bg-white text-white hover:text-black transition-colors cursor-pointer"
+                      title="Đổi ảnh khác"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, coverImage: '' })}
+                      className="p-1.5 rounded-lg bg-red-500/30 hover:bg-red-500 text-red-300 hover:text-white transition-colors cursor-pointer"
+                      title="Xóa ảnh bìa"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
-                ))}
+                </div>
+              ) : (
+                <div
+                  onDragOver={(e) => { e.preventDefault(); setIsCoverDragging(true); }}
+                  onDragLeave={() => setIsCoverDragging(false)}
+                  onDrop={handleCoverDrop}
+                  onClick={() => coverFileInputRef.current?.click()}
+                  className={`aspect-[16/10] rounded-xl border-2 border-dashed transition-all flex flex-col items-center justify-center text-center p-4 cursor-pointer group ${
+                    isCoverDragging
+                      ? 'border-[#C3EA39] bg-[#C3EA39]/10'
+                      : 'border-white/10 hover:border-[#C3EA39]/50 bg-black/30 hover:bg-black/50'
+                  }`}
+                >
+                  <Upload className="w-6 h-6 text-white/30 group-hover:text-[#C3EA39] group-hover:scale-110 transition-all mb-1.5" />
+                  <span className="text-xs font-mono font-bold text-white/70 group-hover:text-white transition-colors">
+                    Chọn ảnh bìa
+                  </span>
+                  <span className="text-[10px] font-mono text-white/30 mt-0.5">
+                    Kéo thả hoặc bấm vào đây
+                  </span>
+                </div>
+              )}
+
+              <input
+                ref={coverFileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,.gif,image/*"
+                onChange={handleCoverUpload}
+                className="hidden"
+              />
+            </div>
+
+            {/* Right Card (7 cols): Thư Viện Ảnh Chi Tiết */}
+            <div className="lg:col-span-7 p-4 rounded-2xl bg-[#16161c]/80 border border-white/5 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono font-bold text-white flex items-center gap-1.5">
+                    <FolderOpen className="w-3.5 h-3.5 text-[#C3EA39]" />
+                    <span>Thư Viện Chi Tiết</span>
+                  </span>
+                  <span className="px-2 py-0.2 rounded-md bg-white/10 text-white/60 text-[11px] font-mono">
+                    {formData.gallery.length}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setShowGalleryUrlInput(prev => !prev)}
+                    className="p-1 rounded-lg hover:bg-white/10 text-white/50 hover:text-[#C3EA39] text-xs font-mono transition-colors"
+                    title="Dán link ảnh"
+                  >
+                    <LinkIcon className="w-3.5 h-3.5" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => galleryFileInputRef.current?.click()}
+                    className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-[#C3EA39] text-white hover:text-black text-xs font-mono font-bold flex items-center gap-1 transition-all cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Thêm ảnh</span>
+                  </button>
+                </div>
               </div>
+
+              {/* Gallery URL Toggle Input */}
+              {showGalleryUrlInput && (
+                <div className="flex gap-1.5 animate-fadeIn">
+                  <input
+                    type="text"
+                    placeholder="Dán link ảnh chi tiết (https://...)"
+                    value={newGalleryUrl}
+                    onChange={(e) => setNewGalleryUrl(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddGalleryUrl();
+                      }
+                    }}
+                    className="flex-1 px-3 py-1.5 rounded-lg bg-black/60 border border-white/10 focus:border-[#C3EA39] text-xs font-mono text-white focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddGalleryUrl}
+                    className="px-3 py-1.5 rounded-lg bg-[#C3EA39] hover:bg-[#d4f854] text-black font-mono font-bold text-xs shrink-0 cursor-pointer"
+                  >
+                    Thêm
+                  </button>
+                </div>
+              )}
+
+              {/* Gallery Thumbnails Grid or Dropzone */}
+              {formData.gallery.length > 0 ? (
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-[300px] overflow-y-auto custom-scrollbar p-0.5">
+                  {formData.gallery.map((img, idx) => {
+                    const isGif = img.startsWith('data:image/gif') || img.toLowerCase().endsWith('.gif');
+                    return (
+                      <div
+                        key={idx}
+                        className="relative aspect-video rounded-lg overflow-hidden border border-white/10 bg-black group shadow-sm"
+                      >
+                        <img
+                          src={img}
+                          alt={`Gallery ${idx + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+
+                        {/* Top Left Tag */}
+                        <span className="absolute top-1 left-1 px-1 py-0.2 rounded bg-black/80 text-white/60 text-[9px] font-mono z-10 pointer-events-none">
+                          #{idx + 1}
+                        </span>
+
+                        {isGif && (
+                          <span className="absolute top-1 right-1 px-1 py-0.2 rounded bg-black/80 text-[#C3EA39] text-[8px] font-mono font-bold z-10 pointer-events-none">
+                            GIF
+                          </span>
+                        )}
+
+                        {/* Action Hover Controls */}
+                        <div className="absolute inset-0 bg-black/75 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1 z-20 backdrop-blur-xs">
+                          {idx > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => handleMoveGalleryItem(idx, 'left')}
+                              className="p-1 rounded bg-white/20 hover:bg-white text-white hover:text-black transition-colors"
+                              title="Sang trái"
+                            >
+                              <ChevronLeft className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+
+                          {!isGif && (
+                            <button
+                              type="button"
+                              onClick={() => handleOpenCropForGalleryItem(idx)}
+                              className="p-1 rounded bg-white/20 hover:bg-[#C3EA39] text-white hover:text-black transition-colors"
+                              title="Cắt ảnh"
+                            >
+                              <Crop className="w-3 h-3" />
+                            </button>
+                          )}
+
+                          {idx < formData.gallery.length - 1 && (
+                            <button
+                              type="button"
+                              onClick={() => handleMoveGalleryItem(idx, 'right')}
+                              className="p-1 rounded bg-white/20 hover:bg-white text-white hover:text-black transition-colors"
+                              title="Sang phải"
+                            >
+                              <ChevronRight className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveGalleryItem(idx)}
+                            className="p-1 rounded bg-red-500/30 hover:bg-red-500 text-red-200 hover:text-white transition-colors"
+                            title="Xóa ảnh"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {/* Add more tile */}
+                  <div
+                    onClick={() => galleryFileInputRef.current?.click()}
+                    className="aspect-video rounded-lg border border-dashed border-white/15 hover:border-[#C3EA39] bg-white/[0.02] hover:bg-white/[0.05] transition-all flex flex-col items-center justify-center text-center cursor-pointer group"
+                  >
+                    <Plus className="w-4 h-4 text-white/40 group-hover:text-[#C3EA39] group-hover:scale-110 transition-all" />
+                    <span className="text-[10px] font-mono text-white/40 group-hover:text-white transition-colors mt-0.5">
+                      + Thêm
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  onDragOver={(e) => { e.preventDefault(); setIsGalleryDragging(true); }}
+                  onDragLeave={() => setIsGalleryDragging(false)}
+                  onDrop={handleGalleryDrop}
+                  onClick={() => galleryFileInputRef.current?.click()}
+                  className={`aspect-[16/9] sm:aspect-[21/9] rounded-xl border-2 border-dashed transition-all flex flex-col items-center justify-center text-center p-4 cursor-pointer group ${
+                    isGalleryDragging
+                      ? 'border-[#C3EA39] bg-[#C3EA39]/10'
+                      : 'border-white/10 hover:border-[#C3EA39]/50 bg-black/30 hover:bg-black/50'
+                  }`}
+                >
+                  <Upload className="w-6 h-6 text-white/30 group-hover:text-[#C3EA39] group-hover:scale-110 transition-all mb-1.5" />
+                  <span className="text-xs font-mono font-bold text-white/70 group-hover:text-white transition-colors">
+                    Tải nhiều ảnh chi tiết
+                  </span>
+                  <span className="text-[10px] font-mono text-white/30 mt-0.5">
+                    Kéo thả hoặc bấm để chọn file
+                  </span>
+                </div>
+              )}
+
+              <input
+                ref={galleryFileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,.gif,image/*"
+                multiple
+                onChange={handleGalleryUpload}
+                className="hidden"
+              />
+            </div>
+
+          </div>
+        </form>
+
+        {/* Footer */}
+        <div className="px-4 sm:px-6 py-3 sm:py-3.5 border-t border-white/10 bg-[#16161c] flex items-center justify-between gap-3 shrink-0">
+          <div className="flex items-center gap-2">
+            {isUploading && (
+              <span className="text-xs font-mono text-[#C3EA39] font-bold flex items-center gap-1.5 animate-pulse">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>Đang tải ảnh lên Cloud...</span>
+              </span>
             )}
           </div>
 
-        </form>
-
-        {/* Sticky Footer */}
-        <div className="px-4 sm:px-6 py-3 sm:py-3.5 border-t border-white/10 bg-[#16161c] flex items-center justify-end gap-2.5 shrink-0">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 rounded-xl text-xs font-mono text-white/60 hover:text-white transition-colors cursor-pointer min-h-[38px]"
-          >
-            Hủy
-          </button>
-          <button
-            type="submit"
-            form="project-editor-form"
-            className="px-5 py-2.5 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black font-display font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md min-h-[38px]"
-          >
-            <Check className="w-3.5 h-3.5" />
-            <span>Lưu Dự Án</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-xl text-xs font-mono text-white/60 hover:text-white hover:bg-white/5 transition-all cursor-pointer min-h-[38px]"
+            >
+              Hủy
+            </button>
+            <button
+              type="submit"
+              form="project-editor-form"
+              disabled={isUploading}
+              className="px-5 py-2 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] disabled:opacity-50 text-black font-display font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md shadow-[#C3EA39]/15 hover:scale-[1.01] active:scale-95 min-h-[38px]"
+            >
+              <Check className="w-4 h-4" />
+              <span>Lưu Dự Án</span>
+            </button>
+          </div>
         </div>
 
       </div>
@@ -494,3 +709,4 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
     </div>
   );
 }
+
