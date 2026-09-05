@@ -261,7 +261,7 @@ export default function CMSPage({ onBackToPortfolio }) {
   // Tab Save Handlers (Persist to Store & Sync to Cloudflare R2)
   const handleSaveProjectsTab = async () => {
     updateProjectsList(localProjects);
-    await saveToCloud({
+    const res = await saveToCloud({
       updatedAt: new Date().toISOString(),
       profile,
       projects: localProjects,
@@ -270,7 +270,12 @@ export default function CMSPage({ onBackToPortfolio }) {
       marqueeItems: localMarqueeItems,
       seasonalEffect: localSeasonalEffect,
     });
-    triggerSaveAlert('projects');
+    if (res && res.success) {
+      triggerSaveAlert('projects');
+      alert("Đã lưu danh sách dự án lên Cloudflare R2 thành công! ✓");
+    } else {
+      alert("Lỗi lưu lên Cloud: " + (res?.error || 'Vui lòng thử lại'));
+    }
   };
 
   const handleSaveHomeTab = async () => {
@@ -278,7 +283,7 @@ export default function CMSPage({ onBackToPortfolio }) {
     updateRandomWorksList(localRandomWorks);
     updateMarqueeItems(localMarqueeItems);
     updateSeasonalEffect(localSeasonalEffect);
-    await saveToCloud({
+    const res = await saveToCloud({
       updatedAt: new Date().toISOString(),
       profile,
       projects: localProjects,
@@ -287,8 +292,41 @@ export default function CMSPage({ onBackToPortfolio }) {
       marqueeItems: localMarqueeItems,
       seasonalEffect: localSeasonalEffect,
     });
-    triggerSaveAlert('home');
+    if (res && res.success) {
+      triggerSaveAlert('home');
+      alert("Đã lưu banner & trang chủ lên Cloudflare R2 thành công! ✓");
+    } else {
+      alert("Lỗi lưu lên Cloud: " + (res?.error || 'Vui lòng thử lại'));
+    }
   };
+
+  const handleSaveAllToCloud = async () => {
+    updateProjectsList(localProjects);
+    updateCoverBannersList(localCoverBanners);
+    updateRandomWorksList(localRandomWorks);
+    updateMarqueeItems(localMarqueeItems);
+    updateSeasonalEffect(localSeasonalEffect);
+
+    const payload = {
+      updatedAt: new Date().toISOString(),
+      profile,
+      projects: localProjects,
+      coverBanners: localCoverBanners,
+      randomWorks: localRandomWorks,
+      marqueeItems: localMarqueeItems,
+      seasonalEffect: localSeasonalEffect,
+    };
+
+    const res = await saveToCloud(payload);
+    if (res && res.success) {
+      triggerSaveAlert('projects');
+      triggerSaveAlert('home');
+      alert("Đã lưu và đồng bộ toàn bộ website lên Cloudflare R2 thành công! ✓");
+    } else {
+      alert("Lỗi lưu lên Cloud: " + (res?.error || 'Vui lòng thử lại'));
+    }
+  };
+
 
   if (!isAuthenticated) {
     return (
@@ -388,7 +426,11 @@ export default function CMSPage({ onBackToPortfolio }) {
           subtitle: subtitle || '',
           image: croppedUrl,
         };
-        setLocalCoverBanners(prev => [...prev, newBanner]);
+        setLocalCoverBanners(prev => {
+          const updated = [...prev, newBanner];
+          updateCoverBannersList(updated);
+          return updated;
+        });
       } else if (actionType === 'replace' || actionType === 'adjust') {
         if (targetIndex !== null && targetIndex !== undefined) {
           setLocalCoverBanners(prev => {
@@ -401,6 +443,7 @@ export default function CMSPage({ onBackToPortfolio }) {
               ...updated[targetIndex],
               image: croppedUrl,
             };
+            updateCoverBannersList(updated);
             return updated;
           });
         }
@@ -413,7 +456,11 @@ export default function CMSPage({ onBackToPortfolio }) {
           subtitle: subtitle || 'Tác phẩm lúc rảnh rỗi',
           image: croppedUrl,
         };
-        setLocalRandomWorks(prev => [...prev, newWork]);
+        setLocalRandomWorks(prev => {
+          const updated = [...prev, newWork];
+          updateRandomWorksList(updated);
+          return updated;
+        });
       } else if (actionType === 'replace' || actionType === 'adjust') {
         if (targetIndex !== null && targetIndex !== undefined) {
           setLocalRandomWorks(prev => {
@@ -426,6 +473,7 @@ export default function CMSPage({ onBackToPortfolio }) {
               ...updated[targetIndex],
               image: croppedUrl,
             };
+            updateRandomWorksList(updated);
             return updated;
           });
         }
@@ -581,6 +629,7 @@ export default function CMSPage({ onBackToPortfolio }) {
           subtitle: updatedItem.subtitle,
           image: updatedItem.image,
         };
+        updateCoverBannersList(updated);
         return updated;
       });
     } else if (mode === 'random') {
@@ -596,6 +645,7 @@ export default function CMSPage({ onBackToPortfolio }) {
           subtitle: updatedItem.subtitle,
           image: updatedItem.image,
         };
+        updateRandomWorksList(updated);
         return updated;
       });
     }
@@ -663,6 +713,7 @@ export default function CMSPage({ onBackToPortfolio }) {
           title: data.title || '',
           subtitle: data.subtitle || '',
         };
+        updateCoverBannersList(updated);
         return updated;
       });
     } else {
@@ -679,7 +730,11 @@ export default function CMSPage({ onBackToPortfolio }) {
         subtitle: data.subtitle || '',
         image: data.afterImage || '',
       };
-      setLocalCoverBanners(prev => [...prev, newBanner]);
+      setLocalCoverBanners(prev => {
+        const updated = [...prev, newBanner];
+        updateCoverBannersList(updated);
+        return updated;
+      });
     }
     setEmbedModalConfig(null);
   };
@@ -695,7 +750,11 @@ export default function CMSPage({ onBackToPortfolio }) {
         subtitle: "",
         image: url.trim(),
       };
-      setLocalCoverBanners(prev => [...prev, newBanner]);
+      setLocalCoverBanners(prev => {
+        const updated = [...prev, newBanner];
+        updateCoverBannersList(updated);
+        return updated;
+      });
     }
   };
 
@@ -707,6 +766,7 @@ export default function CMSPage({ onBackToPortfolio }) {
       const temp = newArr[index];
       newArr[index] = newArr[targetIndex];
       newArr[targetIndex] = temp;
+      updateCoverBannersList(newArr);
       return newArr;
     });
   };
@@ -714,7 +774,11 @@ export default function CMSPage({ onBackToPortfolio }) {
   const handleDeleteCoverBanner = (banner, idx) => {
     if (window.confirm("Xoá banner cover này?")) {
       if (banner.image && banner.type !== 'embed') deleteFromR2(banner.image);
-      setLocalCoverBanners(prev => prev.filter((_, i) => i !== idx));
+      setLocalCoverBanners(prev => {
+        const updated = prev.filter((_, i) => i !== idx);
+        updateCoverBannersList(updated);
+        return updated;
+      });
     }
   };
 
@@ -922,14 +986,7 @@ export default function CMSPage({ onBackToPortfolio }) {
           <div className="flex items-center justify-between sm:justify-end gap-1.5 sm:gap-2 text-xs font-mono overflow-x-auto no-scrollbar py-0.5">
             {/* Interactive Cloudflare R2 Sync Button / Status */}
             <button
-              onClick={async () => {
-                const res = await saveToCloud();
-                if (res.success) {
-                  alert("Đã lưu và đồng bộ toàn bộ website lên Cloudflare R2 thành công! ✓");
-                } else {
-                  alert("Lỗi lưu lên Cloud: " + (res.error || 'Vui lòng thử lại'));
-                }
-              }}
+              onClick={handleSaveAllToCloud}
               disabled={isCloudSyncing}
               className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-xl font-mono text-xs flex items-center justify-center gap-1.5 border transition-all cursor-pointer shadow-sm active:scale-95 shrink-0 ${
                 isCloudSyncing
