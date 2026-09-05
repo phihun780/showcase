@@ -537,9 +537,9 @@ export default function ImageCropModal({
             onTouchEnd={handleMouseUp}
             style={{
               aspectRatio: `${aspectRatio}`,
-              maxHeight: 'min(48vh, 400px)',
-              maxWidth: '100%',
-              width: aspectRatio >= 1 ? '100%' : 'auto',
+              maxHeight: 'min(50vh, 420px)',
+              maxWidth: `min(100%, calc(min(50vh, 420px) * ${aspectRatio}))`,
+              width: '100%',
             }}
             className="relative mx-auto rounded-2xl overflow-hidden bg-black border-2 border-[#C3EA39]/70 shadow-2xl cursor-grab active:cursor-grabbing select-none flex items-center justify-center group touch-none"
           >
