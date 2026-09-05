@@ -17,7 +17,13 @@ export default function ProfileEditor({ profile, onSave }) {
     favicon: profile.favicon || '',
     ogImage: profile.ogImage || '',
     socials: Array.isArray(profile.socials) ? [...profile.socials] : [],
-    experience: Array.isArray(profile.experience) ? [...profile.experience] : [],
+    experience: Array.isArray(profile.experience)
+      ? profile.experience.map((e) => ({
+          ...e,
+          company: e.company === 'Tên Công Ty' ? '' : (e.company || ''),
+          role: e.role === 'Chức vụ / Vị trí' ? '' : (e.role || ''),
+        }))
+      : [],
   });
 
   const [savedAlert, setSavedAlert] = useState(false);
@@ -135,7 +141,7 @@ export default function ProfileEditor({ profile, onSave }) {
     setFormData(prev => ({
       ...prev,
       experience: [
-        { period: `${new Date().getFullYear()}`, company: 'Tên Công Ty', role: 'Chức vụ / Vị trí' },
+        { period: `${new Date().getFullYear()}`, company: '', role: '', isCurrent: false },
         ...prev.experience,
       ]
     }));
@@ -339,7 +345,7 @@ export default function ProfileEditor({ profile, onSave }) {
                     placeholder="Tên công ty"
                     value={exp.company || ''}
                     onChange={(e) => handleExpChange(idx, 'company', e.target.value)}
-                    className="w-full px-3 py-2 sm:py-1.5 rounded-lg bg-black/60 border border-white/10 text-white text-base sm:text-xs font-bold"
+                    className="w-full px-3 py-2 sm:py-1.5 rounded-lg bg-black/60 border border-white/10 text-white text-base sm:text-xs font-bold placeholder-white/30"
                   />
                 </div>
 
@@ -349,7 +355,7 @@ export default function ProfileEditor({ profile, onSave }) {
                     placeholder="Chức vụ / Vị trí"
                     value={exp.role || ''}
                     onChange={(e) => handleExpChange(idx, 'role', e.target.value)}
-                    className="w-full px-3 py-2 sm:py-1.5 rounded-lg bg-black/60 border border-white/10 text-white/80 text-base sm:text-xs font-mono"
+                    className="w-full px-3 py-2 sm:py-1.5 rounded-lg bg-black/60 border border-white/10 text-white/90 text-base sm:text-xs font-normal placeholder-white/30"
                   />
                 </div>
 
