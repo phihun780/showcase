@@ -20,7 +20,6 @@ import {
   Trash2,
   ArrowUp,
   ArrowDown,
-  Download,
   Upload,
   RefreshCw,
   ExternalLink,
@@ -214,8 +213,6 @@ export default function CMSPage({ onBackToPortfolio }) {
     syncStatus,
     lastSavedTime,
     resetToDefault,
-    exportDataJSON,
-    importDataJSON,
   } = usePortfolioData();
 
   const [activeTab, setActiveTab] = useState('projects');
@@ -226,7 +223,6 @@ export default function CMSPage({ onBackToPortfolio }) {
   const [previewingImage, setPreviewingImage] = useState(null);
   const [embedModalConfig, setEmbedModalConfig] = useState(null);
   const [editingMediaItem, setEditingMediaItem] = useState(null);
-  const fileInputRef = useRef(null);
   const projectFileInputRef = useRef(null);
   const coverBannerFileInputRef = useRef(null);
   const replaceBannerFileInputRef = useRef(null);
@@ -905,18 +901,6 @@ export default function CMSPage({ onBackToPortfolio }) {
     }
   };
 
-  const handleFileImport = async (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      try {
-        await importDataJSON(file);
-        alert("Đã nhập dữ liệu thành công!");
-      } catch (err) {
-        alert("Lỗi: " + err.message);
-      }
-    }
-  };
-
   return (
     <div className="min-h-screen bg-[#08080A] text-[#EDEDED] font-sans antialiased selection:bg-[#C3EA39] selection:text-black relative">
       
@@ -987,33 +971,6 @@ export default function CMSPage({ onBackToPortfolio }) {
                 </>
               )}
             </button>
-
-            <button
-              onClick={exportDataJSON}
-              className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-white/75 hover:text-white flex items-center gap-1.5 border border-white/10 transition-all cursor-pointer shadow-sm active:scale-95 shrink-0"
-              title="Xuất bản sao lưu dữ liệu toàn bộ website ra file JSON"
-            >
-              <Download className="w-3.5 h-3.5 text-[#C3EA39]" />
-              <span className="hidden md:inline">Xuất JSON</span>
-              <span className="md:hidden">Xuất</span>
-            </button>
-
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-white/75 hover:text-white flex items-center gap-1.5 border border-white/10 transition-all cursor-pointer shadow-sm active:scale-95 shrink-0"
-              title="Nhập dữ liệu website từ file sao lưu JSON"
-            >
-              <Upload className="w-3.5 h-3.5 text-[#C3EA39]" />
-              <span className="hidden md:inline">Nhập JSON</span>
-              <span className="md:hidden">Nhập</span>
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".json"
-              onChange={handleFileImport}
-              className="hidden"
-            />
 
             <button
               onClick={resetToDefault}
