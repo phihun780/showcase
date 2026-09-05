@@ -458,36 +458,13 @@ export default function ProfileEditor({ profile, onSave }) {
                 />
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-mono text-white/70 uppercase block">Địa chỉ</label>
-                <input
-                  type="text"
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/50 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm"
-                />
-              </div>
-
-              <div className="space-y-1">
+              <div className="sm:col-span-2 space-y-1">
                 <label className="text-xs font-mono text-white/70 uppercase block">Email</label>
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-black/50 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm"
-                />
-              </div>
-
-              <div className="sm:col-span-2 space-y-1">
-                <label className="text-xs font-mono text-white/70 uppercase block">
-                  Link Tải CV / Resume (PDF / Google Drive / URL)
-                </label>
-                <input
-                  type="text"
-                  value={formData.cvUrl || ''}
-                  placeholder="https://drive.google.com/... hoặc /cv.pdf"
-                  onChange={(e) => setFormData({ ...formData, cvUrl: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/50 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs font-mono"
                 />
               </div>
             </div>
@@ -615,8 +592,21 @@ export default function ProfileEditor({ profile, onSave }) {
             Phần Mở Đầu (Hero Banner)
           </span>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4">
-            <div className="space-y-1">
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 sm:gap-4 items-start">
+            <div className="sm:col-span-3 space-y-1">
+              <label className="text-xs font-mono text-white/70 uppercase block">
+                Địa chỉ / Vị trí (Tag đầu trang)
+              </label>
+              <input
+                type="text"
+                value={formData.location || ''}
+                placeholder="Tp. Buôn Ma Thuột, Đắk Lắk"
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs"
+              />
+            </div>
+
+            <div className="sm:col-span-3 space-y-1">
               <label className="text-xs font-mono text-white/70 uppercase block">
                 Tiêu đề lớn 1 (Chữ trên)
               </label>
@@ -629,7 +619,7 @@ export default function ProfileEditor({ profile, onSave }) {
               />
             </div>
 
-            <div className="space-y-1">
+            <div className="sm:col-span-3 space-y-1">
               <label className="text-xs font-mono text-white/70 uppercase block">
                 Tiêu đề lớn 2 (Chữ dưới)
               </label>
@@ -642,7 +632,7 @@ export default function ProfileEditor({ profile, onSave }) {
               />
             </div>
 
-            <div className="space-y-1">
+            <div className="sm:col-span-3 space-y-1">
               <label className="text-xs font-mono text-white/70 uppercase block">
                 Tên nút bấm cuộn
               </label>
@@ -655,7 +645,7 @@ export default function ProfileEditor({ profile, onSave }) {
               />
             </div>
 
-            <div className="sm:col-span-3 space-y-1">
+            <div className="sm:col-span-12 space-y-1">
               <label className="text-xs font-mono text-white/70 uppercase block">
                 Lời giới thiệu Hero (Subtitle)
               </label>
@@ -761,7 +751,7 @@ export default function ProfileEditor({ profile, onSave }) {
               />
             </div>
 
-            <div className="sm:col-span-5 space-y-1">
+            <div className="sm:col-span-10 space-y-1">
               <label className="text-xs font-mono text-white/70 uppercase block">Tiêu đề mục</label>
               <input
                 type="text"
@@ -780,6 +770,19 @@ export default function ProfileEditor({ profile, onSave }) {
                 placeholder="TẢI CV / RESUME (PDF)"
                 onChange={(e) => setFormData({ ...formData, cvButtonText: e.target.value })}
                 className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white font-bold text-base sm:text-xs font-mono"
+              />
+            </div>
+
+            <div className="sm:col-span-7 space-y-1">
+              <label className="text-xs font-mono text-white/70 uppercase block">
+                Link Tải CV / Resume (PDF / Google Drive / URL)
+              </label>
+              <input
+                type="text"
+                value={formData.cvUrl || ''}
+                placeholder="https://drive.google.com/... hoặc /cv.pdf"
+                onChange={(e) => setFormData({ ...formData, cvUrl: e.target.value })}
+                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs font-mono"
               />
             </div>
           </div>
