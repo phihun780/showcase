@@ -224,6 +224,104 @@ export async function deleteFromR2(keyOrUrl) {
 }
 
 /**
+ * List all object keys under a prefix in Cloudflare R2 bucket
+ * @param {string} prefix - e.g. 'projects/du-an-a'
+ * @returns {Promise<string[]>} - array of keys
+ */
+export async function listObjectsInR2(prefix = '') {
+  try {
+    const cleanPrefix = prefix.replace(/^\/+/, '').replace(/\/+$/, '');
+    const host = `${R2_CONFIG.accountId}.r2.cloudflarestorage.com`;
+    const canonicalUri = `/${R2_CONFIG.bucketName}`;
+    const queryParams = `list-type=2&prefix=${encodeURIComponent(cleanPrefix)}`;
+    const endpoint = `https://${host}${canonicalUri}?${queryParams}`;
+
+    const now = new Date();
+    const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, '');
+    const dateStamp = amzDate.slice(0, 8);
+    const region = 'auto';
+    const service = 's3';
+
+    const payloadHash = await sha256Hex('');
+
+    // Canonical Request for GET ListObjectsV2
+    const canonicalHeaders = `host:${host}\nx-amz-content-sha256:${payloadHash}\nx-amz-date:${amzDate}\n`;
+    const signedHeaders = 'host;x-amz-content-sha256;x-amz-date';
+    const canonicalRequest = [
+      'GET',
+      encodeURI(canonicalUri),
+      queryParams,
+      canonicalHeaders,
+      signedHeaders,
+      payloadHash,
+    ].join('\n');
+
+    // String to Sign
+    const credentialScope = `${dateStamp}/${region}/${service}/aws4_request`;
+    const canonicalRequestHash = await sha256Hex(canonicalRequest);
+    const stringToSign = [
+      'AWS4-HMAC-SHA256',
+      amzDate,
+      credentialScope,
+      canonicalRequestHash,
+    ].join('\n');
+
+    // Signature
+    const signingKey = await getSignatureKey(R2_CONFIG.secretAccessKey, dateStamp, region, service);
+    const signature = await hmacSha256Hex(signingKey, stringToSign);
+    const authorizationHeader = `AWS4-HMAC-SHA256 Credential=${R2_CONFIG.accessKeyId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
+
+    const response = await fetch(endpoint, {
+      method: 'GET',
+      headers: {
+        'x-amz-date': amzDate,
+        'x-amz-content-sha256': payloadHash,
+        'Authorization': authorizationHeader,
+      },
+    });
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const xmlText = await response.text();
+    // Parse keys from XML response
+    const keyMatches = [...xmlText.matchAll(/<Key>(.*?)<\/Key>/g)];
+    const keys = keyMatches.map(m => m[1]);
+    return keys;
+  } catch (err) {
+    console.warn('R2 ListObjects error:', err);
+    return [];
+  }
+}
+
+/**
+ * Delete an entire folder and all its contents from R2
+ * @param {string} folderPrefix - e.g. 'projects/du-an-bao-bi'
+ */
+export async function deleteFolderFromR2(folderPrefix) {
+  if (!folderPrefix || typeof folderPrefix !== 'string') return { success: false };
+  try {
+    const cleanPrefix = folderPrefix.replace(/^\/+/, '').replace(/\/+$/, '');
+    if (!cleanPrefix || cleanPrefix === 'projects' || cleanPrefix === 'cover_banners' || cleanPrefix === 'random_works' || cleanPrefix === 'profile' || cleanPrefix === 'data') {
+      // Safety guard against deleting root categories
+      return { success: false, error: 'Cannot delete root folder' };
+    }
+
+    // Find all files inside the folder in R2
+    const keys = await listObjectsInR2(cleanPrefix);
+    if (keys.length > 0) {
+      await deleteMultipleFromR2(keys);
+    }
+    console.log(`Deleted folder ${cleanPrefix} (${keys.length} items) from R2 ✓`);
+    return { success: true, count: keys.length };
+  } catch (err) {
+    console.warn('Error deleting folder from R2:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
  * Delete multiple images from R2 in parallel
  */
 export async function deleteMultipleFromR2(urls) {

@@ -443,7 +443,12 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
 
                     <button
                       type="button"
-                      onClick={() => setFormData({ ...formData, coverImage: '' })}
+                      onClick={() => {
+                        if (formData.coverImage) {
+                          deleteFromR2(formData.coverImage);
+                        }
+                        setFormData({ ...formData, coverImage: '' });
+                      }}
                       className="p-1.5 rounded-lg bg-red-500/30 hover:bg-red-500 text-red-300 hover:text-white transition-colors cursor-pointer"
                       title="Xóa ảnh bìa"
                     >

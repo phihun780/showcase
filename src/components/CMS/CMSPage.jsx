@@ -10,7 +10,7 @@ import CMSAuthGate from './CMSAuthGate';
 import SeasonalAtmosphere from '../SeasonalAtmosphere';
 import { extractEmbedSrc } from '../../utils/juxtaposeUtils';
 import { optimizeAndUploadToR2, getProjectFolderPath } from '../../utils/imageOptimizer';
-import { deleteFromR2, deleteMultipleFromR2 } from '../../utils/r2Storage';
+import { deleteFromR2, deleteMultipleFromR2, deleteFolderFromR2 } from '../../utils/r2Storage';
 import {
   FolderKanban,
   User,
@@ -328,10 +328,19 @@ export default function CMSPage({ onBackToPortfolio }) {
     setIsEditorOpen(false);
   };
 
-  const handleDeleteProject = (proj) => {
-    if (window.confirm(`Xoá dự án "${proj.title}"?`)) {
+  const handleDeleteProject = async (proj) => {
+    if (window.confirm(`Xoá dự án "${proj.title}"? Toàn bộ ảnh trên Cloud R2 cũng sẽ được dọn dẹp.`)) {
+      // 1. Delete all images of this project from R2
       const imagesToDelete = [proj.coverImage, ...(proj.gallery || [])].filter(Boolean);
-      deleteMultipleFromR2(imagesToDelete);
+      if (imagesToDelete.length > 0) {
+        await deleteMultipleFromR2(imagesToDelete);
+      }
+
+      // 2. Delete the entire project folder in R2
+      const projectFolder = getProjectFolderPath(proj.title, proj.id);
+      await deleteFolderFromR2(projectFolder);
+
+      // 3. Remove from local projects list
       setLocalProjects(prev => prev.filter(p => p.id !== proj.id));
     }
   };
