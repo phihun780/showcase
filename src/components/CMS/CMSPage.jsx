@@ -268,31 +268,71 @@ export default function CMSPage({ onBackToPortfolio }) {
   // Tab Save Handlers (Persist to Store & Sync to Cloudflare R2)
   const handleSaveProjectsTab = async () => {
     updateProjectsList(localProjects);
-    await saveToCloud();
+    await saveToCloud({
+      updatedAt: new Date().toISOString(),
+      profile,
+      projects: localProjects,
+      coverBanners: localCoverBanners,
+      randomWorks: localRandomWorks,
+      marqueeItems: localMarqueeItems,
+      seasonalEffect: localSeasonalEffect,
+    });
     triggerSaveAlert('projects');
   };
 
   const handleSaveBannersTab = async () => {
     updateCoverBannersList(localCoverBanners);
-    await saveToCloud();
+    await saveToCloud({
+      updatedAt: new Date().toISOString(),
+      profile,
+      projects: localProjects,
+      coverBanners: localCoverBanners,
+      randomWorks: localRandomWorks,
+      marqueeItems: localMarqueeItems,
+      seasonalEffect: localSeasonalEffect,
+    });
     triggerSaveAlert('banner');
   };
 
   const handleSaveRandomWorksTab = async () => {
     updateRandomWorksList(localRandomWorks);
-    await saveToCloud();
+    await saveToCloud({
+      updatedAt: new Date().toISOString(),
+      profile,
+      projects: localProjects,
+      coverBanners: localCoverBanners,
+      randomWorks: localRandomWorks,
+      marqueeItems: localMarqueeItems,
+      seasonalEffect: localSeasonalEffect,
+    });
     triggerSaveAlert('random');
   };
 
   const handleSaveMarqueeTab = async () => {
     updateMarqueeItems(localMarqueeItems);
-    await saveToCloud();
+    await saveToCloud({
+      updatedAt: new Date().toISOString(),
+      profile,
+      projects: localProjects,
+      coverBanners: localCoverBanners,
+      randomWorks: localRandomWorks,
+      marqueeItems: localMarqueeItems,
+      seasonalEffect: localSeasonalEffect,
+    });
     triggerSaveAlert('marquee');
   };
 
   const handleSaveSeasonalTab = async () => {
     updateSeasonalEffect(localSeasonalEffect);
-    await saveToCloud();
+    await saveToCloud({
+      updatedAt: new Date().toISOString(),
+      profile,
+      projects: localProjects,
+      coverBanners: localCoverBanners,
+      randomWorks: localRandomWorks,
+      marqueeItems: localMarqueeItems,
+      seasonalEffect: localSeasonalEffect,
+    });
     triggerSaveAlert('seasonal');
   };
 
@@ -1929,7 +1969,15 @@ export default function CMSPage({ onBackToPortfolio }) {
             profile={profile}
             onSave={async (updatedProfile) => {
               updateProfile(updatedProfile);
-              await saveToCloud();
+              await saveToCloud({
+                updatedAt: new Date().toISOString(),
+                profile: updatedProfile,
+                projects: localProjects,
+                coverBanners: localCoverBanners,
+                randomWorks: localRandomWorks,
+                marqueeItems: localMarqueeItems,
+                seasonalEffect: localSeasonalEffect,
+              });
             }}
           />
         )}
