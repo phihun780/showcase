@@ -141,7 +141,7 @@ function PortfolioApp() {
 
     // 1. Dynamic Browser Tab Title & Social Title
     const finalTitle = (profile?.tabTitle && profile.tabTitle.trim())
-      || (profile?.name ? `${profile.name} — ${profile.title || 'Graphic Designer'} | Portfolio Showcase` : 'Phi Hùng — Graphic Designer | Portfolio Showcase');
+      || (profile?.name ? `${profile.name} — Showcase | Portfolio` : 'Phi Hùng — Showcase | Portfolio');
     
     document.title = finalTitle;
     
@@ -153,7 +153,7 @@ function PortfolioApp() {
 
     // 2. Dynamic Description (Meta Description / OpenGraph / Twitter)
     const descVal = (profile?.metaDescription && profile.metaDescription.trim())
-      || 'Portfolio thiết kế đồ họa, nhận diện thương hiệu và ấn phẩm sáng tạo của Phi Hùng.';
+      || 'Thiết kế không chỉ là thiết kế, mà còn là thiết kế...';
     
     let metaDesc = document.querySelector("meta[name='description']");
     if (!metaDesc) {

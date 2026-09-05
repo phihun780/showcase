@@ -38,13 +38,12 @@ function usableImage(value) {
 
 function buildSeo(profile, origin) {
   const name = (profile.name || '').trim();
-  const role = (profile.title || 'Graphic Designer').trim();
 
   const title =
     (profile.tabTitle || '').trim() ||
-    (name ? `${name} — ${role} | Portfolio Showcase` : null);
+    (name ? `${name} — Showcase | Portfolio` : 'Phi Hùng — Showcase | Portfolio');
 
-  const description = (profile.metaDescription || '').trim() || 'Portfolio thiết kế đồ họa, nhận diện thương hiệu và ấn phẩm sáng tạo của Phi Hùng.';
+  const description = (profile.metaDescription || '').trim() || 'Thiết kế không chỉ là thiết kế, mà còn là thiết kế...';
   const image = usableImage(profile.ogImage) || `${origin}/og-image.png`;
   const favicon = usableImage(profile.favicon) || `${origin}/favicon.png`;
 

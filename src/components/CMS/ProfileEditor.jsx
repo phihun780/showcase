@@ -13,8 +13,8 @@ export default function ProfileEditor({ profile, onSave }) {
     cvUrl: profile.cvUrl || profile.resumeUrl || '',
     location: profile.location || 'Tp. Buôn Ma Thuột, Đắk Lắk',
     email: profile.email || 'phihung.contact@example.com',
-    tabTitle: profile.tabTitle || 'Phi Hùng — Graphic Designer | Portfolio Showcase',
-    metaDescription: profile.metaDescription || 'Portfolio thiết kế đồ họa, nhận diện thương hiệu và ấn phẩm sáng tạo của Phi Hùng.',
+    tabTitle: profile.tabTitle || 'Phi Hùng — Showcase | Portfolio',
+    metaDescription: profile.metaDescription || 'Thiết kế không chỉ là thiết kế, mà còn là thiết kế...',
     experienceTitle: profile.experienceTitle || 'Quá Khứ Của Tui',
     socialsTitle: profile.socialsTitle || 'Những Nơi Khác',
     favicon: profile.favicon || 'https://pub-0ad262edfb6a4345a3bd61b2110c549c.r2.dev/profile/favicon.png',
@@ -1040,7 +1040,7 @@ export default function ProfileEditor({ profile, onSave }) {
             type="text"
             value={formData.tabTitle || ''}
             onChange={(e) => setFormData({ ...formData, tabTitle: e.target.value })}
-            placeholder="Phi Hùng — Graphic Designer | Portfolio Showcase"
+            placeholder="Phi Hùng — Showcase | Portfolio"
             className="w-full px-3.5 py-2.5 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm font-medium placeholder-white/30"
           />
         </div>
@@ -1059,7 +1059,7 @@ export default function ProfileEditor({ profile, onSave }) {
             rows={2}
             value={formData.metaDescription || ''}
             onChange={(e) => setFormData({ ...formData, metaDescription: e.target.value })}
-            placeholder="Portfolio thiết kế đồ họa, nhận diện thương hiệu và ấn phẩm sáng tạo của Phi Hùng."
+            placeholder="Thiết kế không chỉ là thiết kế, mà còn là thiết kế..."
             className="w-full px-3.5 py-2.5 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm font-normal placeholder-white/30 resize-none"
           />
         </div>
@@ -1170,10 +1170,10 @@ export default function ProfileEditor({ profile, onSave }) {
               </div>
             ) : null}
             <div className="text-sm font-bold text-white leading-snug line-clamp-1">
-              {formData.tabTitle || 'Phi Hùng — Graphic Designer | Portfolio Showcase'}
+              {formData.tabTitle || 'Phi Hùng — Showcase | Portfolio'}
             </div>
             <div className="text-xs text-white/60 font-light leading-relaxed line-clamp-2">
-              {formData.metaDescription || 'Portfolio thiết kế đồ họa, nhận diện thương hiệu và ấn phẩm sáng tạo của Phi Hùng.'}
+              {formData.metaDescription || 'Thiết kế không chỉ là thiết kế, mà còn là thiết kế...'}
             </div>
             <div className="text-[11px] font-mono text-white/40 pt-1">
               phihun.pages.dev
