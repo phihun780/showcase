@@ -1,4 +1,4 @@
-import { json, requireAuth, isWritableKey, PUBLIC_R2_URL } from './_lib.js';
+import { json, requireAuth, isWritableKey, getBucket, PUBLIC_R2_URL } from './_lib.js';
 
 const MAX_BYTES = 25 * 1024 * 1024; // 25MB
 
@@ -41,7 +41,8 @@ export async function onRequestPost(context) {
   if (denied) return denied;
 
   const { request, env } = context;
-  if (!env.PORTFOLIO_ASSETS) {
+  const bucket = getBucket(env);
+  if (!bucket) {
     return json({ error: 'Chưa gắn kho R2 (PORTFOLIO_ASSETS) cho dự án' }, 500);
   }
 
@@ -73,7 +74,7 @@ export async function onRequestPost(context) {
       return json({ error: 'Đường dẫn lưu trữ không hợp lệ' }, 400);
     }
 
-    await env.PORTFOLIO_ASSETS.put(key, file.stream(), {
+    await bucket.put(key, file.stream(), {
       httpMetadata: { contentType, cacheControl: 'public, max-age=31536000, immutable' },
     });
 

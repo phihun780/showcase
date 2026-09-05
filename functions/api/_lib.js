@@ -20,6 +20,10 @@ export function json(data, status = 200) {
   });
 }
 
+export function getBucket(env) {
+  return env.PORTFOLIO_ASSETS || env.showcase || env.BUCKET || env.R2 || env.SHOWCASE || null;
+}
+
 // Mật khẩu đăng nhập CMS (Cloudflare → Settings → Variables and Secrets)
 export function getCmsPassword(env) {
   const pw = env.CMS_PASSWORD ? String(env.CMS_PASSWORD).trim() : '';
@@ -173,10 +177,11 @@ async function guardKey(env, request) {
 
 // Còn được phép thử không? Trả về { allowed, retryAfterMinutes }.
 export async function checkLoginAllowed(env, request) {
-  if (!env.PORTFOLIO_ASSETS) return { allowed: true }; // không chặn được thì vẫn cho đăng nhập
+  const bucket = getBucket(env);
+  if (!bucket) return { allowed: true }; // không chặn được thì vẫn cho đăng nhập
 
   try {
-    const object = await env.PORTFOLIO_ASSETS.get(await guardKey(env, request));
+    const object = await bucket.get(await guardKey(env, request));
     if (!object) return { allowed: true };
 
     const state = JSON.parse(await object.text());
@@ -194,11 +199,12 @@ export async function checkLoginAllowed(env, request) {
 
 // Ghi nhận một lần nhập sai. Trả về số lần thử còn lại.
 export async function recordLoginFailure(env, request) {
-  if (!env.PORTFOLIO_ASSETS) return { remaining: null };
+  const bucket = getBucket(env);
+  if (!bucket) return { remaining: null };
 
   try {
     const key = await guardKey(env, request);
-    const object = await env.PORTFOLIO_ASSETS.get(key);
+    const object = await bucket.get(key);
     const now = Date.now();
 
     let state = { fails: 0, windowStart: now, lockedUntil: 0 };
@@ -215,7 +221,7 @@ export async function recordLoginFailure(env, request) {
     state.fails = (state.fails || 0) + 1;
     if (state.fails >= MAX_FAILS) state.lockedUntil = now + LOCK_MS;
 
-    await env.PORTFOLIO_ASSETS.put(key, JSON.stringify(state), {
+    await bucket.put(key, JSON.stringify(state), {
       httpMetadata: { contentType: 'application/json' },
     });
 
@@ -227,10 +233,12 @@ export async function recordLoginFailure(env, request) {
 
 // Đăng nhập đúng thì xoá bộ đếm.
 export async function clearLoginFailures(env, request) {
-  if (!env.PORTFOLIO_ASSETS) return;
+  const bucket = getBucket(env);
+  if (!bucket) return;
   try {
-    await env.PORTFOLIO_ASSETS.delete(await guardKey(env, request));
+    await bucket.delete(await guardKey(env, request));
   } catch {
     // không quan trọng
   }
 }
+

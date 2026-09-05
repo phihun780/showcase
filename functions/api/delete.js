@@ -1,4 +1,4 @@
-import { json, requireAuth, toObjectKey, isWritableKey } from './_lib.js';
+import { json, requireAuth, toObjectKey, isWritableKey, getBucket } from './_lib.js';
 
 const BATCH_SIZE = 1000; // giới hạn mỗi lệnh xoá của R2
 
@@ -7,7 +7,8 @@ export async function onRequestPost(context) {
   if (denied) return denied;
 
   const { request, env } = context;
-  if (!env.PORTFOLIO_ASSETS) {
+  const bucket = getBucket(env);
+  if (!bucket) {
     return json({ error: 'Chưa gắn kho R2 (PORTFOLIO_ASSETS) cho dự án' }, 500);
   }
 
@@ -30,7 +31,7 @@ export async function onRequestPost(context) {
 
   try {
     for (let i = 0; i < keys.length; i += BATCH_SIZE) {
-      await env.PORTFOLIO_ASSETS.delete(keys.slice(i, i + BATCH_SIZE));
+      await bucket.delete(keys.slice(i, i + BATCH_SIZE));
     }
     return json({ success: true, deleted: keys.length, skipped: inputs.length - keys.length });
   } catch (err) {

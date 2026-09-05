@@ -1,4 +1,4 @@
-import { json, requireAuth } from './_lib.js';
+import { json, requireAuth, getBucket, PUBLIC_R2_URL } from './_lib.js';
 
 const DATA_KEY = 'data/portfolio.json';
 
@@ -6,20 +6,40 @@ const DATA_KEY = 'data/portfolio.json';
 export async function onRequestGet(context) {
   const { env } = context;
 
+  // 1. Thử đọc từ R2 binding nếu có
   try {
-    if (env.PORTFOLIO_ASSETS) {
-      const object = await env.PORTFOLIO_ASSETS.get(DATA_KEY);
+    const bucket = getBucket(env);
+    if (bucket) {
+      const object = await bucket.get(DATA_KEY);
       if (object) {
         return new Response(await object.text(), {
           headers: {
             'Content-Type': 'application/json',
             'Cache-Control': 'no-cache',
+            'Access-Control-Allow-Origin': '*',
           },
         });
       }
     }
   } catch (err) {
-    console.error('Data read error:', err);
+    console.error('Data read error from binding:', err);
+  }
+
+  // 2. Fallback: Đọc từ kho R2 công khai và trả về kèm CORS header
+  try {
+    const publicRes = await fetch(`${PUBLIC_R2_URL}/${DATA_KEY}?t=${Date.now()}`);
+    if (publicRes.ok) {
+      const text = await publicRes.text();
+      return new Response(text, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+          'Access-Control-Allow-Origin': '*',
+        },
+      });
+    }
+  } catch (err) {
+    console.error('Data read error from public URL:', err);
   }
 
   return json({ empty: true });
@@ -31,7 +51,8 @@ export async function onRequestPost(context) {
   if (denied) return denied;
 
   const { request, env } = context;
-  if (!env.PORTFOLIO_ASSETS) {
+  const bucket = getBucket(env);
+  if (!bucket) {
     return json({ error: 'Chưa gắn kho R2 (PORTFOLIO_ASSETS) cho dự án' }, 500);
   }
 
@@ -47,7 +68,7 @@ export async function onRequestPost(context) {
   }
 
   try {
-    await env.PORTFOLIO_ASSETS.put(DATA_KEY, JSON.stringify(payload, null, 2), {
+    await bucket.put(DATA_KEY, JSON.stringify(payload, null, 2), {
       httpMetadata: { contentType: 'application/json' },
     });
     return json({ success: true });

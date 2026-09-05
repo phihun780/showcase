@@ -50,18 +50,46 @@ function buildSeo(profile, origin) {
   return { title, description, image, imageType: imageTypeOf(image), favicon, origin };
 }
 
-async function loadSeo(env, origin) {
-  if (!env.PORTFOLIO_ASSETS) return null;
+const PUBLIC_R2_URL = 'https://pub-0ad262edfb6a4345a3bd61b2110c549c.r2.dev';
 
+function getBucket(env) {
+  return env.PORTFOLIO_ASSETS || env.showcase || env.BUCKET || env.R2 || env.SHOWCASE || null;
+}
+
+async function loadSeo(env, origin) {
   if (cache.data && cache.key === origin && Date.now() - cache.at < CACHE_MS) {
     return cache.data;
   }
 
-  try {
-    const object = await env.PORTFOLIO_ASSETS.get('data/portfolio.json');
-    if (!object) return null;
+  const bucket = getBucket(env);
+  let rawJson = null;
 
-    const parsed = JSON.parse(await object.text());
+  if (bucket) {
+    try {
+      const object = await bucket.get('data/portfolio.json');
+      if (object) {
+        rawJson = await object.text();
+      }
+    } catch (e) {
+      console.error('Middleware bucket get error:', e);
+    }
+  }
+
+  if (!rawJson) {
+    try {
+      const res = await fetch(`${PUBLIC_R2_URL}/data/portfolio.json?t=${Date.now()}`);
+      if (res.ok) {
+        rawJson = await res.text();
+      }
+    } catch (e) {
+      console.error('Middleware fallback fetch error:', e);
+    }
+  }
+
+  if (!rawJson) return null;
+
+  try {
+    const parsed = JSON.parse(rawJson);
     const seo = buildSeo(parsed?.profile || {}, origin);
     cache = { at: Date.now(), key: origin, data: seo };
     return seo;

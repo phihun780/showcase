@@ -1,11 +1,12 @@
-import { json, requireAuth, isWritableFolder } from './_lib.js';
+import { json, requireAuth, isWritableFolder, getBucket } from './_lib.js';
 
 export async function onRequestPost(context) {
   const denied = await requireAuth(context);
   if (denied) return denied;
 
   const { request, env } = context;
-  if (!env.PORTFOLIO_ASSETS) {
+  const bucket = getBucket(env);
+  if (!bucket) {
     return json({ error: 'Chưa gắn kho R2 (PORTFOLIO_ASSETS) cho dự án' }, 500);
   }
 
@@ -28,11 +29,11 @@ export async function onRequestPost(context) {
     let total = 0;
 
     do {
-      const listed = await env.PORTFOLIO_ASSETS.list({ prefix: `${prefix}/`, cursor, limit: 1000 });
+      const listed = await bucket.list({ prefix: `${prefix}/`, cursor, limit: 1000 });
       const keys = listed.objects.map(o => o.key);
 
       if (keys.length > 0) {
-        await env.PORTFOLIO_ASSETS.delete(keys);
+        await bucket.delete(keys);
         total += keys.length;
       }
 
