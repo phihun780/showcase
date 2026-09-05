@@ -426,19 +426,19 @@ export default function ImageCropModal({
     : 'Tỉ lệ chuẩn 16:10 giống 100% khung dự án ngoài trang chủ. Kéo thả & zoom để căn lề ảnh.';
 
   return (
-    <div className="fixed inset-0 z-[100000] flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md overflow-y-auto animate-fadeIn">
-      <div className="relative w-full max-w-5xl bg-[#121216] border border-white/20 rounded-2xl sm:rounded-3xl shadow-2xl p-4 sm:p-6 flex flex-col max-h-[94vh] text-white overflow-hidden animate-fadeIn">
+    <div className="fixed inset-0 z-[100000] flex items-center justify-center p-2.5 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto animate-fadeIn">
+      <div className="relative w-full max-w-4xl bg-[#121216] border border-white/20 rounded-2xl sm:rounded-3xl shadow-2xl p-3.5 sm:p-5 flex flex-col max-h-[92vh] text-white overflow-hidden animate-fadeIn">
         {/* Sticky Header */}
-        <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-white/10 shrink-0">
+        <div className="flex items-center justify-between pb-2.5 sm:pb-3 border-b border-white/10 shrink-0">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-xl bg-[#C3EA39]/10 border border-[#C3EA39]/30 flex items-center justify-center text-[#C3EA39] shrink-0">
-              <Crop className="w-4 h-4" />
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-[#C3EA39]/10 border border-[#C3EA39]/30 flex items-center justify-center text-[#C3EA39] shrink-0">
+              <Crop className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
             <div className="min-w-0">
-              <h3 className="text-sm sm:text-lg font-display font-bold text-white flex items-center gap-2 truncate">
+              <h3 className="text-sm sm:text-base font-display font-bold text-white flex items-center gap-2 truncate">
                 <span>{modalTitle}</span>
               </h3>
-              <p className="text-[11px] sm:text-xs text-white/50 font-mono truncate hidden sm:block">
+              <p className="text-[11px] text-white/50 font-mono truncate hidden sm:block">
                 {modalSubtitle}
               </p>
             </div>
@@ -446,17 +446,17 @@ export default function ImageCropModal({
 
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer shrink-0 ml-2"
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer shrink-0 ml-2"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Scrollable Body */}
-        <div className="space-y-4 overflow-y-auto custom-scrollbar flex-1 py-3 text-xs">
+        <div className="space-y-3.5 overflow-y-auto custom-scrollbar flex-1 py-2 text-xs">
           
           {/* Top Bar: Aspect Presets & Live Overlay Toggle */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 bg-black/40 p-2.5 rounded-2xl border border-white/10">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 bg-black/40 p-2 sm:p-2.5 rounded-2xl border border-white/10">
             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth py-0.5">
               <div className="flex items-center gap-1 text-xs font-mono text-white/60 mr-1 shrink-0">
                 <Maximize2 className="w-3.5 h-3.5 text-[#C3EA39]" />
@@ -498,9 +498,9 @@ export default function ImageCropModal({
           </div>
 
           {/* Main Workspace Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 sm:gap-4 items-center">
             {/* Left / Center: Interactive Draggable Crop Canvas */}
-            <div className="lg:col-span-8 flex flex-col items-center w-full">
+            <div className="lg:col-span-8 flex flex-col items-center justify-center w-full">
               <div
                 ref={containerRef}
                 onMouseDown={handleMouseDown}
@@ -510,8 +510,12 @@ export default function ImageCropModal({
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleMouseUp}
-                style={{ aspectRatio: `${aspectRatio}` }}
-                className="relative w-full max-w-[620px] rounded-2xl overflow-hidden bg-black border-2 border-[#C3EA39] shadow-2xl cursor-grab active:cursor-grabbing select-none flex items-center justify-center group touch-none"
+                style={{
+                  aspectRatio: `${aspectRatio}`,
+                  maxHeight: 'min(45vh, 380px)',
+                  maxWidth: '100%',
+                }}
+                className="relative mx-auto rounded-2xl overflow-hidden bg-black border-2 border-[#C3EA39] shadow-2xl cursor-grab active:cursor-grabbing select-none flex items-center justify-center group touch-none"
               >
                 {/* Active High-Definition Canvas */}
                 <canvas
@@ -546,15 +550,15 @@ export default function ImageCropModal({
                     )}
 
                     {/* Bottom Info Overlay */}
-                    <div className="absolute bottom-2.5 left-3 right-3 sm:bottom-4 sm:left-5 sm:right-5 z-10 space-y-0.5 pointer-events-none">
+                    <div className="absolute bottom-2.5 left-3 right-3 sm:bottom-3 sm:left-4 sm:right-4 z-10 space-y-0.5 pointer-events-none">
                       <span className="text-[8px] sm:text-[9px] font-mono text-[#C3EA39] uppercase tracking-wider block">
                         Preview Trực Tiếp
                       </span>
-                      <h3 className="text-sm sm:text-xl font-bold uppercase text-white tracking-tight leading-tight drop-shadow-md truncate">
+                      <h3 className="text-xs sm:text-base font-bold uppercase text-white tracking-tight leading-tight drop-shadow-md truncate">
                         {projectTitle || (isBannerMode ? 'Slide Banner' : isPortraitMode ? 'Ảnh Chân Dung' : 'Tên Dự Án')}
                       </h3>
                       {projectSubtitle && (
-                        <p className="text-[10px] sm:text-xs text-white/80 font-light drop-shadow line-clamp-1">
+                        <p className="text-[10px] text-white/80 font-light drop-shadow line-clamp-1">
                           {projectSubtitle}
                         </p>
                       )}
@@ -562,7 +566,7 @@ export default function ImageCropModal({
 
                     {/* Bottom Dots Mockup for Banner */}
                     {isBannerMode && (
-                      <div className="absolute bottom-2 sm:bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1 sm:gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-black/60 border border-white/10 pointer-events-none">
+                      <div className="absolute bottom-2 sm:bottom-2.5 left-1/2 -translate-x-1/2 flex items-center gap-1 sm:gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-black/60 border border-white/10 pointer-events-none">
                         <div className="w-1.5 h-1.5 rounded-full bg-[#C3EA39]" />
                         <div className="w-1.5 h-1.5 rounded-full bg-white/30" />
                         <div className="w-1.5 h-1.5 rounded-full bg-white/30" />
@@ -578,15 +582,15 @@ export default function ImageCropModal({
               </div>
 
               {/* Zoom Controls & Slider */}
-              <div className="w-full max-w-[620px] mt-2.5 sm:mt-3.5 p-2.5 sm:p-3 rounded-2xl bg-black/40 border border-white/10 flex items-center justify-between gap-2 sm:gap-3">
+              <div className="w-full max-w-[500px] mt-2 sm:mt-2.5 p-2 sm:p-2.5 rounded-2xl bg-black/40 border border-white/10 flex items-center justify-between gap-2 sm:gap-3">
                 <div className="flex items-center gap-1.5 sm:gap-2 flex-1">
                   <button
                     type="button"
                     onClick={() => setScale((s) => Math.max(0.4, Number((s - 0.1).toFixed(2))))}
-                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-white/80 transition-colors cursor-pointer min-w-[34px] min-h-[34px] flex items-center justify-center"
+                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-white/80 transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center"
                     title="Thu nhỏ"
                   >
-                    <ZoomOut className="w-4 h-4" />
+                    <ZoomOut className="w-3.5 h-3.5" />
                   </button>
 
                   <input
@@ -602,13 +606,13 @@ export default function ImageCropModal({
                   <button
                     type="button"
                     onClick={() => setScale((s) => Math.min(3, Number((s + 0.1).toFixed(2))))}
-                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-white/80 transition-colors cursor-pointer min-w-[34px] min-h-[34px] flex items-center justify-center"
+                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-white/80 transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center"
                     title="Phóng to"
                   >
-                    <ZoomIn className="w-4 h-4" />
+                    <ZoomIn className="w-3.5 h-3.5" />
                   </button>
 
-                  <span className="text-xs font-mono font-bold text-[#C3EA39] w-10 sm:w-12 text-right">
+                  <span className="text-xs font-mono font-bold text-[#C3EA39] w-10 text-right">
                     {Math.round(scale * 100)}%
                   </span>
                 </div>
@@ -616,7 +620,7 @@ export default function ImageCropModal({
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-xs font-mono text-white/70 flex items-center gap-1 transition-colors cursor-pointer min-h-[34px]"
+                  className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-xs font-mono text-white/70 flex items-center gap-1 transition-colors cursor-pointer min-h-[32px]"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Căn giữa</span>
@@ -625,8 +629,8 @@ export default function ImageCropModal({
             </div>
 
             {/* Right: Real-time Synchronized Mirror Card */}
-            <div className="lg:col-span-4 flex flex-col space-y-2 w-full">
-              <div className="flex items-center justify-between">
+            <div className="lg:col-span-4 flex flex-col items-center lg:items-stretch space-y-2 w-full">
+              <div className="flex items-center justify-between w-full">
                 <label className="text-xs font-mono text-white/60 uppercase block">
                   {isBannerMode
                     ? 'Khung Banner (21:9):'
@@ -640,8 +644,12 @@ export default function ImageCropModal({
               </div>
 
               <div
-                style={{ aspectRatio: `${aspectRatio}` }}
-                className="relative w-full rounded-2xl overflow-hidden bg-black border-2 border-white/20 shadow-xl flex flex-col justify-end p-3.5 sm:p-4 group"
+                style={{
+                  aspectRatio: `${aspectRatio}`,
+                  maxHeight: 'min(34vh, 260px)',
+                  maxWidth: '100%',
+                }}
+                className="relative mx-auto w-full max-w-[240px] rounded-2xl overflow-hidden bg-black border-2 border-white/20 shadow-xl flex flex-col justify-end p-3 sm:p-3.5 group"
               >
                 {/* Synchronized Real-time Canvas */}
                 <canvas
@@ -669,11 +677,11 @@ export default function ImageCropModal({
 
                 {/* Title & Subtitle Mockup */}
                 <div className="relative z-10 space-y-0.5 pointer-events-none">
-                  <h4 className="text-xs sm:text-base font-bold uppercase text-white tracking-tight truncate">
+                  <h4 className="text-xs sm:text-sm font-bold uppercase text-white tracking-tight truncate">
                     {projectTitle || (isBannerMode ? 'Slide Banner' : isRandomMode ? 'Artwork' : 'Tên Dự Án')}
                   </h4>
                   {projectSubtitle && (
-                    <p className="text-[10px] sm:text-[11px] text-white/70 font-light truncate">
+                    <p className="text-[10px] text-white/70 font-light truncate">
                       {projectSubtitle}
                     </p>
                   )}
@@ -689,12 +697,12 @@ export default function ImageCropModal({
         </div>
 
         {/* Sticky Footer Actions */}
-        <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-white/10 shrink-0 bg-[#121216]">
+        <div className="flex items-center justify-end gap-2.5 pt-2.5 sm:pt-3 border-t border-white/10 shrink-0 bg-[#121216]">
           <button
             type="button"
             onClick={onClose}
             disabled={isSaving}
-            className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs font-mono transition-colors cursor-pointer min-h-[38px]"
+            className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs font-mono transition-colors cursor-pointer min-h-[36px]"
           >
             Hủy
           </button>
@@ -703,7 +711,7 @@ export default function ImageCropModal({
             type="button"
             onClick={handleConfirmCrop}
             disabled={isSaving}
-            className="px-5 py-2.5 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black font-display font-bold text-xs sm:text-sm tracking-wide flex items-center justify-center gap-2 transition-all shadow-md shadow-[#C3EA39]/20 hover:scale-[1.02] cursor-pointer disabled:opacity-50 min-h-[38px]"
+            className="px-5 py-2 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black font-display font-bold text-xs sm:text-sm tracking-wide flex items-center justify-center gap-2 transition-all shadow-md shadow-[#C3EA39]/20 hover:scale-[1.02] cursor-pointer disabled:opacity-50 min-h-[36px]"
           >
             {isSaving ? (
               <>
