@@ -4,6 +4,7 @@ import ProjectEditorModal from './ProjectEditorModal';
 import ProfileEditor from './ProfileEditor';
 import ImageCropModal from './ImageCropModal';
 import JuxtaposeEmbedModal from './JuxtaposeEmbedModal';
+import MediaItemEditorModal from './MediaItemEditorModal';
 import BeforeAfterSlider from '../BeforeAfterSlider';
 import CMSAuthGate from './CMSAuthGate';
 import SeasonalAtmosphere from '../SeasonalAtmosphere';
@@ -222,6 +223,7 @@ export default function CMSPage({ onBackToPortfolio }) {
   const [cropModalConfig, setCropModalConfig] = useState(null);
   const [previewingImage, setPreviewingImage] = useState(null);
   const [embedModalConfig, setEmbedModalConfig] = useState(null);
+  const [editingMediaItem, setEditingMediaItem] = useState(null);
   const fileInputRef = useRef(null);
   const projectFileInputRef = useRef(null);
   const coverBannerFileInputRef = useRef(null);
@@ -522,6 +524,51 @@ export default function CMSPage({ onBackToPortfolio }) {
     e.target.value = '';
   };
 
+  const handleOpenEditBanner = (banner, idx) => {
+    setEditingMediaItem({ item: banner, index: idx, mode: 'banner' });
+  };
+
+  const handleOpenEditRandomWork = (work, idx) => {
+    setEditingMediaItem({ item: work, index: idx, mode: 'random' });
+  };
+
+  const handleSaveMediaItem = (updatedItem) => {
+    if (!editingMediaItem) return;
+    const { mode, index } = editingMediaItem;
+    if (mode === 'banner') {
+      setLocalCoverBanners(prev => {
+        const updated = [...prev];
+        const oldImg = updated[index]?.image;
+        if (oldImg && oldImg !== updatedItem.image && updated[index]?.type !== 'embed') {
+          deleteFromR2(oldImg);
+        }
+        updated[index] = {
+          ...updated[index],
+          title: updatedItem.title,
+          subtitle: updatedItem.subtitle,
+          image: updatedItem.image,
+        };
+        return updated;
+      });
+    } else if (mode === 'random') {
+      setLocalRandomWorks(prev => {
+        const updated = [...prev];
+        const oldImg = updated[index]?.image;
+        if (oldImg && oldImg !== updatedItem.image) {
+          deleteFromR2(oldImg);
+        }
+        updated[index] = {
+          ...updated[index],
+          title: updatedItem.title,
+          subtitle: updatedItem.subtitle,
+          image: updatedItem.image,
+        };
+        return updated;
+      });
+    }
+    setEditingMediaItem(null);
+  };
+
   const handleAdjustBanner = (banner, idx) => {
     setCropModalConfig({
       isOpen: true,
@@ -533,24 +580,6 @@ export default function CMSPage({ onBackToPortfolio }) {
       subtitle: banner.subtitle || "",
       initialAspectRatio: 21 / 9,
     });
-  };
-
-  const handleEditImageBannerInfo = (banner, idx) => {
-    const newTitle = window.prompt("Nhập tiêu đề cho Slide Banner (tuỳ chọn):", banner.title || "");
-    if (newTitle !== null) {
-      const newSubtitle = window.prompt("Nhập mô tả phụ cho Slide Banner (tuỳ chọn):", banner.subtitle || "");
-      if (newSubtitle !== null) {
-        setLocalCoverBanners(prev => {
-          const updated = [...prev];
-          updated[idx] = {
-            ...updated[idx],
-            title: newTitle.trim(),
-            subtitle: newSubtitle.trim(),
-          };
-          return updated;
-        });
-      }
-    }
   };
 
   const handleOpenAddEmbedBanner = () => {
@@ -1422,58 +1451,22 @@ export default function CMSPage({ onBackToPortfolio }) {
                         </div>
 
                         {/* Top Right: Actions */}
-                        <div className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 flex items-center gap-1 sm:gap-1.5 z-20">
-                          {isEmbed ? (
-                            <button
-                              onClick={() => handleOpenEditEmbedBanner(banner, idx)}
-                              className="px-2 py-1 rounded-lg bg-black/80 hover:bg-[#C3EA39] text-[#C3EA39] hover:text-black text-[10px] sm:text-[11px] font-mono font-bold flex items-center gap-1 transition-colors cursor-pointer border border-[#C3EA39]/40 shadow-md"
-                              title="Chỉnh sửa Juxtapose Before / After"
-                            >
-                              <Edit2 className="w-3 h-3" />
-                              <span>Sửa</span>
-                            </button>
-                          ) : (
-                            <>
-                              <button
-                                onClick={() => handleAdjustBanner(banner, idx)}
-                                className="px-2 py-1 rounded-lg bg-black/80 hover:bg-[#C3EA39] text-[#C3EA39] hover:text-black text-[10px] sm:text-[11px] font-mono font-bold flex items-center gap-1 transition-colors cursor-pointer border border-[#C3EA39]/30"
-                                title="Căn chỉnh khung preview, zoom & filter"
-                              >
-                                <SlidersHorizontal className="w-3 h-3" />
-                                <span>Căn chỉnh</span>
-                              </button>
-                              <button
-                                onClick={() => handleTriggerReplaceBanner(idx)}
-                                className="px-2 py-1 rounded-lg bg-black/80 hover:bg-white text-white/80 hover:text-black text-[10px] sm:text-[11px] font-mono flex items-center gap-1 transition-colors cursor-pointer border border-white/10"
-                                title="Chọn ảnh mới để thay thế và căn chỉnh"
-                              >
-                                <Upload className="w-3 h-3" />
-                                <span>Đổi ảnh</span>
-                              </button>
-                              <button
-                                onClick={() => handleEditImageBannerInfo(banner, idx)}
-                                className="px-2 py-1 rounded-lg bg-black/80 hover:bg-white text-white/80 hover:text-black text-[10px] sm:text-[11px] font-mono flex items-center gap-1 transition-colors cursor-pointer border border-white/10"
-                                title="Đổi tiêu đề & mô tả"
-                              >
-                                <Edit2 className="w-3 h-3" />
-                                <span>Tên</span>
-                              </button>
-                              <button
-                                onClick={() => setPreviewingImage(banner.image)}
-                                className="p-1 sm:p-1.5 rounded-lg bg-black/75 hover:bg-white text-white/80 hover:text-black transition-colors cursor-pointer border border-white/10"
-                                title="Xem ảnh đầy đủ"
-                              >
-                                <Eye className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                              </button>
-                            </>
-                          )}
+                        <div className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 flex items-center gap-1.5 z-20">
+                          <button
+                            onClick={() => isEmbed ? handleOpenEditEmbedBanner(banner, idx) : handleOpenEditBanner(banner, idx)}
+                            className="px-2.5 py-1 sm:px-3 sm:py-1 rounded-lg bg-black/80 hover:bg-[#C3EA39] text-[#C3EA39] hover:text-black text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer border border-[#C3EA39]/40 shadow-md active:scale-95"
+                            title="Chỉnh sửa thông tin, ảnh & căn chỉnh"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                            <span>Sửa</span>
+                          </button>
 
                           <button
                             onClick={() => handleDeleteCoverBanner(banner, idx)}
-                            className="p-1 sm:p-1.5 rounded-lg bg-black/75 hover:bg-red-500 text-white/80 hover:text-white transition-colors cursor-pointer border border-white/10 shadow-md"
+                            className="p-1 sm:p-1.5 rounded-lg bg-black/75 hover:bg-red-500 text-white/80 hover:text-white transition-colors cursor-pointer border border-white/10 shadow-md active:scale-95"
                             title="Xoá banner"
                           >
-                            <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </div>
@@ -1602,44 +1595,22 @@ export default function CMSPage({ onBackToPortfolio }) {
                       </div>
 
                       {/* Top Right: Actions */}
-                      <div className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 flex items-center gap-1 sm:gap-1.5 z-20">
+                      <div className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 flex items-center gap-1.5 z-20">
                         <button
-                          onClick={() => handleAdjustRandomWork(work, idx)}
-                          className="px-2 py-1 rounded-lg bg-black/80 hover:bg-[#C3EA39] text-[#C3EA39] hover:text-black text-[10px] sm:text-[11px] font-mono font-bold flex items-center gap-1 transition-colors cursor-pointer border border-[#C3EA39]/30"
-                          title="Căn chỉnh khung preview, zoom & filter (1:1)"
+                          onClick={() => handleOpenEditRandomWork(work, idx)}
+                          className="px-2.5 py-1 sm:px-3 sm:py-1 rounded-lg bg-black/80 hover:bg-[#C3EA39] text-[#C3EA39] hover:text-black text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer border border-[#C3EA39]/40 shadow-md active:scale-95"
+                          title="Chỉnh sửa tác phẩm, ảnh & căn chỉnh"
                         >
-                          <SlidersHorizontal className="w-3 h-3" />
-                          <span>Căn chỉnh</span>
+                          <Edit2 className="w-3.5 h-3.5" />
+                          <span>Sửa</span>
                         </button>
-                        <button
-                          onClick={() => handleTriggerReplaceRandom(idx)}
-                          className="px-2 py-1 rounded-lg bg-black/80 hover:bg-white text-white/80 hover:text-black text-[10px] sm:text-[11px] font-mono flex items-center gap-1 transition-colors cursor-pointer border border-white/10"
-                          title="Chọn ảnh mới để thay thế và căn chỉnh"
-                        >
-                          <Upload className="w-3 h-3" />
-                          <span>Đổi ảnh</span>
-                        </button>
-                        <button
-                          onClick={() => handleEditRandomWorkInfo(work, idx)}
-                          className="px-2 py-1 rounded-lg bg-black/80 hover:bg-white text-white/80 hover:text-black text-[10px] sm:text-[11px] font-mono flex items-center gap-1 transition-colors cursor-pointer border border-white/10"
-                          title="Đổi tên tác phẩm & mô tả phụ"
-                        >
-                          <Edit2 className="w-3 h-3" />
-                          <span>Tên</span>
-                        </button>
-                        <button
-                          onClick={() => setPreviewingImage(work.image)}
-                          className="p-1 sm:p-1.5 rounded-lg bg-black/75 hover:bg-white text-white/80 hover:text-black transition-colors cursor-pointer border border-white/10"
-                          title="Xem ảnh đầy đủ"
-                        >
-                          <Eye className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                        </button>
+
                         <button
                           onClick={() => handleDeleteRandomWork(work, idx)}
-                          className="p-1 sm:p-1.5 rounded-lg bg-black/75 hover:bg-red-500 text-white/80 hover:text-white transition-colors cursor-pointer border border-white/10"
+                          className="p-1 sm:p-1.5 rounded-lg bg-black/75 hover:bg-red-500 text-white/80 hover:text-white transition-colors cursor-pointer border border-white/10 active:scale-95"
                           title="Xoá artwork"
                         >
-                          <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
@@ -1970,6 +1941,19 @@ export default function CMSPage({ onBackToPortfolio }) {
           onCropComplete={handleUnifiedCropComplete}
           mode={cropModalConfig.mode}
           initialAspectRatio={cropModalConfig.initialAspectRatio}
+        />
+      )}
+
+      {/* Unified Media Item Editor Modal (Banner & Random Work) */}
+      {editingMediaItem && (
+        <MediaItemEditorModal
+          isOpen={Boolean(editingMediaItem)}
+          item={editingMediaItem.item}
+          index={editingMediaItem.index}
+          mode={editingMediaItem.mode}
+          onSave={handleSaveMediaItem}
+          onClose={() => setEditingMediaItem(null)}
+          onPreviewImage={(src) => setPreviewingImage(src)}
         />
       )}
 
