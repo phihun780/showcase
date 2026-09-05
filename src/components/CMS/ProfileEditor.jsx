@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, Check, Upload, Image as ImageIcon, Sparkles, Loader2, Crop } from 'lucide-react';
+import { Plus, Trash2, Check, Upload, Image as ImageIcon, Sparkles, Loader2, Crop, GripVertical, Edit3 } from 'lucide-react';
 import { optimizeAndUploadToR2 } from '../../utils/imageOptimizer';
 import { deleteFromR2 } from '../../utils/r2Storage';
 import ImageCropModal from './ImageCropModal';
@@ -14,6 +14,8 @@ export default function ProfileEditor({ profile, onSave }) {
     location: profile.location || 'Tp. Buôn Ma Thuột, Đắk Lắk',
     email: profile.email || 'phihung.contact@example.com',
     tabTitle: profile.tabTitle || 'Phi Hùng — Graphic Designer | Portfolio Showcase',
+    experienceTitle: profile.experienceTitle || 'Quá Khứ Của Tui',
+    socialsTitle: profile.socialsTitle || 'Những Nơi Khác',
     favicon: profile.favicon || '',
     ogImage: profile.ogImage || '',
     socials: Array.isArray(profile.socials) ? [...profile.socials] : [],
@@ -32,6 +34,14 @@ export default function ProfileEditor({ profile, onSave }) {
   const [isUploading, setIsUploading] = useState(false);
   const [cropImageSrc, setCropImageSrc] = useState(null);
   const [isCropOpen, setIsCropOpen] = useState(false);
+
+  // Drag & drop state for Experience list
+  const [draggedExpIndex, setDraggedExpIndex] = useState(null);
+  const [dragOverExpIndex, setDragOverExpIndex] = useState(null);
+
+  // Drag & drop state for Socials list
+  const [draggedSocialIndex, setDraggedSocialIndex] = useState(null);
+  const [dragOverSocialIndex, setDragOverSocialIndex] = useState(null);
 
   const handleFaviconUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -153,6 +163,76 @@ export default function ProfileEditor({ profile, onSave }) {
       ...prev,
       experience: prev.experience.filter((_, i) => i !== idx)
     }));
+  };
+
+  // Drag & Drop handlers for Experience
+  const handleExpDragStart = (e, index) => {
+    setDraggedExpIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    try { e.dataTransfer.setData('text/plain', String(index)); } catch (err) {}
+  };
+
+  const handleExpDragOver = (e, index) => {
+    e.preventDefault();
+    if (draggedExpIndex === null || draggedExpIndex === index) return;
+    setDragOverExpIndex(index);
+  };
+
+  const handleExpDrop = (e, targetIndex) => {
+    e.preventDefault();
+    if (draggedExpIndex === null || draggedExpIndex === targetIndex) {
+      setDraggedExpIndex(null);
+      setDragOverExpIndex(null);
+      return;
+    }
+    setFormData(prev => {
+      const list = [...prev.experience];
+      const [movedItem] = list.splice(draggedExpIndex, 1);
+      list.splice(targetIndex, 0, movedItem);
+      return { ...prev, experience: list };
+    });
+    setDraggedExpIndex(null);
+    setDragOverExpIndex(null);
+  };
+
+  const handleExpDragEnd = () => {
+    setDraggedExpIndex(null);
+    setDragOverExpIndex(null);
+  };
+
+  // Drag & Drop handlers for Socials
+  const handleSocialDragStart = (e, index) => {
+    setDraggedSocialIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    try { e.dataTransfer.setData('text/plain', String(index)); } catch (err) {}
+  };
+
+  const handleSocialDragOver = (e, index) => {
+    e.preventDefault();
+    if (draggedSocialIndex === null || draggedSocialIndex === index) return;
+    setDragOverSocialIndex(index);
+  };
+
+  const handleSocialDrop = (e, targetIndex) => {
+    e.preventDefault();
+    if (draggedSocialIndex === null || draggedSocialIndex === targetIndex) {
+      setDraggedSocialIndex(null);
+      setDragOverSocialIndex(null);
+      return;
+    }
+    setFormData(prev => {
+      const list = [...prev.socials];
+      const [movedItem] = list.splice(draggedSocialIndex, 1);
+      list.splice(targetIndex, 0, movedItem);
+      return { ...prev, socials: list };
+    });
+    setDraggedSocialIndex(null);
+    setDragOverSocialIndex(null);
+  };
+
+  const handleSocialDragEnd = () => {
+    setDraggedSocialIndex(null);
+    setDragOverSocialIndex(null);
   };
 
   const handleSubmit = (e) => {
@@ -317,9 +397,17 @@ export default function ProfileEditor({ profile, onSave }) {
       {/* Quá Khứ Của Tui (Timeline) */}
       <div className="p-4 sm:p-6 rounded-2xl bg-[#121216] border border-white/10 space-y-4">
         <div className="flex items-center justify-between pb-2 border-b border-white/10">
-          <h3 className="text-base font-display font-bold text-white">
-            Quá Khứ Của Tui
-          </h3>
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={formData.experienceTitle || 'Quá Khứ Của Tui'}
+              onChange={(e) => setFormData({ ...formData, experienceTitle: e.target.value })}
+              placeholder="Quá Khứ Của Tui"
+              className="text-base font-display font-bold text-white bg-transparent border-b border-dashed border-white/25 hover:border-[#C3EA39] focus:border-[#C3EA39] focus:outline-none transition-colors max-w-xs cursor-text px-1 py-0.5"
+              title="Nhấp chuột vào để đổi tên tiêu đề mục này"
+            />
+            <Edit3 className="w-3.5 h-3.5 text-white/30" />
+          </div>
 
           <button
             type="button"
@@ -334,27 +422,48 @@ export default function ProfileEditor({ profile, onSave }) {
         <div className="space-y-3">
           {formData.experience.map((exp, idx) => {
             const isCurrent = Boolean(exp.isCurrent);
+            const isDragging = draggedExpIndex === idx;
+            const isOver = dragOverExpIndex === idx;
 
             return (
               <div
                 key={idx}
-                className="p-3.5 rounded-xl bg-black/40 border border-white/10 flex flex-col sm:grid sm:grid-cols-12 gap-2.5 items-stretch sm:items-start"
+                draggable
+                onDragStart={(e) => handleExpDragStart(e, idx)}
+                onDragOver={(e) => handleExpDragOver(e, idx)}
+                onDrop={(e) => handleExpDrop(e, idx)}
+                onDragEnd={handleExpDragEnd}
+                className={`p-3.5 rounded-xl bg-black/40 border transition-all flex flex-col sm:grid sm:grid-cols-12 gap-2.5 items-stretch sm:items-start ${
+                  isDragging
+                    ? 'opacity-40 border-[#C3EA39] scale-[0.99] border-dashed'
+                    : isOver
+                    ? 'border-[#C3EA39] bg-[#C3EA39]/5 shadow-lg shadow-[#C3EA39]/10'
+                    : 'border-white/10 hover:border-white/20'
+                }`}
               >
-                <div className="sm:col-span-4 space-y-1.5">
-                  <input
-                    type="text"
-                    placeholder="Tên công ty"
-                    value={exp.company || ''}
-                    onChange={(e) => handleExpChange(idx, 'company', e.target.value)}
-                    className="w-full px-3 py-2 sm:py-1.5 rounded-lg bg-black/60 border border-white/10 text-white text-base sm:text-xs font-bold placeholder-white/30"
-                  />
-                  <input
-                    type="text"
-                    placeholder="🔗 Link web cty (tuỳ chọn)"
-                    value={exp.url || ''}
-                    onChange={(e) => handleExpChange(idx, 'url', e.target.value)}
-                    className="w-full px-2.5 py-1 rounded-lg bg-black/30 border border-white/5 focus:border-[#C3EA39]/50 text-white/80 text-[11px] font-mono placeholder-white/20"
-                  />
+                <div className="sm:col-span-4 flex items-start gap-1.5">
+                  <div
+                    className="p-1 text-white/30 hover:text-[#C3EA39] cursor-grab active:cursor-grabbing shrink-0 pt-2 select-none"
+                    title="Giữ và kéo để đổi thứ tự công ty"
+                  >
+                    <GripVertical className="w-4 h-4" />
+                  </div>
+                  <div className="flex-1 space-y-1.5 min-w-0">
+                    <input
+                      type="text"
+                      placeholder="Tên công ty"
+                      value={exp.company || ''}
+                      onChange={(e) => handleExpChange(idx, 'company', e.target.value)}
+                      className="w-full px-3 py-2 sm:py-1.5 rounded-lg bg-black/60 border border-white/10 text-white text-base sm:text-xs font-bold placeholder-white/30"
+                    />
+                    <input
+                      type="text"
+                      placeholder="🔗 Link web cty (tuỳ chọn)"
+                      value={exp.url || ''}
+                      onChange={(e) => handleExpChange(idx, 'url', e.target.value)}
+                      className="w-full px-2.5 py-1 rounded-lg bg-black/30 border border-white/5 focus:border-[#C3EA39]/50 text-white/80 text-[11px] font-mono placeholder-white/20"
+                    />
+                  </div>
                 </div>
 
                 <div className="sm:col-span-3">
@@ -417,9 +526,17 @@ export default function ProfileEditor({ profile, onSave }) {
       {/* Những Nơi Khác (Socials) */}
       <div className="p-4 sm:p-6 rounded-2xl bg-[#121216] border border-white/10 space-y-4">
         <div className="flex items-center justify-between pb-2 border-b border-white/10">
-          <h3 className="text-base font-display font-bold text-white">
-            Những Nơi Khác
-          </h3>
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={formData.socialsTitle || 'Những Nơi Khác'}
+              onChange={(e) => setFormData({ ...formData, socialsTitle: e.target.value })}
+              placeholder="Những Nơi Khác"
+              className="text-base font-display font-bold text-white bg-transparent border-b border-dashed border-white/25 hover:border-[#C3EA39] focus:border-[#C3EA39] focus:outline-none transition-colors max-w-xs cursor-text px-1 py-0.5"
+              title="Nhấp chuột vào để đổi tên tiêu đề mục này"
+            />
+            <Edit3 className="w-3.5 h-3.5 text-white/30" />
+          </div>
 
           <button
             type="button"
@@ -432,38 +549,60 @@ export default function ProfileEditor({ profile, onSave }) {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {formData.socials.map((soc, idx) => (
-            <div
-              key={idx}
-              className="p-3.5 rounded-xl bg-black/40 border border-white/10 space-y-2"
-            >
-              <div className="flex items-center justify-between gap-2">
+          {formData.socials.map((soc, idx) => {
+            const isDragging = draggedSocialIndex === idx;
+            const isOver = dragOverSocialIndex === idx;
+
+            return (
+              <div
+                key={idx}
+                draggable
+                onDragStart={(e) => handleSocialDragStart(e, idx)}
+                onDragOver={(e) => handleSocialDragOver(e, idx)}
+                onDrop={(e) => handleSocialDrop(e, idx)}
+                onDragEnd={handleSocialDragEnd}
+                className={`p-3.5 rounded-xl bg-black/40 border transition-all space-y-2 ${
+                  isDragging
+                    ? 'opacity-40 border-[#C3EA39] scale-[0.99] border-dashed'
+                    : isOver
+                    ? 'border-[#C3EA39] bg-[#C3EA39]/5 shadow-lg shadow-[#C3EA39]/10'
+                    : 'border-white/10 hover:border-white/20'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div
+                    className="p-1 text-white/30 hover:text-[#C3EA39] cursor-grab active:cursor-grabbing shrink-0 select-none"
+                    title="Giữ và kéo để đổi thứ tự liên kết"
+                  >
+                    <GripVertical className="w-4 h-4" />
+                  </div>
+                  <input
+                    type="text"
+                    value={soc.name}
+                    onChange={(e) => handleSocialChange(idx, 'name', e.target.value)}
+                    placeholder="Tên nút"
+                    className="px-3 py-1.5 rounded-lg bg-black/60 border border-white/10 text-white font-bold text-base sm:text-xs flex-1"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveSocial(idx)}
+                    className="p-2 text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-colors min-w-[34px] min-h-[34px] flex items-center justify-center rounded-lg cursor-pointer"
+                    title="Xoá liên kết"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
                 <input
                   type="text"
-                  value={soc.name}
-                  onChange={(e) => handleSocialChange(idx, 'name', e.target.value)}
-                  placeholder="Tên nút"
-                  className="px-3 py-1.5 rounded-lg bg-black/60 border border-white/10 text-white font-bold text-base sm:text-xs flex-1"
+                  value={soc.url}
+                  onChange={(e) => handleSocialChange(idx, 'url', e.target.value)}
+                  placeholder="URL (https://...)"
+                  className="w-full px-3 py-2 sm:py-1.5 rounded-lg bg-black/60 border border-white/10 text-base sm:text-xs font-mono text-white/70"
                 />
-                <button
-                  type="button"
-                  onClick={() => handleRemoveSocial(idx)}
-                  className="p-2 text-white/40 hover:text-red-400 transition-colors min-w-[34px] min-h-[34px] flex items-center justify-center cursor-pointer"
-                  title="Xoá liên kết"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
               </div>
-
-              <input
-                type="text"
-                value={soc.url}
-                onChange={(e) => handleSocialChange(idx, 'url', e.target.value)}
-                placeholder="URL (https://...)"
-                className="w-full px-3 py-2 sm:py-1.5 rounded-lg bg-black/60 border border-white/10 text-base sm:text-xs font-mono text-white/70"
-              />
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

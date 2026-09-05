@@ -137,7 +137,7 @@ export default function AboutSection() {
               {/* Header: Quá Khứ Của Tui (Brand Color + Faint Divider Line) */}
               <div className="pb-4 border-b border-white/10">
                 <h3 className="text-xl font-display font-bold text-[#C3EA39] tracking-tight">
-                  Quá Khứ Của Tui
+                  {profile.experienceTitle || 'Quá Khứ Của Tui'}
                 </h3>
               </div>
 
@@ -212,7 +212,7 @@ export default function AboutSection() {
               {/* Header: Những Nơi Khác */}
               <div className="pb-4 border-b border-white/10">
                 <h3 className="text-xl font-display font-bold text-[#C3EA39] tracking-tight">
-                  Những Nơi Khác
+                  {profile.socialsTitle || 'Những Nơi Khác'}
                 </h3>
               </div>
 
