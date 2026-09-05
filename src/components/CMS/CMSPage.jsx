@@ -1269,16 +1269,16 @@ export default function CMSPage({ onBackToPortfolio }) {
 
                         {/* Top Right: Actions */}
                         <div className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 flex items-center gap-1 sm:gap-1.5 z-20">
-                          {isEmbed ? (
-                            <button
-                              onClick={() => handleOpenEditEmbedBanner(banner, idx)}
-                              className="px-2 py-1 rounded-lg bg-black/80 hover:bg-[#C3EA39] text-[#C3EA39] hover:text-black text-[10px] sm:text-[11px] font-mono font-bold flex items-center gap-1 transition-colors cursor-pointer border border-[#C3EA39]/40 shadow-md"
-                              title="Chỉnh sửa mã nhúng & thông tin Juxtapose"
-                            >
-                              <Edit2 className="w-3 h-3" />
-                              <span>Sửa</span>
-                            </button>
-                          ) : (
+                          <button
+                            onClick={() => handleOpenEditEmbedBanner(banner, idx)}
+                            className="px-2 py-1 rounded-lg bg-black/80 hover:bg-[#C3EA39] text-[#C3EA39] hover:text-black text-[10px] sm:text-[11px] font-mono font-bold flex items-center gap-1 transition-colors cursor-pointer border border-[#C3EA39]/40 shadow-md"
+                            title="Chỉnh sửa nội dung & thông tin banner"
+                          >
+                            <Edit2 className="w-3 h-3" />
+                            <span>Sửa</span>
+                          </button>
+
+                          {!isEmbed && (
                             <>
                               <button
                                 onClick={() => handleReCropBanner(banner, idx)}
@@ -1308,73 +1308,37 @@ export default function CMSPage({ onBackToPortfolio }) {
                         </div>
                       </div>
 
-                      {/* Bottom Form Fields & Reorder Controls */}
-                      <div className="p-3.5 sm:p-4 space-y-3 bg-[#121216] flex-1 flex flex-col justify-between">
-                        <div className="space-y-2.5">
-                          <div>
-                            <label className="text-[10px] font-mono text-white/40 block mb-1 uppercase tracking-wider">
-                              Tiêu đề banner (tuỳ chọn)
-                            </label>
-                            <input
-                              type="text"
-                              value={banner.title || ''}
-                              placeholder="Nhập tiêu đề (VD: So Sánh Bản Vẽ...)"
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                setLocalCoverBanners(prev => {
-                                  const newArr = [...prev];
-                                  newArr[idx] = { ...newArr[idx], title: val };
-                                  return newArr;
-                                });
-                              }}
-                              className="w-full px-3 py-2 sm:py-1.5 rounded-xl bg-white/5 border border-white/10 text-base sm:text-xs font-medium text-white placeholder-white/20 focus:outline-none focus:border-[#C3EA39] focus:text-[#C3EA39] transition-all"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="text-[10px] font-mono text-white/40 block mb-1 uppercase tracking-wider">
-                              Mô tả phụ (tuỳ chọn)
-                            </label>
-                            <input
-                              type="text"
-                              value={banner.subtitle || ''}
-                              placeholder="Nhập mô tả ngắn..."
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                setLocalCoverBanners(prev => {
-                                  const newArr = [...prev];
-                                  newArr[idx] = { ...newArr[idx], subtitle: val };
-                                  return newArr;
-                                });
-                              }}
-                              className="w-full px-3 py-2 sm:py-1.5 rounded-xl bg-white/5 border border-white/10 text-base sm:text-xs font-light text-white/80 placeholder-white/20 focus:outline-none focus:border-[#C3EA39] transition-all"
-                            />
-                          </div>
+                      {/* Bottom Info & Reorder Controls (Clean & compact, no duplicate inputs) */}
+                      <div className="p-3 sm:p-3.5 bg-[#121216] flex items-center justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <h4 className="text-xs sm:text-sm font-display font-bold text-white truncate">
+                            {banner.title || `Slide Banner #${idx + 1 < 10 ? `0${idx + 1}` : idx + 1}`}
+                          </h4>
+                          {banner.subtitle && (
+                            <p className="text-[11px] text-white/50 font-light truncate mt-0.5">
+                              {banner.subtitle}
+                            </p>
+                          )}
                         </div>
 
-                        {/* Footer: Position Reorder */}
-                        <div className="flex items-center justify-between pt-2.5 border-t border-white/5 text-xs font-mono">
-                          <span className="text-[11px] text-white/40">Thứ tự:</span>
-                          <div className="flex items-center gap-1.5">
-                            <button
-                              onClick={() => moveLocalCoverBanner(idx, 'up')}
-                              disabled={idx === 0}
-                              className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/80 hover:text-white transition-colors flex items-center gap-1 text-[11px] cursor-pointer min-h-[32px]"
-                              title="Di chuyển lên trước"
-                            >
-                              <ArrowUp className="w-3 h-3" />
-                              <span>Trước</span>
-                            </button>
-                            <button
-                              onClick={() => moveLocalCoverBanner(idx, 'down')}
-                              disabled={idx === localCoverBanners.length - 1}
-                              className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/80 hover:text-white transition-colors flex items-center gap-1 text-[11px] cursor-pointer min-h-[32px]"
-                              title="Di chuyển ra sau"
-                            >
-                              <span>Sau</span>
-                              <ArrowDown className="w-3 h-3" />
-                            </button>
-                          </div>
+                        {/* Reorder Buttons */}
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            onClick={() => moveLocalCoverBanner(idx, 'up')}
+                            disabled={idx === 0}
+                            className="p-1.5 sm:p-2 rounded-xl bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/70 hover:text-white transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center"
+                            title="Di chuyển lên trước"
+                          >
+                            <ArrowUp className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => moveLocalCoverBanner(idx, 'down')}
+                            disabled={idx === localCoverBanners.length - 1}
+                            className="p-1.5 sm:p-2 rounded-xl bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/70 hover:text-white transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center"
+                            title="Di chuyển ra sau"
+                          >
+                            <ArrowDown className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </div>
 
