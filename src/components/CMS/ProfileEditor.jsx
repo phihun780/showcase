@@ -63,63 +63,8 @@ export default function ProfileEditor({ profile, onSave }) {
   const [isUploading, setIsUploading] = useState(false);
   const [cropImageSrc, setCropImageSrc] = useState(null);
   const [isCropOpen, setIsCropOpen] = useState(false);
-  const [cropTarget, setCropTarget] = useState('avatar'); // 'avatar' | 'og'
 
   // Drag & drop state for Experience list
-  const [draggedExpIndex, setDraggedExpIndex] = useState(null);
-  const [dragOverExpIndex, setDragOverExpIndex] = useState(null);
-  const [canDragExp, setCanDragExp] = useState(false);
-
-  // Drag & drop state for Socials list
-  const [draggedSocialIndex, setDraggedSocialIndex] = useState(null);
-  const [dragOverSocialIndex, setDragOverSocialIndex] = useState(null);
-  const [canDragSocial, setCanDragSocial] = useState(false);
-
-  const handleFaviconUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setIsUploading(true);
-      try {
-        const res = await optimizeAndUploadToR2(file, 'profile');
-        setFormData(prev => ({ ...prev, favicon: res.url }));
-        setOptimizeNotice('Favicon đã tải lên thành công ✓');
-        setTimeout(() => setOptimizeNotice(''), 3000);
-      } catch (err) {
-        const reader = new FileReader();
-        reader.onload = (ev) => setFormData(prev => ({ ...prev, favicon: ev.target.result }));
-        reader.readAsDataURL(file);
-      } finally {
-        setIsUploading(false);
-      }
-    }
-    e.target.value = '';
-  };
-
-  // Ảnh preview khi chia sẻ link: cho cắt khung 1200×630 trước khi tải lên,
-  // vì Facebook / Zalo luôn hiển thị theo đúng khung này.
-  const handleOgImageUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        setCropImageSrc(ev.target.result);
-        setCropTarget('og');
-        setIsCropOpen(true);
-      };
-      reader.readAsDataURL(file);
-    }
-    e.target.value = '';
-  };
-
-  const handleCropOgComplete = (croppedUrl) => {
-    const oldOg = formData.ogImage;
-    if (oldOg && oldOg !== croppedUrl) {
-      deleteFromR2(oldOg);
-    }
-    setFormData(prev => ({ ...prev, ogImage: croppedUrl }));
-    setOptimizeNotice('Ảnh preview đã cắt chuẩn 1200×630 & lưu R2 ✓ — nhớ bấm Lưu bên dưới');
-    setTimeout(() => setOptimizeNotice(''), 4500);
-  };
 
   const handleAvatarUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -142,7 +87,6 @@ export default function ProfileEditor({ profile, onSave }) {
         reader.onload = (loadEvt) => {
           const dataUrl = loadEvt.target.result;
           setCropImageSrc(dataUrl);
-          setCropTarget('avatar');
           setIsCropOpen(true);
         };
         reader.readAsDataURL(file);
@@ -1017,171 +961,6 @@ export default function ProfileEditor({ profile, onSave }) {
         </div>
       </div>
 
-      {/* Nhận Diện, Tiêu Đề Tab & Thumbnail (SEO / Favicon / OpenGraph) */}
-      {/* Nhận Diện, Tiêu Đề Tab & Thumbnail (SEO / Favicon / OpenGraph) */}
-      <div className="p-4 sm:p-6 rounded-2xl bg-[#121216] border border-white/10 space-y-4">
-        <div className="pb-2 border-b border-white/10">
-          <h3 className="text-base font-display font-bold text-white">
-            Tiêu Đề Tab Trình Duyệt, Đoạn Mô Tả & Thumbnail Khi Gửi Link
-          </h3>
-        </div>
-
-        {/* 1. Tiêu đề Tab & Tiêu đề khi gửi link */}
-        <div className="p-3.5 sm:p-4 rounded-xl bg-black/40 border border-white/10 space-y-2">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-            <span className="font-mono font-bold text-xs text-[#C3EA39] uppercase">
-              1. Tiêu đề Tab & Tiêu đề Khi Gửi Link (Tab & Social Title)
-            </span>
-            <span className="text-[10px] font-mono text-white/40 bg-white/5 px-2 py-0.5 rounded border border-white/10 w-fit">
-              Dòng in đậm khi gửi link qua Messenger / Zalo...
-            </span>
-          </div>
-          <input
-            type="text"
-            value={formData.tabTitle || ''}
-            onChange={(e) => setFormData({ ...formData, tabTitle: e.target.value })}
-            placeholder="Phi Hùng — Showcase | Portfolio"
-            className="w-full px-3.5 py-2.5 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm font-medium placeholder-white/30"
-          />
-        </div>
-
-        {/* 2. Đoạn mô tả khi gửi link */}
-        <div className="p-3.5 sm:p-4 rounded-xl bg-black/40 border border-white/10 space-y-2">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-            <span className="font-mono font-bold text-xs text-[#C3EA39] uppercase">
-              2. Đoạn Mô Tả Khi Gửi Link (Social / Meta Description)
-            </span>
-            <span className="text-[10px] font-mono text-white/40 bg-white/5 px-2 py-0.5 rounded border border-white/10 w-fit">
-              Dòng mô tả bên dưới tiêu đề khi chia sẻ link
-            </span>
-          </div>
-          <textarea
-            rows={2}
-            value={formData.metaDescription || ''}
-            onChange={(e) => setFormData({ ...formData, metaDescription: e.target.value })}
-            placeholder="Thiết kế không chỉ là thiết kế, mà còn là thiết kế..."
-            className="w-full px-3.5 py-2.5 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm font-normal placeholder-white/30 resize-none"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* 3. Favicon */}
-          <div className="p-3.5 sm:p-4 rounded-xl bg-black/40 border border-white/10 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="font-mono font-bold text-xs text-[#C3EA39] uppercase">
-                3. Favicon (Icon tab web)
-              </span>
-              <span className="text-[10px] font-mono text-white/40 bg-white/5 px-2 py-0.5 rounded border border-white/10">
-                1:1 • 64×64px
-              </span>
-            </div>
-
-            <div className="flex items-center gap-3">
-              {/* Preview icon */}
-              <div className="w-12 h-12 rounded-xl bg-black border border-white/20 flex items-center justify-center overflow-hidden shrink-0">
-                {formData.favicon ? (
-                  <img src={formData.favicon} alt="Favicon" className="w-8 h-8 object-contain" />
-                ) : (
-                  <span className="text-lg text-[#C3EA39] font-black">✦</span>
-                )}
-              </div>
-
-              <div className="flex-1 space-y-1.5">
-                <input
-                  type="text"
-                  value={formData.favicon}
-                  onChange={(e) => setFormData({ ...formData, favicon: e.target.value })}
-                  placeholder="Dán link ảnh favicon..."
-                  className="w-full px-3 py-2 sm:py-1.5 rounded-lg bg-black/60 border border-white/10 text-base sm:text-xs font-mono text-white focus:outline-none focus:border-[#C3EA39]"
-                />
-                <label className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-[#C3EA39] hover:text-black text-white text-xs sm:text-[11px] font-mono font-bold transition-all cursor-pointer min-h-[36px]">
-                  <Upload className="w-3.5 h-3.5" />
-                  <span>Tải ảnh Favicon</span>
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp,image/svg+xml,image/x-icon,.ico,.png,.svg"
-                    onChange={handleFaviconUpload}
-                    className="hidden"
-                  />
-                </label>
-              </div>
-            </div>
-          </div>
-
-          {/* 4. Social Preview Thumbnail (OpenGraph) */}
-          <div className="p-3.5 sm:p-4 rounded-xl bg-black/40 border border-white/10 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="font-mono font-bold text-xs text-[#C3EA39] uppercase">
-                4. Thumbnail Chia Sẻ (Zalo / FB)
-              </span>
-              <span className="text-[10px] font-mono text-white/40 bg-white/5 px-2 py-0.5 rounded border border-white/10">
-                1200×630px
-              </span>
-            </div>
-
-            <p className="text-[11px] font-mono text-white/40 leading-relaxed">
-              Ảnh tải lên sẽ được cắt đúng khung 1200×630 và lưu dưới định dạng JPEG
-              để Zalo / Facebook đều đọc được.
-            </p>
-
-            <div className="flex items-center gap-3">
-              {/* Preview image */}
-              <div className="w-20 aspect-[1.91/1] rounded-lg bg-black border border-white/20 flex items-center justify-center overflow-hidden shrink-0">
-                {formData.ogImage ? (
-                  <img src={formData.ogImage} alt="Thumbnail" className="w-full h-full object-cover" />
-                ) : (
-                  <ImageIcon className="w-5 h-5 text-white/30" />
-                )}
-              </div>
-
-              <div className="flex-1 space-y-1.5">
-                <input
-                  type="text"
-                  value={formData.ogImage}
-                  onChange={(e) => setFormData({ ...formData, ogImage: e.target.value })}
-                  placeholder="Dán link ảnh thumbnail..."
-                  className="w-full px-3 py-2 sm:py-1.5 rounded-lg bg-black/60 border border-white/10 text-base sm:text-xs font-mono text-white focus:outline-none focus:border-[#C3EA39]"
-                />
-                <label className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-[#C3EA39] hover:text-black text-white text-xs sm:text-[11px] font-mono font-bold transition-all cursor-pointer min-h-[36px]">
-                  <Upload className="w-3.5 h-3.5" />
-                  <span>Tải ảnh & cắt khung</span>
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"
-                    onChange={handleOgImageUpload}
-                    className="hidden"
-                  />
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 5. Live Message Link Preview Simulation */}
-        <div className="p-3.5 sm:p-4 rounded-xl bg-black/30 border border-dashed border-white/15 space-y-2">
-          <span className="text-[11px] font-mono text-white/40 uppercase block">
-            Xem trước khi gửi link trên Messenger / Zalo:
-          </span>
-
-          <div className="p-3 rounded-xl bg-[#1e1e24] border border-white/10 max-w-md space-y-1.5">
-            {formData.ogImage ? (
-              <div className="w-full aspect-[1.91/1] rounded-lg overflow-hidden bg-black mb-2 border border-white/10">
-                <img src={formData.ogImage} alt="Preview" className="w-full h-full object-cover" />
-              </div>
-            ) : null}
-            <div className="text-sm font-bold text-white leading-snug line-clamp-1">
-              {formData.tabTitle || 'Phi Hùng — Showcase | Portfolio'}
-            </div>
-            <div className="text-xs text-white/60 font-light leading-relaxed line-clamp-2">
-              {formData.metaDescription || 'Thiết kế không chỉ là thiết kế, mà còn là thiết kế...'}
-            </div>
-            <div className="text-[11px] font-mono text-white/40 pt-1">
-              phihun.pages.dev
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Sticky Bottom Save Bar */}
       <div className="sticky bottom-4 z-30 p-3.5 sm:p-4 rounded-2xl bg-[#121216]/95 backdrop-blur-xl border border-white/15 shadow-2xl flex items-center justify-between gap-3">
         {savedAlert ? (
@@ -1204,14 +983,14 @@ export default function ProfileEditor({ profile, onSave }) {
         </button>
       </div>
 
-      {/* Khung cắt ảnh — dùng chung cho ảnh đại diện và ảnh preview chia sẻ */}
+      {/* Khung cắt ảnh đại diện chân dung 3:4 */}
       <ImageCropModal
         isOpen={isCropOpen}
         imageSrc={cropImageSrc}
-        mode={cropTarget === 'og' ? 'og' : 'portrait'}
-        initialAspectRatio={cropTarget === 'og' ? 1200 / 630 : 3 / 4}
+        mode="portrait"
+        initialAspectRatio={3 / 4}
         folderPrefix="profile"
-        onCropComplete={cropTarget === 'og' ? handleCropOgComplete : handleCropAvatarComplete}
+        onCropComplete={handleCropAvatarComplete}
         onClose={() => setIsCropOpen(false)}
       />
 
