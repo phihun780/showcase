@@ -3,11 +3,36 @@ import { X, Check, ZoomIn, ZoomOut, RotateCcw, Crop, Sparkles, Loader2, Maximize
 import { uploadToR2 } from '../../utils/r2Storage';
 
 const FILTER_PRESETS = [
-  { id: 'none', label: 'Gốc', icon: '🎨', filterString: 'none' },
-  { id: 'bw_contrast', label: 'B&W Tương phản', icon: '🖤', filterString: 'grayscale(100%) contrast(125%)' },
-  { id: 'bw_classic', label: 'B&W Chuẩn', icon: '⚪', filterString: 'grayscale(100%) contrast(110%)' },
-  { id: 'bw_soft', label: 'B&W Film', icon: '🎞️', filterString: 'grayscale(100%) contrast(100%) brightness(105%)' },
-  { id: 'vintage', label: 'Tone Ấm', icon: '☕', filterString: 'sepia(30%) contrast(105%) brightness(102%)' },
+  {
+    id: 'none',
+    label: 'Màu gốc (Full color)',
+    filterString: 'none',
+    bgClass: 'bg-gradient-to-tr from-[#FF5E7E] via-[#FFD166] to-[#06D6A0]',
+  },
+  {
+    id: 'bw_contrast',
+    label: 'Trắng đen tương phản cao',
+    filterString: 'grayscale(100%) contrast(125%)',
+    bgClass: 'bg-gradient-to-tr from-black via-zinc-800 to-white',
+  },
+  {
+    id: 'bw_classic',
+    label: 'Trắng đen chuẩn',
+    filterString: 'grayscale(100%) contrast(110%)',
+    bgClass: 'bg-gradient-to-tr from-zinc-900 via-zinc-500 to-zinc-200',
+  },
+  {
+    id: 'bw_soft',
+    label: 'Trắng đen Film dịu',
+    filterString: 'grayscale(100%) contrast(100%) brightness(105%)',
+    bgClass: 'bg-gradient-to-tr from-zinc-700 via-zinc-400 to-zinc-100',
+  },
+  {
+    id: 'vintage',
+    label: 'Tone ấm Vintage',
+    filterString: 'sepia(30%) contrast(105%) brightness(102%)',
+    bgClass: 'bg-gradient-to-tr from-[#4a2e18] via-[#a3683b] to-[#f4d19b]',
+  },
 ];
 
 export default function ImageCropModal({
@@ -436,56 +461,65 @@ export default function ImageCropModal({
           </button>
         </div>
 
-        {/* Unified Controls Bar (Tỉ lệ & Bộ lọc) */}
+        {/* Unified Controls Bar (Tỉ lệ & Bộ lọc dạng icon tròn) */}
         <div className="pt-3 pb-2 space-y-2 text-xs">
-          {/* Ratio Pills & Filters Row */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+          {/* Ratio Pills & Circular Filters Row */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
             {/* Aspect Ratio Pills */}
             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
               <span className="text-[11px] font-mono text-white/40 mr-1 shrink-0 flex items-center gap-1">
                 <Maximize2 className="w-3 h-3 text-[#C3EA39]" />
                 <span>Tỉ lệ:</span>
               </span>
-              {presets.map((ratio) => (
-                <button
-                  key={ratio.name}
-                  type="button"
-                  onClick={() => {
-                    setAspectRatio(ratio.value);
-                    setAspectName(ratio.name);
-                  }}
-                  className={`px-2.5 py-1 rounded-xl text-xs font-mono font-medium transition-all cursor-pointer shrink-0 ${
-                    aspectName === ratio.name
-                      ? 'bg-[#C3EA39] text-black font-bold shadow-md shadow-[#C3EA39]/15'
-                      : 'bg-white/5 hover:bg-white/10 text-white/70'
-                  }`}
-                >
-                  {ratio.label}
-                </button>
-              ))}
+              <div className="flex items-center gap-1 p-0.5 rounded-xl bg-black/40 border border-white/5">
+                {presets.map((ratio) => (
+                  <button
+                    key={ratio.name}
+                    type="button"
+                    onClick={() => {
+                      setAspectRatio(ratio.value);
+                      setAspectName(ratio.name);
+                    }}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-mono font-medium transition-all cursor-pointer shrink-0 ${
+                      aspectName === ratio.name
+                        ? 'bg-[#C3EA39] text-black font-bold shadow-sm'
+                        : 'text-white/70 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    {ratio.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {/* Filter Pills */}
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-              <span className="text-[11px] font-mono text-white/40 mr-1 shrink-0 flex items-center gap-1">
+            {/* Circular Filter Swatches */}
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+              <span className="text-[11px] font-mono text-white/40 mr-0.5 shrink-0 flex items-center gap-1">
                 <Sparkles className="w-3 h-3 text-[#C3EA39]" />
                 <span>Màu:</span>
               </span>
-              {FILTER_PRESETS.map((f) => (
-                <button
-                  key={f.id}
-                  type="button"
-                  onClick={() => setSelectedFilter(f.id)}
-                  className={`px-2.5 py-1 rounded-xl text-xs font-mono transition-all cursor-pointer shrink-0 flex items-center gap-1 ${
-                    selectedFilter === f.id
-                      ? 'bg-[#C3EA39] text-black font-bold shadow-md shadow-[#C3EA39]/15'
-                      : 'bg-white/5 hover:bg-white/10 text-white/70'
-                  }`}
-                >
-                  <span>{f.icon}</span>
-                  <span>{f.label}</span>
-                </button>
-              ))}
+              <div className="flex items-center gap-2 px-2 py-1 rounded-full bg-black/40 border border-white/5">
+                {FILTER_PRESETS.map((f) => {
+                  const isSelected = selectedFilter === f.id;
+                  return (
+                    <button
+                      key={f.id}
+                      type="button"
+                      onClick={() => setSelectedFilter(f.id)}
+                      title={f.label}
+                      className={`relative w-5.5 h-5.5 sm:w-6 sm:h-6 rounded-full transition-all cursor-pointer flex items-center justify-center ${f.bgClass} ${
+                        isSelected
+                          ? 'ring-2 ring-[#C3EA39] ring-offset-2 ring-offset-[#121216] scale-110 shadow-sm shadow-[#C3EA39]/30'
+                          : 'opacity-65 hover:opacity-100 hover:scale-105 border border-white/20'
+                      }`}
+                    >
+                      {isSelected && (
+                        <div className="w-1.5 h-1.5 rounded-full bg-white shadow-sm" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
