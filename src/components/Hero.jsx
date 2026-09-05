@@ -34,8 +34,11 @@ export default function Hero() {
   return (
     <section className="relative min-h-screen w-full max-w-full flex flex-col justify-between pt-24 sm:pt-28 lg:pt-24 pb-6 sm:pb-8 overflow-hidden touch-pan-y">
       
-      {/* Subtle Ambient Background Lime Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[450px] bg-[#C3EA39]/10 blur-[180px] rounded-full pointer-events-none" />
+      {/* Subtle Ambient Background Lime Glow (GPU Radial Gradient) */}
+      <div 
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[450px] pointer-events-none rounded-full"
+        style={{ background: 'radial-gradient(circle, rgba(195, 234, 57, 0.12) 0%, rgba(195, 234, 57, 0.03) 45%, transparent 70%)' }}
+      />
 
       {/* Main 2-Column Balanced Content Block: Left Info + Right Photoshop Simulator */}
       <div className="max-w-7xl mx-auto px-5 sm:px-8 relative z-10 w-full flex-1 flex flex-col justify-center py-4 sm:py-6 lg:-translate-y-4">

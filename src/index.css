@@ -220,23 +220,22 @@ img {
   -webkit-user-select: none;
   -ms-user-select: none;
   -webkit-touch-callout: none !important;
-  content-visibility: auto;
 }
 
-/* Hardware-Accelerate & Optimize Mobile Safari */
+/* 120FPS iOS Safari Performance Engine */
 @media (max-width: 768px) {
-  .backdrop-blur-xl,
-  .backdrop-blur-2xl {
-    -webkit-backdrop-filter: blur(8px) !important;
-    backdrop-filter: blur(8px) !important;
+  /* Eliminate heavy compositor blur passes on mobile fixed elements */
+  header {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background-color: rgba(8, 8, 10, 0.96) !important;
   }
 
-  /* GPU-assisted transform to avoid paint re-renders */
-  section {
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
+  .backdrop-blur-md,
+  .backdrop-blur-xl,
+  .backdrop-blur-2xl {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
   }
 }
 

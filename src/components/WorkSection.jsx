@@ -24,8 +24,11 @@ export default function WorkSection() {
   return (
     <section id="work" className="pt-8 sm:pt-16 pb-8 sm:pb-16 scroll-mt-16 relative w-full max-w-full overflow-hidden touch-pan-y">
       
-      {/* Ambient background glow mapped to stage */}
-      <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-[500px] h-[350px] bg-[#C3EA39]/10 blur-[150px] rounded-full pointer-events-none" />
+      {/* Ambient background glow mapped to stage (GPU Radial Gradient) */}
+      <div 
+        className="absolute top-1/2 right-1/4 -translate-y-1/2 w-[500px] h-[350px] pointer-events-none rounded-full" 
+        style={{ background: 'radial-gradient(circle, rgba(195, 234, 57, 0.08) 0%, transparent 70%)' }}
+      />
 
       <div className="max-w-7xl mx-auto px-5 sm:px-8 relative z-10">
         
@@ -127,11 +130,11 @@ export default function WorkSection() {
                     key={`placeholder-slot-${slotNum}`}
                     className="rounded-2xl transition-all duration-300 relative overflow-hidden flex-1 flex items-center justify-between px-5 sm:px-6 py-3 sm:py-3.5 border border-dashed border-white/10 bg-[#121216]/30 select-none cursor-default"
                   >
-                    {/* Cascading Gentle Light Streak from Top to Bottom (Slow & Relaxed) */}
+                    {/* Cascading Gentle Light Streak from Top to Bottom (GPU Transform) */}
                     <motion.div
                       className="absolute inset-y-0 w-64 bg-gradient-to-r from-transparent via-[#C3EA39]/12 via-white/[0.08] to-transparent -skew-x-12 pointer-events-none"
-                      initial={{ left: '-140%' }}
-                      animate={{ left: '240%' }}
+                      initial={{ x: '-150%' }}
+                      animate={{ x: '350%' }}
                       transition={{
                         repeat: Infinity,
                         repeatDelay: cycleDelay,

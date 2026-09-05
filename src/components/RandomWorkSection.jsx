@@ -22,8 +22,11 @@ export default function RandomWorkSection() {
   return (
     <section id="random" className="pt-10 sm:pt-16 pb-10 sm:pb-16 scroll-mt-16 relative w-full max-w-full overflow-hidden touch-pan-y">
       
-      {/* Background Subtle Lime Glow */}
-      <div className="absolute top-1/2 left-1/3 -translate-y-1/2 w-[550px] h-[400px] bg-[#C3EA39]/5 blur-[180px] rounded-full pointer-events-none" />
+      {/* Background Subtle Lime Glow (GPU Radial Gradient) */}
+      <div 
+        className="absolute top-1/2 left-1/3 -translate-y-1/2 w-[550px] h-[400px] pointer-events-none rounded-full" 
+        style={{ background: 'radial-gradient(circle, rgba(195, 234, 57, 0.06) 0%, transparent 70%)' }}
+      />
 
       <div className="max-w-7xl mx-auto px-5 sm:px-8 relative z-10">
         

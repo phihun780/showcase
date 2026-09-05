@@ -144,8 +144,11 @@ export default function PhotoshopSimulator() {
         className="absolute -bottom-3 sm:-bottom-5 w-4/5 h-8 bg-black/80 blur-2xl rounded-full pointer-events-none"
       />
 
-      {/* Subtle Ambient Glow behind 3D Board */}
-      <div className="absolute inset-0 bg-[#C3EA39]/10 blur-[75px] rounded-3xl pointer-events-none" />
+      {/* Subtle Ambient Glow behind 3D Board (GPU Radial Gradient) */}
+      <div 
+        className="absolute inset-0 rounded-3xl pointer-events-none" 
+        style={{ background: 'radial-gradient(circle, rgba(195, 234, 57, 0.12) 0%, transparent 70%)' }}
+      />
 
       {/* 3D FLOATING MAIN WINDOW */}
       <motion.div
@@ -162,7 +165,7 @@ export default function PhotoshopSimulator() {
           y: { duration: 5.5, repeat: Infinity, ease: 'easeInOut' },
           rotateZ: { duration: 7, repeat: Infinity, ease: 'easeInOut' }
         }}
-        className="w-full max-w-full rounded-xl bg-[#282828] border border-[#444]/90 shadow-[0_22px_55px_rgba(0,0,0,0.85)] overflow-hidden text-[#d5d5d5] font-sans text-xs select-none backdrop-blur-xl relative group transition-shadow duration-500 hover:shadow-[0_30px_70px_rgba(0,0,0,0.95)]"
+        className="w-full max-w-full rounded-xl bg-[#282828] border border-[#444]/90 shadow-[0_22px_55px_rgba(0,0,0,0.85)] overflow-hidden text-[#d5d5d5] font-sans text-xs select-none relative group transition-shadow duration-500 hover:shadow-[0_30px_70px_rgba(0,0,0,0.95)]"
       >
         
         {/* 1. TOP MENU BAR */}

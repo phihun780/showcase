@@ -79,10 +79,10 @@ export default function Header({ activeSection, setActiveSection, onOpenCMS }) {
             <AnimatePresence mode="wait">
               <motion.span
                 key={titleIndex}
-                initial={{ opacity: 0, x: -30, filter: 'blur(5px)' }}
-                animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-                exit={{ opacity: 0, x: 30, filter: 'blur(5px)' }}
-                transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                 className="font-mono font-bold text-xs sm:text-sm tracking-wider text-white group-hover:text-[#C3EA39] transition-colors whitespace-nowrap block"
               >
                 {titles[titleIndex].content}

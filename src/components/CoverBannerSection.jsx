@@ -101,8 +101,11 @@ export default function CoverBannerSection() {
       onMouseLeave={() => setIsHovered(false)}
     >
       
-      {/* Background Subtle Ambient Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-[#C3EA39]/5 blur-[180px] rounded-full pointer-events-none" />
+      {/* Background Subtle Ambient Glow (GPU Radial Gradient) */}
+      <div 
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] pointer-events-none rounded-full" 
+        style={{ background: 'radial-gradient(circle, rgba(195, 234, 57, 0.06) 0%, transparent 70%)' }}
+      />
 
       <div className="max-w-7xl mx-auto px-5 sm:px-8 relative z-10">
         

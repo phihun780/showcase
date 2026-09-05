@@ -15,8 +15,11 @@ export default function ContactSection() {
   return (
     <section id="contact" className="pt-8 sm:pt-16 pb-16 sm:pb-24 scroll-mt-16 relative">
       
-      {/* Background Glow */}
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#C3EA39]/10 blur-[160px] rounded-full pointer-events-none" />
+      {/* Background Glow (GPU Radial Gradient) */}
+      <div 
+        className="absolute bottom-10 left-1/2 -translate-x-1/2 w-[600px] h-[300px] pointer-events-none rounded-full" 
+        style={{ background: 'radial-gradient(circle, rgba(195, 234, 57, 0.08) 0%, transparent 70%)' }}
+      />
 
       <div className="max-w-7xl mx-auto px-5 sm:px-8 relative z-10">
         
