@@ -1,4 +1,5 @@
 import { json, requireAuth, isWritableKey, getBucket, PUBLIC_R2_URL } from './_lib.js';
+import { s3PutObject } from './_s3.js';
 
 const MAX_BYTES = 25 * 1024 * 1024; // 25MB
 
@@ -41,16 +42,12 @@ export async function onRequestPost(context) {
   if (denied) return denied;
 
   const { request, env } = context;
-  const bucket = getBucket(env);
-  if (!bucket) {
-    return json({ error: 'Chưa gắn kho R2 (PORTFOLIO_ASSETS) cho dự án' }, 500);
-  }
 
   try {
     const formData = await request.formData();
     const file = formData.get('file');
 
-    if (!file || typeof file.stream !== 'function') {
+    if (!file || (typeof file.stream !== 'function' && typeof file.arrayBuffer !== 'function')) {
       return json({ error: 'Thiếu file cần tải lên' }, 400);
     }
     if (file.size === 0) {
@@ -74,13 +71,26 @@ export async function onRequestPost(context) {
       return json({ error: 'Đường dẫn lưu trữ không hợp lệ' }, 400);
     }
 
-    await bucket.put(key, file.stream(), {
-      httpMetadata: { contentType, cacheControl: 'public, max-age=31536000, immutable' },
-    });
+    const bucket = getBucket(env);
+    if (bucket) {
+      await bucket.put(key, file.stream(), {
+        httpMetadata: { contentType, cacheControl: 'public, max-age=31536000, immutable' },
+      });
+      return json({ success: true, url: `${PUBLIC_R2_URL}/${key}`, key });
+    }
 
-    return json({ success: true, url: `${PUBLIC_R2_URL}/${key}`, key });
+    // Fallback qua S3 REST API
+    const buffer = await file.arrayBuffer();
+    const s3Res = await s3PutObject(env, key, buffer, contentType);
+    if (s3Res.ok) {
+      return json({ success: true, url: `${PUBLIC_R2_URL}/${key}`, key });
+    }
+
+    const errText = await s3Res.text();
+    console.error('S3 Upload error:', errText);
+    return json({ error: 'Tải ảnh lên qua S3 API thất bại: ' + s3Res.status }, 500);
   } catch (err) {
     console.error('Upload error:', err);
-    return json({ error: 'Tải ảnh lên thất bại' }, 500);
+    return json({ error: 'Tải ảnh lên thất bại: ' + err.message }, 500);
   }
 }
