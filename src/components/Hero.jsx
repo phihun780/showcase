@@ -123,8 +123,8 @@ export default function Hero() {
           </div>
 
           {/* RIGHT COLUMN: Interactive Adobe Illustrator Design Simulation */}
-          <div className="lg:col-span-7 xl:col-span-7 flex flex-col justify-center items-center lg:items-end w-full max-w-full overflow-hidden">
-            <div className="w-full max-w-full flex justify-center lg:justify-end overflow-hidden">
+          <div className="lg:col-span-7 xl:col-span-7 flex flex-col justify-center items-center lg:items-end w-full max-w-full">
+            <div className="w-full max-w-full flex justify-center lg:justify-end">
               <PhotoshopSimulator />
             </div>
           </div>

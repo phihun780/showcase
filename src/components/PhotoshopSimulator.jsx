@@ -125,7 +125,7 @@ export default function PhotoshopSimulator() {
       onMouseMove={handleContainerMouseMove}
       onMouseLeave={handleContainerMouseLeave}
       style={{ perspective: isMobile ? 'none' : 1200 }}
-      className="relative w-full max-w-[630px] lg:max-w-[670px] xl:max-w-[690px] mx-auto lg:mr-0 lg:ml-auto flex flex-col items-center justify-center py-1 sm:py-3 overflow-hidden"
+      className="relative w-full max-w-[630px] lg:max-w-[670px] xl:max-w-[690px] mx-auto lg:mr-0 lg:ml-auto flex flex-col items-center justify-center py-2 sm:py-4 px-1"
     >
       
       {/* 3D Floating Shadow on the floor */}
