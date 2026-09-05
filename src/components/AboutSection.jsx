@@ -33,8 +33,8 @@ export default function AboutSection() {
 
     let current = 0;
     const interval = setInterval(() => {
-      // Dynamic non-linear progress increments (+6% to +16%)
-      const increment = Math.floor(Math.random() * 11) + 6;
+      // Smooth natural progress increments (+3% to +7%)
+      const increment = Math.floor(Math.random() * 5) + 3;
       current = Math.min(100, current + increment);
       setDownloadProgress(current);
 
@@ -64,7 +64,7 @@ export default function AboutSection() {
           }, 3800);
         }
       }
-    }, 55);
+    }, 75);
   };
 
   return (
