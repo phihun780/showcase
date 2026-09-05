@@ -168,6 +168,8 @@ export default function ProjectModal({ project, isOpen, onClose, onSelectNextPro
                     alt={`${project.title} visual ${idx + 1}`}
                     onContextMenu={(e) => e.preventDefault()}
                     onDragStart={(e) => e.preventDefault()}
+                    loading={idx === 0 ? 'eager' : 'lazy'}
+                    decoding="async"
                     className="w-full h-auto object-cover select-none group-hover:scale-[1.01] transition-transform duration-500"
                   />
                 </div>

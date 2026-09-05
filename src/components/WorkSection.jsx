@@ -180,7 +180,9 @@ export default function WorkSection() {
                     alt={currentProject.title}
                     onContextMenu={(e) => e.preventDefault()}
                     onDragStart={(e) => e.preventDefault()}
-                    className="absolute inset-0 w-full h-full object-cover select-none group-hover:scale-105 transition-transform duration-700 ease-out animate-fadeIn"
+                    loading="lazy"
+                    decoding="async"
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                   />
                 )}
 

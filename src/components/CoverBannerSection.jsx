@@ -61,6 +61,8 @@ function BannerItem({ banner, isActive }) {
         alt={banner.title || 'Banner'}
         onContextMenu={(e) => e.preventDefault()}
         onDragStart={(e) => e.preventDefault()}
+        loading={isActive ? 'eager' : 'lazy'}
+        decoding="async"
         className="w-full h-full object-cover"
       />
     </div>

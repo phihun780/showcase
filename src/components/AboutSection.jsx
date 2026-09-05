@@ -112,6 +112,8 @@ export default function AboutSection() {
                   alt={profile.name}
                   onContextMenu={(e) => e.preventDefault()}
                   onDragStart={(e) => e.preventDefault()}
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700 select-none"
                 />
               ) : (

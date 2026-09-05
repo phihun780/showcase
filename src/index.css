@@ -206,6 +206,7 @@ html, body, #root {
   max-width: 100vw;
   overflow-x: clip !important;
   overscroll-behavior-x: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Image Anti-Copy, Anti-Drag & Long-Press Download Lock */
@@ -219,6 +220,25 @@ img {
   -webkit-user-select: none;
   -ms-user-select: none;
   -webkit-touch-callout: none !important;
+  content-visibility: auto;
 }
+
+/* Hardware-Accelerate & Optimize Mobile Safari */
+@media (max-width: 768px) {
+  .backdrop-blur-xl,
+  .backdrop-blur-2xl {
+    -webkit-backdrop-filter: blur(8px) !important;
+    backdrop-filter: blur(8px) !important;
+  }
+
+  /* GPU-assisted transform to avoid paint re-renders */
+  section {
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+}
+
 
 

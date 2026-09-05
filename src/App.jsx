@@ -78,25 +78,14 @@ function SecurityShield() {
       }
     };
 
-    // 4. Mobile Gesture Zoom Prevention (Lightweight & 100% Non-blocking)
-    const handleGesture = (e) => {
-      e.preventDefault();
-    };
-
     window.addEventListener('contextmenu', handleContextMenu, true);
     window.addEventListener('dragstart', handleDragStart, true);
     window.addEventListener('keydown', handleKeyDown, true);
-    document.addEventListener('gesturestart', handleGesture, { passive: false });
-    document.addEventListener('gesturechange', handleGesture, { passive: false });
-    document.addEventListener('gestureend', handleGesture, { passive: false });
 
     return () => {
       window.removeEventListener('contextmenu', handleContextMenu, true);
       window.removeEventListener('dragstart', handleDragStart, true);
       window.removeEventListener('keydown', handleKeyDown, true);
-      document.removeEventListener('gesturestart', handleGesture);
-      document.removeEventListener('gesturechange', handleGesture);
-      document.removeEventListener('gestureend', handleGesture);
     };
   }, []);
 

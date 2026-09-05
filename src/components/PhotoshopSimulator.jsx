@@ -74,6 +74,10 @@ export default function PhotoshopSimulator() {
 
   // Stage timeline tracking for realistic Photoshop status updates
   useEffect(() => {
+    if (isMobile) {
+      setDrawStage('complete');
+      return;
+    }
     setDrawStage('drawing');
     const t1 = setTimeout(() => setDrawStage('coloring'), 1600);
     const t2 = setTimeout(() => setDrawStage('detailing'), 2700);
@@ -84,16 +88,17 @@ export default function PhotoshopSimulator() {
       clearTimeout(t2);
       clearTimeout(t3);
     };
-  }, [selectedArtworkId, animKey]);
+  }, [selectedArtworkId, animKey, isMobile]);
 
-  // Auto switch between Cat and Dog every 7.5s (allows full drawing + 3.7s admiring finished face)
+  // Auto switch between Cat and Dog on desktop only
   useEffect(() => {
+    if (isMobile) return;
     const timer = setInterval(() => {
       setSelectedArtworkId((prev) => (prev === 'cat' ? 'dog' : 'cat'));
       setAnimKey((k) => k + 1);
-    }, 7500);
+    }, 10000);
     return () => clearInterval(timer);
-  }, []);
+  }, [isMobile]);
 
   const handleSelectAnimal = (id) => {
     setSelectedArtworkId(id);
