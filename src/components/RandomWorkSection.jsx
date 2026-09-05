@@ -38,17 +38,17 @@ export default function RandomWorkSection() {
             className="lg:col-span-5 space-y-3"
           >
             {/* Header: 01 Tùm lum tà la */}
-            <div className="flex items-baseline gap-3 sm:gap-4">
-              <span className="text-2xl sm:text-3xl md:text-4xl font-mono font-bold text-[#C3EA39]">
+            <div className="flex items-baseline gap-3 sm:gap-5">
+              <span className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-mono font-black text-[#C3EA39]">
                 {profile?.section01Number || '01'}
               </span>
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-tight">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white tracking-tight">
                 {profile?.section01Title || 'Tùm lum tà la'}
               </h2>
             </div>
 
             {/* Subtitle */}
-            <p className="text-sm sm:text-base text-white/70 font-light leading-relaxed max-w-md">
+            <p className="text-sm sm:text-base md:text-lg text-white/70 font-light leading-relaxed max-w-lg pt-1">
               {profile?.section01Subtitle || 'Những sản phẩm này được làm ra lúc rảnh rỗi và có hứng làm gì đó...'}
             </p>
           </motion.div>
