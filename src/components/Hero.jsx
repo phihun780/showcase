@@ -45,7 +45,7 @@ export default function Hero() {
           {/* LEFT COLUMN: Main Info & Brand Headline (Untouched & Bold) */}
           <div className="lg:col-span-5 xl:col-span-5 flex flex-col justify-center pr-0 lg:pr-2">
             
-            {/* Top Tagline: Buôn Ma Thuột */}
+            {/* Top Tagline: Location */}
             <motion.div
               initial={{ opacity: 0, y: -15 }}
               animate={{ opacity: 1, y: 0 }}
@@ -54,7 +54,7 @@ export default function Hero() {
             >
               <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs sm:text-sm font-mono text-white/90 backdrop-blur-md hover:border-[#C3EA39]/40 transition-colors">
                 <MapPin className="w-4 h-4 text-[#C3EA39]" />
-                <span>{profile.location}</span>
+                <span>{currentProfile?.location || 'Tp. Buôn Ma Thuột, Đắk Lắk'}</span>
               </span>
             </motion.div>
 
@@ -73,7 +73,7 @@ export default function Hero() {
                       : 'text-transparent [-webkit-text-stroke:2px_#C3EA39] sm:[-webkit-text-stroke:2.5px_#C3EA39]'
                   }`}
                 >
-                  SHOW
+                  {currentProfile?.heroTitleRow1 || 'SHOW'}
                 </span>
                 <span
                   className={`block mt-1 transition-all duration-700 ease-in-out ${
@@ -82,7 +82,14 @@ export default function Hero() {
                       : 'text-white'
                   }`}
                 >
-                  CASE<span className="text-[#C3EA39] [-webkit-text-stroke:0px]">.</span>
+                  {(currentProfile?.heroTitleRow2 || 'CASE.').endsWith('.') ? (
+                    <>
+                      {(currentProfile?.heroTitleRow2 || 'CASE.').slice(0, -1)}
+                      <span className="text-[#C3EA39] [-webkit-text-stroke:0px]">.</span>
+                    </>
+                  ) : (
+                    currentProfile?.heroTitleRow2 || 'CASE.'
+                  )}
                 </span>
               </h1>
 
@@ -115,7 +122,7 @@ export default function Hero() {
                 }}
                 className="px-5 py-2.5 sm:px-7 sm:py-3.5 md:px-8 md:py-4 rounded-full bg-[#C3EA39] hover:bg-[#b0d62e] active:scale-95 text-black font-bold text-xs sm:text-sm md:text-base tracking-wide flex items-center gap-2 sm:gap-2.5 shadow-lg shadow-[#C3EA39]/20 transition-all cursor-pointer select-none"
               >
-                <span>Dạo xem 1 vòng</span>
+                <span>{currentProfile?.heroCtaText || 'Dạo xem 1 vòng'}</span>
                 <ArrowDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-bounce" />
               </button>
             </motion.div>

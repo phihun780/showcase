@@ -6,6 +6,40 @@ export const profile = {
   location: "Tp. Buôn Ma Thuột, Đắk Lắk",
   status: "",
 
+  // Header Customization
+  headerTitle1: "PORTFOLIO // SHOWCASE",
+  headerTitle2: "GRAPHIC DESIGNER",
+  headerNavWork: "Dự án của tui",
+  headerNavAbout: "Về tui",
+
+  // Hero Customization
+  heroTitleRow1: "SHOW",
+  heroTitleRow2: "CASE.",
+  heroCtaText: "Dạo xem 1 vòng",
+
+  // Section Headings Customization
+  section01Number: "01",
+  section01Title: "Tùm lum tà la",
+  section01Subtitle: "Những sản phẩm này được làm ra lúc rảnh rỗi và có hứng làm gì đó...",
+
+  section02Number: "02",
+  section02Title: "Dự án của tui",
+
+  section03Number: "03",
+  section03Title: "Về tui",
+  experienceTitle: "Quá Khứ Của Tui",
+  socialsTitle: "Những Nơi Khác",
+  cvButtonText: "TẢI CV / RESUME (PDF)",
+
+  // Footer Customization
+  footerCopyright: "Phi Hùng",
+  footerTagline: "Graphic Designer Portfolio",
+
+  // Tab & SEO Customization
+  tabTitle: "Phi Hùng — Graphic Designer | Portfolio Showcase",
+  favicon: "",
+  ogImage: "",
+
   email: "phihung.contact@example.com",
   bio: [
     "Xin chào! Mình là Phi Hùng — Graphic Designer với 2 năm kinh nghiệm đồng hành cùng các ấn phẩm thị giác và nhận diện thương hiệu hiện đại. Mình đam mê kiến tạo những sản phẩm thiết kế giàu cảm xúc, sáng tạo và sắc nét trong từng chi tiết.",

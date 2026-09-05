@@ -4,22 +4,34 @@ import { Menu, X } from 'lucide-react';
 import { usePortfolioData } from '../context/PortfolioDataContext';
 
 export default function Header({ activeSection, setActiveSection, onOpenCMS }) {
-  const { projects } = usePortfolioData();
+  const { projects, profile } = usePortfolioData();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [titleIndex, setTitleIndex] = useState(0);
 
+  const rawTitle1 = profile?.headerTitle1 || 'PORTFOLIO // SHOWCASE';
+  const rawTitle2 = profile?.headerTitle2 || 'GRAPHIC DESIGNER';
+
+  const formatTitle = (str) => {
+    if (!str) return '';
+    if (str.includes('//')) {
+      const parts = str.split('//');
+      return (
+        <>
+          {parts[0].trim()} <span className="text-[#C3EA39] font-normal">//</span> {parts.slice(1).join('//').trim()}
+        </>
+      );
+    }
+    return str;
+  };
+
   const titles = [
     {
-      id: 'showcase',
-      content: (
-        <>
-          PORTFOLIO <span className="text-[#C3EA39] font-normal">//</span> SHOWCASE
-        </>
-      ),
+      id: 'title-1',
+      content: formatTitle(rawTitle1),
     },
     {
-      id: 'designer',
-      content: 'GRAPHIC DESIGNER',
+      id: 'title-2',
+      content: formatTitle(rawTitle2),
     },
   ];
 
@@ -28,11 +40,11 @@ export default function Header({ activeSection, setActiveSection, onOpenCMS }) {
       setTitleIndex((prev) => (prev + 1) % titles.length);
     }, 7000);
     return () => clearInterval(interval);
-  }, []);
+  }, [titles.length]);
 
   const navItems = [
-    { label: 'Dự án của tui', id: 'work', count: `${projects.length}` },
-    { label: 'Về tui', id: 'about' },
+    { label: profile?.headerNavWork || 'Dự án của tui', id: 'work', count: `${projects.length}` },
+    { label: profile?.headerNavAbout || 'Về tui', id: 'about' },
   ];
 
   const scrollToSection = (id) => {

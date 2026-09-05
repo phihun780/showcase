@@ -74,10 +74,10 @@ export default function AboutSection() {
         >
           <div className="flex items-baseline gap-3 sm:gap-4">
             <span className="text-2xl sm:text-3xl md:text-4xl font-mono font-bold text-[#C3EA39]">
-              03
+              {profile?.section03Number || '03'}
             </span>
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-tight">
-              Về tui
+              {profile?.section03Title || 'Về tui'}
             </h2>
           </div>
         </motion.div>
@@ -311,7 +311,7 @@ export default function AboutSection() {
                   <>
                     <Download className="w-4 h-4 text-black stroke-[2.5]" />
                     <span className="text-black uppercase">
-                      TẢI CV / RESUME (PDF)
+                      {profile?.cvButtonText || 'TẢI CV / RESUME (PDF)'}
                     </span>
                   </>
                 )}

@@ -18,6 +18,34 @@ export default function ProfileEditor({ profile, onSave }) {
     socialsTitle: profile.socialsTitle || 'Những Nơi Khác',
     favicon: profile.favicon || '',
     ogImage: profile.ogImage || '',
+
+    // Header Customization
+    headerTitle1: profile.headerTitle1 || 'PORTFOLIO // SHOWCASE',
+    headerTitle2: profile.headerTitle2 || 'GRAPHIC DESIGNER',
+    headerNavWork: profile.headerNavWork || 'Dự án của tui',
+    headerNavAbout: profile.headerNavAbout || 'Về tui',
+
+    // Hero Customization
+    heroTitleRow1: profile.heroTitleRow1 || 'SHOW',
+    heroTitleRow2: profile.heroTitleRow2 || 'CASE.',
+    heroCtaText: profile.heroCtaText || 'Dạo xem 1 vòng',
+
+    // Section Headings Customization
+    section01Number: profile.section01Number || '01',
+    section01Title: profile.section01Title || 'Tùm lum tà la',
+    section01Subtitle: profile.section01Subtitle || 'Những sản phẩm này được làm ra lúc rảnh rỗi và có hứng làm gì đó...',
+
+    section02Number: profile.section02Number || '02',
+    section02Title: profile.section02Title || 'Dự án của tui',
+
+    section03Number: profile.section03Number || '03',
+    section03Title: profile.section03Title || 'Về tui',
+    cvButtonText: profile.cvButtonText || 'TẢI CV / RESUME (PDF)',
+
+    // Footer Customization
+    footerCopyright: profile.footerCopyright || profile.name || 'Phi Hùng',
+    footerTagline: profile.footerTagline || 'Graphic Designer Portfolio',
+
     socials: Array.isArray(profile.socials) ? [...profile.socials] : [],
     experience: Array.isArray(profile.experience)
       ? profile.experience.map((e) => ({
@@ -477,6 +505,283 @@ export default function ProfileEditor({ profile, onSave }) {
             </div>
           </div>
 
+        </div>
+      </div>
+
+      {/* 2. Header & Footer Text Customization Panel */}
+      <div className="p-4 sm:p-6 rounded-2xl bg-[#121216] border border-white/10 space-y-4">
+        <div className="pb-2 border-b border-white/10">
+          <h3 className="text-base font-display font-bold text-white">
+            Nội Dung Header & Footer (Thanh Điều Hướng & Chân Trang)
+          </h3>
+        </div>
+
+        {/* Header Customization */}
+        <div className="p-3.5 sm:p-4 rounded-xl bg-black/40 border border-white/10 space-y-3">
+          <span className="font-mono font-bold text-xs text-[#C3EA39] uppercase block">
+            1. Header (Logo Chạy Chữ & Menu Điều Hướng)
+          </span>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
+            <div className="space-y-1">
+              <label className="text-xs font-mono text-white/70 uppercase block">
+                Chữ chạy Logo 1 (Góc trái)
+              </label>
+              <input
+                type="text"
+                value={formData.headerTitle1 || ''}
+                placeholder="PORTFOLIO // SHOWCASE"
+                onChange={(e) => setFormData({ ...formData, headerTitle1: e.target.value })}
+                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs font-mono"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-mono text-white/70 uppercase block">
+                Chữ chạy Logo 2 (Góc trái)
+              </label>
+              <input
+                type="text"
+                value={formData.headerTitle2 || ''}
+                placeholder="GRAPHIC DESIGNER"
+                onChange={(e) => setFormData({ ...formData, headerTitle2: e.target.value })}
+                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs font-mono"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-mono text-white/70 uppercase block">
+                Tên nút Menu 1 (Dự Án)
+              </label>
+              <input
+                type="text"
+                value={formData.headerNavWork || ''}
+                placeholder="Dự án của tui"
+                onChange={(e) => setFormData({ ...formData, headerNavWork: e.target.value })}
+                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs font-mono"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-mono text-white/70 uppercase block">
+                Tên nút Menu 2 (Về Tui)
+              </label>
+              <input
+                type="text"
+                value={formData.headerNavAbout || ''}
+                placeholder="Về tui"
+                onChange={(e) => setFormData({ ...formData, headerNavAbout: e.target.value })}
+                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs font-mono"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Customization */}
+        <div className="p-3.5 sm:p-4 rounded-xl bg-black/40 border border-white/10 space-y-3">
+          <span className="font-mono font-bold text-xs text-[#C3EA39] uppercase block">
+            2. Footer (Chân Trang)
+          </span>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
+            <div className="space-y-1">
+              <label className="text-xs font-mono text-white/70 uppercase block">
+                Tên bản quyền © (Footer Name)
+              </label>
+              <input
+                type="text"
+                value={formData.footerCopyright || ''}
+                placeholder="Phi Hùng"
+                onChange={(e) => setFormData({ ...formData, footerCopyright: e.target.value })}
+                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs font-mono"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-mono text-white/70 uppercase block">
+                Chức danh / Tagline Chân Trang
+              </label>
+              <input
+                type="text"
+                value={formData.footerTagline || ''}
+                placeholder="Graphic Designer Portfolio"
+                onChange={(e) => setFormData({ ...formData, footerTagline: e.target.value })}
+                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs font-mono"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Hero & Section Headings Customization Panel */}
+      <div className="p-4 sm:p-6 rounded-2xl bg-[#121216] border border-white/10 space-y-4">
+        <div className="pb-2 border-b border-white/10">
+          <h3 className="text-base font-display font-bold text-white">
+            Nội Dung Hero & Tiêu Đề Các Đầu Mục (Sections 01, 02, 03)
+          </h3>
+        </div>
+
+        {/* Hero Headline & CTA */}
+        <div className="p-3.5 sm:p-4 rounded-xl bg-black/40 border border-white/10 space-y-3">
+          <span className="font-mono font-bold text-xs text-[#C3EA39] uppercase block">
+            Phần Mở Đầu (Hero Banner)
+          </span>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4">
+            <div className="space-y-1">
+              <label className="text-xs font-mono text-white/70 uppercase block">
+                Tiêu đề lớn 1 (Chữ trên)
+              </label>
+              <input
+                type="text"
+                value={formData.heroTitleRow1 || ''}
+                placeholder="SHOW"
+                onChange={(e) => setFormData({ ...formData, heroTitleRow1: e.target.value })}
+                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white font-bold text-base sm:text-xs font-mono"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-mono text-white/70 uppercase block">
+                Tiêu đề lớn 2 (Chữ dưới)
+              </label>
+              <input
+                type="text"
+                value={formData.heroTitleRow2 || ''}
+                placeholder="CASE."
+                onChange={(e) => setFormData({ ...formData, heroTitleRow2: e.target.value })}
+                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white font-bold text-base sm:text-xs font-mono"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-mono text-white/70 uppercase block">
+                Tên nút bấm cuộn
+              </label>
+              <input
+                type="text"
+                value={formData.heroCtaText || ''}
+                placeholder="Dạo xem 1 vòng"
+                onChange={(e) => setFormData({ ...formData, heroCtaText: e.target.value })}
+                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs font-mono"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Section 01: Tùm Lum Tà La */}
+        <div className="p-3.5 sm:p-4 rounded-xl bg-black/40 border border-white/10 space-y-3">
+          <span className="font-mono font-bold text-xs text-[#C3EA39] uppercase block">
+            Mục 01 (Tác phẩm ngẫu hứng / Random Works)
+          </span>
+
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 sm:gap-4 items-start">
+            <div className="sm:col-span-2 space-y-1">
+              <label className="text-xs font-mono text-white/70 uppercase block">Số mục</label>
+              <input
+                type="text"
+                value={formData.section01Number || ''}
+                placeholder="01"
+                onChange={(e) => setFormData({ ...formData, section01Number: e.target.value })}
+                className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-[#C3EA39] font-mono font-bold text-center text-base sm:text-xs"
+              />
+            </div>
+
+            <div className="sm:col-span-4 space-y-1">
+              <label className="text-xs font-mono text-white/70 uppercase block">Tiêu đề mục</label>
+              <input
+                type="text"
+                value={formData.section01Title || ''}
+                placeholder="Tùm lum tà la"
+                onChange={(e) => setFormData({ ...formData, section01Title: e.target.value })}
+                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white font-bold text-base sm:text-xs"
+              />
+            </div>
+
+            <div className="sm:col-span-6 space-y-1">
+              <label className="text-xs font-mono text-white/70 uppercase block">Mô tả phụ</label>
+              <input
+                type="text"
+                value={formData.section01Subtitle || ''}
+                placeholder="Những sản phẩm này được làm ra lúc rảnh rỗi..."
+                onChange={(e) => setFormData({ ...formData, section01Subtitle: e.target.value })}
+                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Section 02: Dự Án */}
+        <div className="p-3.5 sm:p-4 rounded-xl bg-black/40 border border-white/10 space-y-3">
+          <span className="font-mono font-bold text-xs text-[#C3EA39] uppercase block">
+            Mục 02 (Dự Án Nổi Bật / Projects)
+          </span>
+
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 sm:gap-4 items-start">
+            <div className="sm:col-span-2 space-y-1">
+              <label className="text-xs font-mono text-white/70 uppercase block">Số mục</label>
+              <input
+                type="text"
+                value={formData.section02Number || ''}
+                placeholder="02"
+                onChange={(e) => setFormData({ ...formData, section02Number: e.target.value })}
+                className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-[#C3EA39] font-mono font-bold text-center text-base sm:text-xs"
+              />
+            </div>
+
+            <div className="sm:col-span-10 space-y-1">
+              <label className="text-xs font-mono text-white/70 uppercase block">Tiêu đề mục</label>
+              <input
+                type="text"
+                value={formData.section02Title || ''}
+                placeholder="Dự án của tui"
+                onChange={(e) => setFormData({ ...formData, section02Title: e.target.value })}
+                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white font-bold text-base sm:text-xs"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Section 03: Về Tui */}
+        <div className="p-3.5 sm:p-4 rounded-xl bg-black/40 border border-white/10 space-y-3">
+          <span className="font-mono font-bold text-xs text-[#C3EA39] uppercase block">
+            Mục 03 (Về Tui & Hồ Sơ / About)
+          </span>
+
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 sm:gap-4 items-start">
+            <div className="sm:col-span-2 space-y-1">
+              <label className="text-xs font-mono text-white/70 uppercase block">Số mục</label>
+              <input
+                type="text"
+                value={formData.section03Number || ''}
+                placeholder="03"
+                onChange={(e) => setFormData({ ...formData, section03Number: e.target.value })}
+                className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-[#C3EA39] font-mono font-bold text-center text-base sm:text-xs"
+              />
+            </div>
+
+            <div className="sm:col-span-5 space-y-1">
+              <label className="text-xs font-mono text-white/70 uppercase block">Tiêu đề mục</label>
+              <input
+                type="text"
+                value={formData.section03Title || ''}
+                placeholder="Về tui"
+                onChange={(e) => setFormData({ ...formData, section03Title: e.target.value })}
+                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white font-bold text-base sm:text-xs"
+              />
+            </div>
+
+            <div className="sm:col-span-5 space-y-1">
+              <label className="text-xs font-mono text-white/70 uppercase block">Tên nút Tải CV</label>
+              <input
+                type="text"
+                value={formData.cvButtonText || ''}
+                placeholder="TẢI CV / RESUME (PDF)"
+                onChange={(e) => setFormData({ ...formData, cvButtonText: e.target.value })}
+                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white font-bold text-base sm:text-xs font-mono"
+              />
+            </div>
+          </div>
         </div>
       </div>
 

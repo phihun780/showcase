@@ -9,7 +9,7 @@ export default function Footer({ onOpenCMS }) {
       <div className="max-w-7xl mx-auto px-5 sm:px-8 flex items-center justify-center select-none text-center">
         <div className="flex flex-wrap items-center justify-center gap-2">
           <span>
-            © {new Date().getFullYear()} <span className="text-white/80 font-bold">{profile?.name || 'Phi Hùng'}</span>
+            © {new Date().getFullYear()} <span className="text-white/80 font-bold">{profile?.footerCopyright || profile?.name || 'Phi Hùng'}</span>
           </span>
           <span 
             onClick={onOpenCMS} 
@@ -18,7 +18,7 @@ export default function Footer({ onOpenCMS }) {
           >
             ✦
           </span>
-          <span>Graphic Designer Portfolio</span>
+          <span>{profile?.footerTagline || 'Graphic Designer Portfolio'}</span>
         </div>
       </div>
     </footer>

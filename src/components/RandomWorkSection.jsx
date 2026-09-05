@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { usePortfolioData } from '../context/PortfolioDataContext';
 
 export default function RandomWorkSection() {
-  const { randomWorks } = usePortfolioData();
+  const { randomWorks, profile } = usePortfolioData();
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const works = randomWorks || [];
@@ -40,16 +40,16 @@ export default function RandomWorkSection() {
             {/* Header: 01 Tùm lum tà la */}
             <div className="flex items-baseline gap-3 sm:gap-4">
               <span className="text-2xl sm:text-3xl md:text-4xl font-mono font-bold text-[#C3EA39]">
-                01
+                {profile?.section01Number || '01'}
               </span>
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-tight">
-                Tùm lum tà la
+                {profile?.section01Title || 'Tùm lum tà la'}
               </h2>
             </div>
 
             {/* Subtitle */}
             <p className="text-sm sm:text-base text-white/70 font-light leading-relaxed max-w-md">
-              Những sản phẩm này được làm ra lúc rảnh rỗi và có hứng làm gì đó...
+              {profile?.section01Subtitle || 'Những sản phẩm này được làm ra lúc rảnh rỗi và có hứng làm gì đó...'}
             </p>
           </motion.div>
 

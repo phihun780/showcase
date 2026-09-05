@@ -4,7 +4,7 @@ import { usePortfolioData } from '../context/PortfolioDataContext';
 import ProjectModal from './ProjectModal';
 
 export default function WorkSection() {
-  const { projects } = usePortfolioData();
+  const { projects, profile } = usePortfolioData();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [activeProjectModal, setActiveProjectModal] = useState(null);
 
@@ -39,10 +39,10 @@ export default function WorkSection() {
         >
           <div className="flex items-baseline gap-3 sm:gap-4">
             <span className="text-2xl sm:text-3xl md:text-4xl font-mono font-bold text-[#C3EA39]">
-              02
+              {profile?.section02Number || '02'}
             </span>
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-tight">
-              Dự án của tui
+              {profile?.section02Title || 'Dự án của tui'}
             </h2>
           </div>
         </motion.div>
