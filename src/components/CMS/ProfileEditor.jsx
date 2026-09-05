@@ -38,10 +38,12 @@ export default function ProfileEditor({ profile, onSave }) {
   // Drag & drop state for Experience list
   const [draggedExpIndex, setDraggedExpIndex] = useState(null);
   const [dragOverExpIndex, setDragOverExpIndex] = useState(null);
+  const [canDragExp, setCanDragExp] = useState(false);
 
   // Drag & drop state for Socials list
   const [draggedSocialIndex, setDraggedSocialIndex] = useState(null);
   const [dragOverSocialIndex, setDragOverSocialIndex] = useState(null);
+  const [canDragSocial, setCanDragSocial] = useState(false);
 
   const handleFaviconUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -165,8 +167,12 @@ export default function ProfileEditor({ profile, onSave }) {
     }));
   };
 
-  // Drag & Drop handlers for Experience
+  // Drag & Drop handlers for Experience (Desktop & Mobile)
   const handleExpDragStart = (e, index) => {
+    if (!canDragExp) {
+      e.preventDefault();
+      return;
+    }
     setDraggedExpIndex(index);
     e.dataTransfer.effectAllowed = 'move';
     try { e.dataTransfer.setData('text/plain', String(index)); } catch (err) {}
@@ -183,6 +189,7 @@ export default function ProfileEditor({ profile, onSave }) {
     if (draggedExpIndex === null || draggedExpIndex === targetIndex) {
       setDraggedExpIndex(null);
       setDragOverExpIndex(null);
+      setCanDragExp(false);
       return;
     }
     setFormData(prev => {
@@ -193,15 +200,56 @@ export default function ProfileEditor({ profile, onSave }) {
     });
     setDraggedExpIndex(null);
     setDragOverExpIndex(null);
+    setCanDragExp(false);
   };
 
   const handleExpDragEnd = () => {
     setDraggedExpIndex(null);
     setDragOverExpIndex(null);
+    setCanDragExp(false);
   };
 
-  // Drag & Drop handlers for Socials
+  // Mobile Touch handlers for Experience
+  const handleExpTouchStart = (e, index) => {
+    setDraggedExpIndex(index);
+    setDragOverExpIndex(index);
+    setCanDragExp(true);
+  };
+
+  const handleExpTouchMove = (e) => {
+    if (draggedExpIndex === null) return;
+    const touch = e.touches?.[0];
+    if (!touch) return;
+    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+    const card = element?.closest('[data-exp-index]');
+    if (card) {
+      const targetIdx = parseInt(card.getAttribute('data-exp-index'), 10);
+      if (!isNaN(targetIdx) && targetIdx !== dragOverExpIndex) {
+        setDragOverExpIndex(targetIdx);
+      }
+    }
+  };
+
+  const handleExpTouchEnd = () => {
+    if (draggedExpIndex !== null && dragOverExpIndex !== null && draggedExpIndex !== dragOverExpIndex) {
+      setFormData(prev => {
+        const list = [...prev.experience];
+        const [movedItem] = list.splice(draggedExpIndex, 1);
+        list.splice(dragOverExpIndex, 0, movedItem);
+        return { ...prev, experience: list };
+      });
+    }
+    setDraggedExpIndex(null);
+    setDragOverExpIndex(null);
+    setCanDragExp(false);
+  };
+
+  // Drag & Drop handlers for Socials (Desktop & Mobile)
   const handleSocialDragStart = (e, index) => {
+    if (!canDragSocial) {
+      e.preventDefault();
+      return;
+    }
     setDraggedSocialIndex(index);
     e.dataTransfer.effectAllowed = 'move';
     try { e.dataTransfer.setData('text/plain', String(index)); } catch (err) {}
@@ -218,6 +266,7 @@ export default function ProfileEditor({ profile, onSave }) {
     if (draggedSocialIndex === null || draggedSocialIndex === targetIndex) {
       setDraggedSocialIndex(null);
       setDragOverSocialIndex(null);
+      setCanDragSocial(false);
       return;
     }
     setFormData(prev => {
@@ -228,11 +277,48 @@ export default function ProfileEditor({ profile, onSave }) {
     });
     setDraggedSocialIndex(null);
     setDragOverSocialIndex(null);
+    setCanDragSocial(false);
   };
 
   const handleSocialDragEnd = () => {
     setDraggedSocialIndex(null);
     setDragOverSocialIndex(null);
+    setCanDragSocial(false);
+  };
+
+  // Mobile Touch handlers for Socials
+  const handleSocialTouchStart = (e, index) => {
+    setDraggedSocialIndex(index);
+    setDragOverSocialIndex(index);
+    setCanDragSocial(true);
+  };
+
+  const handleSocialTouchMove = (e) => {
+    if (draggedSocialIndex === null) return;
+    const touch = e.touches?.[0];
+    if (!touch) return;
+    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+    const card = element?.closest('[data-social-index]');
+    if (card) {
+      const targetIdx = parseInt(card.getAttribute('data-social-index'), 10);
+      if (!isNaN(targetIdx) && targetIdx !== dragOverSocialIndex) {
+        setDragOverSocialIndex(targetIdx);
+      }
+    }
+  };
+
+  const handleSocialTouchEnd = () => {
+    if (draggedSocialIndex !== null && dragOverSocialIndex !== null && draggedSocialIndex !== dragOverSocialIndex) {
+      setFormData(prev => {
+        const list = [...prev.socials];
+        const [movedItem] = list.splice(draggedSocialIndex, 1);
+        list.splice(dragOverSocialIndex, 0, movedItem);
+        return { ...prev, socials: list };
+      });
+    }
+    setDraggedSocialIndex(null);
+    setDragOverSocialIndex(null);
+    setCanDragSocial(false);
   };
 
   const handleSubmit = (e) => {
@@ -428,7 +514,8 @@ export default function ProfileEditor({ profile, onSave }) {
             return (
               <div
                 key={idx}
-                draggable
+                data-exp-index={idx}
+                draggable={canDragExp && draggedExpIndex === idx}
                 onDragStart={(e) => handleExpDragStart(e, idx)}
                 onDragOver={(e) => handleExpDragOver(e, idx)}
                 onDrop={(e) => handleExpDrop(e, idx)}
@@ -443,10 +530,18 @@ export default function ProfileEditor({ profile, onSave }) {
               >
                 <div className="sm:col-span-4 flex items-start gap-1.5">
                   <div
-                    className="p-1 text-white/30 hover:text-[#C3EA39] cursor-grab active:cursor-grabbing shrink-0 pt-2 select-none"
+                    onMouseDown={() => {
+                      setCanDragExp(true);
+                      setDraggedExpIndex(idx);
+                    }}
+                    onMouseUp={() => setCanDragExp(false)}
+                    onTouchStart={(e) => handleExpTouchStart(e, idx)}
+                    onTouchMove={handleExpTouchMove}
+                    onTouchEnd={handleExpTouchEnd}
+                    className="p-1 text-white/30 hover:text-[#C3EA39] cursor-grab active:cursor-grabbing shrink-0 pt-2 select-none touch-none rounded hover:bg-white/5 transition-colors"
                     title="Giữ và kéo để đổi thứ tự công ty"
                   >
-                    <GripVertical className="w-4 h-4" />
+                    <GripVertical className="w-4 h-4 pointer-events-none" />
                   </div>
                   <div className="flex-1 space-y-1.5 min-w-0">
                     <input
@@ -556,7 +651,8 @@ export default function ProfileEditor({ profile, onSave }) {
             return (
               <div
                 key={idx}
-                draggable
+                data-social-index={idx}
+                draggable={canDragSocial && draggedSocialIndex === idx}
                 onDragStart={(e) => handleSocialDragStart(e, idx)}
                 onDragOver={(e) => handleSocialDragOver(e, idx)}
                 onDrop={(e) => handleSocialDrop(e, idx)}
@@ -571,10 +667,18 @@ export default function ProfileEditor({ profile, onSave }) {
               >
                 <div className="flex items-center justify-between gap-2">
                   <div
-                    className="p-1 text-white/30 hover:text-[#C3EA39] cursor-grab active:cursor-grabbing shrink-0 select-none"
+                    onMouseDown={() => {
+                      setCanDragSocial(true);
+                      setDraggedSocialIndex(idx);
+                    }}
+                    onMouseUp={() => setCanDragSocial(false)}
+                    onTouchStart={(e) => handleSocialTouchStart(e, idx)}
+                    onTouchMove={handleSocialTouchMove}
+                    onTouchEnd={handleSocialTouchEnd}
+                    className="p-1 text-white/30 hover:text-[#C3EA39] cursor-grab active:cursor-grabbing shrink-0 select-none touch-none rounded hover:bg-white/5 transition-colors"
                     title="Giữ và kéo để đổi thứ tự liên kết"
                   >
-                    <GripVertical className="w-4 h-4" />
+                    <GripVertical className="w-4 h-4 pointer-events-none" />
                   </div>
                   <input
                     type="text"
