@@ -14,6 +14,7 @@ export default function ProfileEditor({ profile, onSave }) {
     location: profile.location || 'Tp. Buôn Ma Thuột, Đắk Lắk',
     email: profile.email || 'phihung.contact@example.com',
     tabTitle: profile.tabTitle || 'Phi Hùng — Graphic Designer | Portfolio Showcase',
+    metaDescription: profile.metaDescription || 'Portfolio thiết kế đồ họa, nhận diện thương hiệu và ấn phẩm sáng tạo của Phi Hùng.',
     experienceTitle: profile.experienceTitle || 'Quá Khứ Của Tui',
     socialsTitle: profile.socialsTitle || 'Những Nơi Khác',
     favicon: profile.favicon || '',
@@ -1016,21 +1017,22 @@ export default function ProfileEditor({ profile, onSave }) {
       </div>
 
       {/* Nhận Diện, Tiêu Đề Tab & Thumbnail (SEO / Favicon / OpenGraph) */}
+      {/* Nhận Diện, Tiêu Đề Tab & Thumbnail (SEO / Favicon / OpenGraph) */}
       <div className="p-4 sm:p-6 rounded-2xl bg-[#121216] border border-white/10 space-y-4">
         <div className="pb-2 border-b border-white/10">
           <h3 className="text-base font-display font-bold text-white">
-            Tiêu Đề Tab Trình Duyệt, Favicon & Thumbnail Chia Sẻ
+            Tiêu Đề Tab Trình Duyệt, Đoạn Mô Tả & Thumbnail Khi Gửi Link
           </h3>
         </div>
 
-        {/* 1. Tiêu đề Tab Trình duyệt */}
+        {/* 1. Tiêu đề Tab & Tiêu đề khi gửi link */}
         <div className="p-3.5 sm:p-4 rounded-xl bg-black/40 border border-white/10 space-y-2">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
             <span className="font-mono font-bold text-xs text-[#C3EA39] uppercase">
-              1. Tiêu đề Tab Trình duyệt (Browser Tab Title)
+              1. Tiêu đề Tab & Tiêu đề Khi Gửi Link (Tab & Social Title)
             </span>
             <span className="text-[10px] font-mono text-white/40 bg-white/5 px-2 py-0.5 rounded border border-white/10 w-fit">
-              Hiển thị trên tab Chrome, Safari...
+              Dòng in đậm khi gửi link qua Messenger / Zalo...
             </span>
           </div>
           <input
@@ -1042,12 +1044,31 @@ export default function ProfileEditor({ profile, onSave }) {
           />
         </div>
 
+        {/* 2. Đoạn mô tả khi gửi link */}
+        <div className="p-3.5 sm:p-4 rounded-xl bg-black/40 border border-white/10 space-y-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+            <span className="font-mono font-bold text-xs text-[#C3EA39] uppercase">
+              2. Đoạn Mô Tả Khi Gửi Link (Social / Meta Description)
+            </span>
+            <span className="text-[10px] font-mono text-white/40 bg-white/5 px-2 py-0.5 rounded border border-white/10 w-fit">
+              Dòng mô tả bên dưới tiêu đề khi chia sẻ link
+            </span>
+          </div>
+          <textarea
+            rows={2}
+            value={formData.metaDescription || ''}
+            onChange={(e) => setFormData({ ...formData, metaDescription: e.target.value })}
+            placeholder="Portfolio thiết kế đồ họa, nhận diện thương hiệu và ấn phẩm sáng tạo của Phi Hùng."
+            className="w-full px-3.5 py-2.5 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm font-normal placeholder-white/30 resize-none"
+          />
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* 2. Favicon */}
+          {/* 3. Favicon */}
           <div className="p-3.5 sm:p-4 rounded-xl bg-black/40 border border-white/10 space-y-3">
             <div className="flex items-center justify-between">
               <span className="font-mono font-bold text-xs text-[#C3EA39] uppercase">
-                2. Favicon (Icon tab web)
+                3. Favicon (Icon tab web)
               </span>
               <span className="text-[10px] font-mono text-white/40 bg-white/5 px-2 py-0.5 rounded border border-white/10">
                 1:1 • 64×64px
@@ -1086,11 +1107,11 @@ export default function ProfileEditor({ profile, onSave }) {
             </div>
           </div>
 
-          {/* Social Preview Thumbnail (OpenGraph) */}
+          {/* 4. Social Preview Thumbnail (OpenGraph) */}
           <div className="p-3.5 sm:p-4 rounded-xl bg-black/40 border border-white/10 space-y-3">
             <div className="flex items-center justify-between">
               <span className="font-mono font-bold text-xs text-[#C3EA39] uppercase">
-                3. Thumbnail Chia Sẻ (Zalo / FB)
+                4. Thumbnail Chia Sẻ (Zalo / FB)
               </span>
               <span className="text-[10px] font-mono text-white/40 bg-white/5 px-2 py-0.5 rounded border border-white/10">
                 1200×630px
@@ -1126,6 +1147,30 @@ export default function ProfileEditor({ profile, onSave }) {
                   />
                 </label>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 5. Live Message Link Preview Simulation */}
+        <div className="p-3.5 sm:p-4 rounded-xl bg-black/30 border border-dashed border-white/15 space-y-2">
+          <span className="text-[11px] font-mono text-white/40 uppercase block">
+            Xem trước khi gửi link trên Messenger / Zalo:
+          </span>
+
+          <div className="p-3 rounded-xl bg-[#1e1e24] border border-white/10 max-w-md space-y-1.5">
+            {formData.ogImage ? (
+              <div className="w-full aspect-[1.91/1] rounded-lg overflow-hidden bg-black mb-2 border border-white/10">
+                <img src={formData.ogImage} alt="Preview" className="w-full h-full object-cover" />
+              </div>
+            ) : null}
+            <div className="text-sm font-bold text-white leading-snug line-clamp-1">
+              {formData.tabTitle || 'Phi Hùng — Graphic Designer | Portfolio Showcase'}
+            </div>
+            <div className="text-xs text-white/60 font-light leading-relaxed line-clamp-2">
+              {formData.metaDescription || 'Portfolio thiết kế đồ họa, nhận diện thương hiệu và ấn phẩm sáng tạo của Phi Hùng.'}
+            </div>
+            <div className="text-[11px] font-mono text-white/40 pt-1">
+              phihun.pages.dev
             </div>
           </div>
         </div>

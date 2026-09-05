@@ -153,7 +153,36 @@ function PortfolioApp() {
       document.title = defaultTitle;
     }
 
-    // 2. Dynamic Favicon
+    // 2. Dynamic Description (Meta Description / OpenGraph / Twitter)
+    if (profile?.metaDescription && profile.metaDescription.trim()) {
+      const descVal = profile.metaDescription.trim();
+      
+      let metaDesc = document.querySelector("meta[name='description']");
+      if (!metaDesc) {
+        metaDesc = document.createElement('meta');
+        metaDesc.setAttribute('name', 'description');
+        document.head.appendChild(metaDesc);
+      }
+      metaDesc.content = descVal;
+
+      let ogDesc = document.querySelector("meta[property='og:description']");
+      if (!ogDesc) {
+        ogDesc = document.createElement('meta');
+        ogDesc.setAttribute('property', 'og:description');
+        document.head.appendChild(ogDesc);
+      }
+      ogDesc.content = descVal;
+
+      let twDesc = document.querySelector("meta[name='twitter:description']");
+      if (!twDesc) {
+        twDesc = document.createElement('meta');
+        twDesc.setAttribute('name', 'twitter:description');
+        document.head.appendChild(twDesc);
+      }
+      twDesc.content = descVal;
+    }
+
+    // 3. Dynamic Favicon
     if (profile?.favicon) {
       let link = document.querySelector("link[rel~='icon']");
       if (!link) {
@@ -164,7 +193,7 @@ function PortfolioApp() {
       link.href = profile.favicon;
     }
 
-    // 3. Dynamic OpenGraph Image
+    // 4. Dynamic OpenGraph Image
     if (profile?.ogImage) {
       let ogImg = document.querySelector("meta[property='og:image']");
       if (!ogImg) {
@@ -182,7 +211,7 @@ function PortfolioApp() {
       }
       twImg.content = profile.ogImage;
     }
-  }, [profile?.tabTitle, profile?.name, profile?.title, profile?.favicon, profile?.ogImage]);
+  }, [profile?.tabTitle, profile?.metaDescription, profile?.name, profile?.title, profile?.favicon, profile?.ogImage]);
 
   // Route Synchronization & Scroll Reset
   useEffect(() => {

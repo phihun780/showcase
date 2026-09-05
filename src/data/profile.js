@@ -37,6 +37,7 @@ export const profile = {
 
   // Tab & SEO Customization
   tabTitle: "Phi Hùng — Graphic Designer | Portfolio Showcase",
+  metaDescription: "Portfolio thiết kế đồ họa, nhận diện thương hiệu và ấn phẩm sáng tạo của Phi Hùng.",
   favicon: "",
   ogImage: "",
 
