@@ -1,13 +1,13 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { X, Check, ZoomIn, ZoomOut, RotateCcw, Crop, Sparkles, Loader2, Maximize2, Eye, EyeOff, Image as ImageIcon, Sliders } from 'lucide-react';
+import { X, Check, ZoomIn, ZoomOut, RotateCcw, Crop, Sparkles, Loader2, Maximize2 } from 'lucide-react';
 import { uploadToR2 } from '../../utils/r2Storage';
 
 const FILTER_PRESETS = [
-  { id: 'none', label: 'Màu gốc', icon: '🎨', filterString: 'none' },
-  { id: 'bw_contrast', label: 'Trắng Đen (Tương phản cao ⭐)', icon: '🖤', filterString: 'grayscale(100%) contrast(125%)' },
-  { id: 'bw_classic', label: 'Trắng Đen (Chuẩn)', icon: '⚪', filterString: 'grayscale(100%) contrast(110%)' },
-  { id: 'bw_soft', label: 'Trắng Đen (Film dịu)', icon: '🎞️', filterString: 'grayscale(100%) contrast(100%) brightness(105%)' },
-  { id: 'vintage', label: 'Tone Ấm Vintage', icon: '☕', filterString: 'sepia(30%) contrast(105%) brightness(102%)' },
+  { id: 'none', label: 'Gốc', icon: '🎨', filterString: 'none' },
+  { id: 'bw_contrast', label: 'B&W Tương phản', icon: '🖤', filterString: 'grayscale(100%) contrast(125%)' },
+  { id: 'bw_classic', label: 'B&W Chuẩn', icon: '⚪', filterString: 'grayscale(100%) contrast(110%)' },
+  { id: 'bw_soft', label: 'B&W Film', icon: '🎞️', filterString: 'grayscale(100%) contrast(100%) brightness(105%)' },
+  { id: 'vintage', label: 'Tone Ấm', icon: '☕', filterString: 'sepia(30%) contrast(105%) brightness(102%)' },
 ];
 
 export default function ImageCropModal({
@@ -17,8 +17,6 @@ export default function ImageCropModal({
   onClose,
   mode = 'project', // 'banner' | 'project' | 'portrait' | 'avatar' | 'random'
   initialAspectRatio = null,
-  projectTitle = 'Tên Dự Án',
-  projectSubtitle = 'Mô tả ngắn dự án'
 }) {
   const isBannerMode = mode === 'banner';
   const isRandomMode = mode === 'random';
@@ -38,7 +36,7 @@ export default function ImageCropModal({
     '16:10'
   );
 
-  // 1. All State Hooks (Unconditionally at top)
+  // 1. State Hooks
   const [aspectRatio, setAspectRatio] = useState(defaultRatio);
   const [aspectName, setAspectName] = useState(defaultRatioName);
   const [scale, setScale] = useState(1);
@@ -46,12 +44,10 @@ export default function ImageCropModal({
   const [isDragging, setIsDragging] = useState(false);
   const [imageObj, setImageObj] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [showLiveMockup, setShowLiveMockup] = useState(true);
   const [selectedFilter, setSelectedFilter] = useState('none');
 
-  // 2. All Ref Hooks (Unconditionally at top)
+  // 2. Ref Hooks
   const canvasRef = useRef(null);
-  const previewCanvasRef = useRef(null);
   const containerRef = useRef(null);
   const dragStartRef = useRef({ clientX: 0, clientY: 0, offsetX: 0, offsetY: 0 });
 
@@ -72,12 +68,13 @@ export default function ImageCropModal({
         ratio === 3 / 4 ? '3:4' :
         ratio === 16 / 10 ? '16:10' :
         ratio === 16 / 9 ? '16:9' :
-        'Custom'
+        '1:1'
       );
       setAspectRatio(ratio);
       setAspectName(name);
       setScale(1);
       setOffset({ x: 0, y: 0 });
+      setSelectedFilter('none');
     }
   }, [isOpen, mode, initialAspectRatio]);
 
@@ -129,12 +126,12 @@ export default function ImageCropModal({
   }, [imageSrc, isOpen]);
 
   // 5. Safe Canvas Drawing Callback
-  const drawCanvases = useCallback(() => {
+  const drawCanvas = useCallback(() => {
     if (!imageObj) return;
     if (!imageObj.complete || !imageObj.naturalWidth || imageObj.naturalWidth <= 0) return;
 
     try {
-      const baseHeight = Math.max(1, Math.round(BASE_WIDTH / (aspectRatio || (16 / 10))));
+      const baseHeight = Math.max(1, Math.round(BASE_WIDTH / (aspectRatio || 1)));
       const imgW = imageObj.naturalWidth || imageObj.width || BASE_WIDTH;
       const imgH = imageObj.naturalHeight || imageObj.height || baseHeight;
       const imgRatio = (imgW > 0 && imgH > 0) ? (imgW / imgH) : (aspectRatio || 1);
@@ -160,7 +157,6 @@ export default function ImageCropModal({
 
       const activeFilter = FILTER_PRESETS.find(f => f.id === selectedFilter)?.filterString || 'none';
 
-      // 1. Draw Main Interactive Canvas
       if (canvasRef.current) {
         const canvas = canvasRef.current;
         canvas.width = BASE_WIDTH;
@@ -175,22 +171,6 @@ export default function ImageCropModal({
           ctx.filter = 'none';
         }
       }
-
-      // 2. Draw Live Preview Mirror Canvas
-      if (previewCanvasRef.current) {
-        const pCanvas = previewCanvasRef.current;
-        pCanvas.width = BASE_WIDTH;
-        pCanvas.height = baseHeight;
-        const pCtx = pCanvas.getContext('2d');
-        if (pCtx) {
-          pCtx.clearRect(0, 0, BASE_WIDTH, baseHeight);
-          pCtx.imageSmoothingEnabled = true;
-          pCtx.imageSmoothingQuality = 'high';
-          pCtx.filter = activeFilter;
-          pCtx.drawImage(imageObj, renderX, renderY, renderW, renderH);
-          pCtx.filter = 'none';
-        }
-      }
     } catch (err) {
       console.warn('Canvas render error in ImageCropModal:', err);
     }
@@ -199,9 +179,9 @@ export default function ImageCropModal({
   // 6. Draw whenever state changes
   useEffect(() => {
     if (isOpen && imageObj) {
-      drawCanvases();
+      drawCanvas();
     }
-  }, [drawCanvases, isOpen, imageObj]);
+  }, [drawCanvas, isOpen, imageObj]);
 
   // 7. Lock body scroll while Crop Modal is active
   useEffect(() => {
@@ -235,7 +215,7 @@ export default function ImageCropModal({
     };
   }, [isOpen]);
 
-  // 9. Interaction Handlers
+  // 9. Drag Handlers
   const handleMouseDown = (e) => {
     setIsDragging(true);
     dragStartRef.current = {
@@ -306,7 +286,7 @@ export default function ImageCropModal({
 
     try {
       const exportW = 1920;
-      const exportH = Math.max(1, Math.round(exportW / (aspectRatio || (16 / 10))));
+      const exportH = Math.max(1, Math.round(exportW / (aspectRatio || 1)));
 
       const exportCanvas = document.createElement('canvas');
       exportCanvas.width = exportW;
@@ -352,7 +332,7 @@ export default function ImageCropModal({
         if (!dataUrl || dataUrl === 'data:,' || !dataUrl.startsWith('data:image/')) {
           dataUrl = exportCanvas.toDataURL('image/jpeg', 0.92);
         }
-      } catch (err) {
+      } catch {
         dataUrl = exportCanvas.toDataURL('image/jpeg', 0.92);
       }
 
@@ -395,92 +375,77 @@ export default function ImageCropModal({
     }
   };
 
-  // 10. UNCONDITIONAL RETURN CHECK (Guaranteed AFTER all hooks)
   if (!isOpen || !imageSrc) return null;
 
-  // Presets configuration
-  const presets = isBannerMode
+  // Aspect Ratio Presets
+  const presets = isRandomMode
     ? [
-        { label: '21:9 (Chuẩn Cover Banner ⭐)', value: 21 / 9, name: '21:9' },
-        { label: '16:9 (Widescreen)', value: 16 / 9, name: '16:9' },
-        { label: '16:10 (Dự án)', value: 16 / 10, name: '16:10' },
         { label: '1:1 (Vuông)', value: 1, name: '1:1' },
+        { label: '4:3', value: 4 / 3, name: '4:3' },
+        { label: '16:10', value: 16 / 10, name: '16:10' },
+        { label: '21:9', value: 21 / 9, name: '21:9' },
       ]
-    : isRandomMode
+    : isBannerMode
     ? [
-        { label: '1:1 (Chuẩn Vuông Tùm Lum Tà La ⭐)', value: 1, name: '1:1' },
-        { label: '4:3 (Tiêu chuẩn)', value: 4 / 3, name: '4:3' },
-        { label: '16:10 (Dự án)', value: 16 / 10, name: '16:10' },
-        { label: '21:9 (Cover Banner)', value: 21 / 9, name: '21:9' },
+        { label: '21:9 (Widescreen)', value: 21 / 9, name: '21:9' },
+        { label: '16:9', value: 16 / 9, name: '16:9' },
+        { label: '16:10', value: 16 / 10, name: '16:10' },
+        { label: '1:1', value: 1, name: '1:1' },
       ]
     : isPortraitMode
     ? [
-        { label: '3:4 (Chuẩn Chân Dung ⭐)', value: 3 / 4, name: '3:4' },
-        { label: '4:5 (Portrait)', value: 4 / 5, name: '4:5' },
-        { label: '1:1 (Vuông)', value: 1, name: '1:1' },
-        { label: '16:10 (Ngang)', value: 16 / 10, name: '16:10' },
+        { label: '3:4 (Chân dung)', value: 3 / 4, name: '3:4' },
+        { label: '4:5', value: 4 / 5, name: '4:5' },
+        { label: '1:1', value: 1, name: '1:1' },
+        { label: '16:10', value: 16 / 10, name: '16:10' },
       ]
     : [
-        { label: '16:10 (Chuẩn Dự Án Trang Chủ ⭐)', value: 16 / 10, name: '16:10' },
-        { label: '16:9 (Widescreen)', value: 16 / 9, name: '16:9' },
-        { label: '21:9 (Cover Banner)', value: 21 / 9, name: '21:9' },
-        { label: '1:1 (Vuông)', value: 1, name: '1:1' },
+        { label: '16:10 (Dự án)', value: 16 / 10, name: '16:10' },
+        { label: '16:9', value: 16 / 9, name: '16:9' },
+        { label: '21:9', value: 21 / 9, name: '21:9' },
+        { label: '1:1', value: 1, name: '1:1' },
       ];
 
-  const modalTitle = isBannerMode
-    ? 'Cắt & Căn Chỉnh Ảnh Slide Banner Cover (21:9)'
-    : isRandomMode
-    ? 'Cắt & Căn Chỉnh Artwork Tùm Lum Tà La (1:1)'
-    : isPortraitMode
-    ? 'Cắt & Căn Chỉnh Ảnh Chân Dung (3:4)'
-    : 'Cắt & Căn Chỉnh Ảnh Bìa Dự Án (16:10)';
-
-  const modalSubtitle = isBannerMode
-    ? 'Tỉ lệ chuẩn 21:9 giống 100% khung banner ngoài trang chủ. Kéo thả & zoom để căn lề ảnh chuẩn nhất.'
-    : isRandomMode
-    ? 'Tỉ lệ vuông 1:1 chuẩn ngoài mục 01 Tùm lum tà la. Kéo thả & zoom để căn lề ảnh.'
-    : isPortraitMode
-    ? 'Tỉ lệ dọc 3:4 chuẩn cho ảnh đại diện mục Về tui. Kéo thả & zoom để căn lề.'
-    : 'Tỉ lệ chuẩn 16:10 giống 100% khung dự án ngoài trang chủ. Kéo thả & zoom để căn lề ảnh.';
+  const exportHeight = Math.round(1920 / aspectRatio);
 
   return (
-    <div className="fixed inset-0 z-[100000] flex items-center justify-center p-2.5 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto animate-fadeIn">
-      <div className="relative w-full max-w-4xl bg-[#121216] border border-white/20 rounded-2xl sm:rounded-3xl shadow-2xl p-3.5 sm:p-5 flex flex-col max-h-[92vh] text-white overflow-hidden animate-fadeIn">
-        {/* Sticky Header */}
-        <div className="flex items-center justify-between pb-2.5 sm:pb-3 border-b border-white/10 shrink-0">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-[#C3EA39]/10 border border-[#C3EA39]/30 flex items-center justify-center text-[#C3EA39] shrink-0">
-              <Crop className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+    <div className="fixed inset-0 z-[100000] flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md overflow-y-auto animate-fadeIn">
+      <div className="relative w-full max-w-2xl bg-[#121216] border border-white/15 rounded-3xl shadow-2xl p-4 sm:p-5 flex flex-col text-white overflow-hidden animate-fadeIn">
+        
+        {/* Header */}
+        <div className="flex items-center justify-between pb-3 border-b border-white/10 shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-[#C3EA39]/10 border border-[#C3EA39]/30 flex items-center justify-center text-[#C3EA39]">
+              <Crop className="w-4 h-4" />
             </div>
-            <div className="min-w-0">
-              <h3 className="text-sm sm:text-base font-display font-bold text-white flex items-center gap-2 truncate">
-                <span>{modalTitle}</span>
+            <div>
+              <h3 className="text-sm sm:text-base font-display font-bold text-white flex items-center gap-2">
+                <span>Căn Chỉnh & Cắt Ảnh</span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[#C3EA39]">
+                  {aspectName}
+                </span>
               </h3>
-              <p className="text-[11px] text-white/50 font-mono truncate hidden sm:block">
-                {modalSubtitle}
-              </p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer shrink-0 ml-2"
+            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Scrollable Body */}
-        <div className="space-y-3.5 overflow-y-auto custom-scrollbar flex-1 py-2 text-xs">
-          
-          {/* Top Bar 1: Aspect Presets & Live Overlay Toggle */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 bg-black/40 p-2 sm:p-2.5 rounded-2xl border border-white/10">
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth py-0.5">
-              <div className="flex items-center gap-1 text-xs font-mono text-white/60 mr-1 shrink-0">
-                <Maximize2 className="w-3.5 h-3.5 text-[#C3EA39]" />
-                <span className="hidden sm:inline">Tỷ lệ:</span>
-              </div>
-
+        {/* Unified Controls Bar (Tỉ lệ & Bộ lọc) */}
+        <div className="pt-3 pb-2 space-y-2 text-xs">
+          {/* Ratio Pills & Filters Row */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+            {/* Aspect Ratio Pills */}
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+              <span className="text-[11px] font-mono text-white/40 mr-1 shrink-0 flex items-center gap-1">
+                <Maximize2 className="w-3 h-3 text-[#C3EA39]" />
+                <span>Tỉ lệ:</span>
+              </span>
               {presets.map((ratio) => (
                 <button
                   key={ratio.name}
@@ -489,9 +454,9 @@ export default function ImageCropModal({
                     setAspectRatio(ratio.value);
                     setAspectName(ratio.name);
                   }}
-                  className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer shrink-0 ${
+                  className={`px-2.5 py-1 rounded-xl text-xs font-mono font-medium transition-all cursor-pointer shrink-0 ${
                     aspectName === ratio.name
-                      ? 'bg-[#C3EA39] text-black shadow-md shadow-[#C3EA39]/15'
+                      ? 'bg-[#C3EA39] text-black font-bold shadow-md shadow-[#C3EA39]/15'
                       : 'bg-white/5 hover:bg-white/10 text-white/70'
                   }`}
                 >
@@ -500,37 +465,20 @@ export default function ImageCropModal({
               ))}
             </div>
 
-            {/* Toggle Live Title Overlay */}
-            <button
-              type="button"
-              onClick={() => setShowLiveMockup(!showLiveMockup)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-mono flex items-center justify-center gap-1.5 transition-all cursor-pointer shrink-0 ${
-                showLiveMockup
-                  ? 'bg-white/15 text-[#C3EA39] border border-[#C3EA39]/30'
-                  : 'bg-white/5 text-white/50 hover:text-white'
-              }`}
-            >
-              {showLiveMockup ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-              <span>{showLiveMockup ? 'Hiện mockup chữ' : 'Ẩn mockup chữ'}</span>
-            </button>
-          </div>
-
-          {/* Top Bar 2: B&W & Color Filters */}
-          <div className="flex items-center justify-between gap-2 bg-black/40 p-2 sm:p-2.5 rounded-2xl border border-white/10 overflow-x-auto no-scrollbar">
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth py-0.5">
-              <div className="flex items-center gap-1 text-xs font-mono text-white/60 mr-1 shrink-0">
-                <Sparkles className="w-3.5 h-3.5 text-[#C3EA39]" />
-                <span className="hidden sm:inline">Bộ lọc:</span>
-              </div>
-
+            {/* Filter Pills */}
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+              <span className="text-[11px] font-mono text-white/40 mr-1 shrink-0 flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-[#C3EA39]" />
+                <span>Màu:</span>
+              </span>
               {FILTER_PRESETS.map((f) => (
                 <button
                   key={f.id}
                   type="button"
                   onClick={() => setSelectedFilter(f.id)}
-                  className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1.5 ${
+                  className={`px-2.5 py-1 rounded-xl text-xs font-mono transition-all cursor-pointer shrink-0 flex items-center gap-1 ${
                     selectedFilter === f.id
-                      ? 'bg-[#C3EA39] text-black shadow-md shadow-[#C3EA39]/15'
+                      ? 'bg-[#C3EA39] text-black font-bold shadow-md shadow-[#C3EA39]/15'
                       : 'bg-white/5 hover:bg-white/10 text-white/70'
                   }`}
                 >
@@ -539,248 +487,139 @@ export default function ImageCropModal({
                 </button>
               ))}
             </div>
+          </div>
+        </div>
 
-            {selectedFilter !== 'none' && (
+        {/* Main Cropper Stage (Clean, centered, unobstructed) */}
+        <div className="py-2 flex flex-col items-center justify-center">
+          <div
+            ref={containerRef}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleMouseUp}
+            style={{
+              aspectRatio: `${aspectRatio}`,
+              maxHeight: 'min(48vh, 400px)',
+              maxWidth: '100%',
+              width: aspectRatio >= 1 ? '100%' : 'auto',
+            }}
+            className="relative mx-auto rounded-2xl overflow-hidden bg-black border-2 border-[#C3EA39]/70 shadow-2xl cursor-grab active:cursor-grabbing select-none flex items-center justify-center group touch-none"
+          >
+            {/* Canvas */}
+            <canvas
+              ref={canvasRef}
+              className="w-full h-full object-cover pointer-events-none"
+            />
+
+            {/* Rule of Thirds Guide (Subtle grid) */}
+            <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 pointer-events-none border border-white/5 opacity-25">
+              <div className="border-r border-b border-white/20" />
+              <div className="border-r border-b border-white/20" />
+              <div className="border-b border-white/20" />
+              <div className="border-r border-b border-white/20" />
+              <div className="border-r border-b border-white/20" />
+              <div className="border-b border-white/20" />
+              <div className="border-r border-b border-white/20" />
+              <div className="border-r border-b border-white/20" />
+              <div />
+            </div>
+
+            {/* Sleek Floating Helper Badge */}
+            <div className="absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded-lg bg-black/75 backdrop-blur-md text-[9px] font-mono text-white/60 border border-white/10 pointer-events-none">
+              Kéo để dời • Cuộn để zoom
+            </div>
+          </div>
+
+          {/* Zoom & Centering Control Bar */}
+          <div className="w-full max-w-md mt-3 px-3 py-2 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 flex-1">
               <button
                 type="button"
-                onClick={() => setSelectedFilter('none')}
-                className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-[11px] font-mono text-white/60 hover:text-white transition-colors cursor-pointer shrink-0"
+                onClick={() => setScale((s) => Math.max(0.4, Number((s - 0.1).toFixed(2))))}
+                className="p-1 rounded-lg bg-white/5 hover:bg-white/15 text-white/80 transition-colors cursor-pointer"
+                title="Thu nhỏ"
               >
-                Về màu gốc
+                <ZoomOut className="w-3.5 h-3.5" />
               </button>
-            )}
-          </div>
 
-          {/* Main Workspace Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 sm:gap-4 items-center">
-            {/* Left / Center: Interactive Draggable Crop Canvas */}
-            <div className="lg:col-span-8 flex flex-col items-center justify-center w-full">
-              <div
-                ref={containerRef}
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleMouseUp}
-                style={{
-                  aspectRatio: `${aspectRatio}`,
-                  maxHeight: 'min(45vh, 380px)',
-                  maxWidth: '100%',
-                }}
-                className="relative mx-auto rounded-2xl overflow-hidden bg-black border-2 border-[#C3EA39] shadow-2xl cursor-grab active:cursor-grabbing select-none flex items-center justify-center group touch-none"
+              <input
+                type="range"
+                min="0.4"
+                max="3"
+                step="0.02"
+                value={scale}
+                onChange={(e) => setScale(parseFloat(e.target.value))}
+                className="flex-1 accent-[#C3EA39] cursor-pointer h-1.5"
+              />
+
+              <button
+                type="button"
+                onClick={() => setScale((s) => Math.min(3, Number((s + 0.1).toFixed(2))))}
+                className="p-1 rounded-lg bg-white/5 hover:bg-white/15 text-white/80 transition-colors cursor-pointer"
+                title="Phóng to"
               >
-                {/* Active High-Definition Canvas */}
-                <canvas
-                  ref={canvasRef}
-                  className="w-full h-full object-cover pointer-events-none"
-                />
+                <ZoomIn className="w-3.5 h-3.5" />
+              </button>
 
-                {/* Grid 3x3 Overlay */}
-                <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 pointer-events-none border border-white/10 opacity-30">
-                  <div className="border-r border-b border-white/20" />
-                  <div className="border-r border-b border-white/20" />
-                  <div className="border-b border-white/20" />
-                  <div className="border-r border-b border-white/20" />
-                  <div className="border-r border-b border-white/20" />
-                  <div className="border-b border-white/20" />
-                  <div className="border-r border-b border-white/20" />
-                  <div className="border-r border-b border-white/20" />
-                  <div />
-                </div>
-
-                {/* Live Mockup Overlay on Stage */}
-                {showLiveMockup && (
-                  <>
-                    <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none transition-opacity" />
-                    
-                    {/* Top Left Slide Tag Mockup for Banner */}
-                    {isBannerMode && (
-                      <div className="absolute top-2 left-2 sm:top-2.5 sm:left-2.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg bg-black/75 backdrop-blur-md text-[10px] sm:text-[11px] font-mono font-bold text-[#C3EA39] border border-white/10 flex items-center gap-1.5 pointer-events-none">
-                        <ImageIcon className="w-3 h-3" />
-                        <span>Cover #01</span>
-                      </div>
-                    )}
-
-                    {/* Bottom Info Overlay */}
-                    <div className="absolute bottom-2.5 left-3 right-3 sm:bottom-3 sm:left-4 sm:right-4 z-10 space-y-0.5 pointer-events-none">
-                      <span className="text-[8px] sm:text-[9px] font-mono text-[#C3EA39] uppercase tracking-wider block">
-                        Preview Trực Tiếp
-                      </span>
-                      <h3 className="text-xs sm:text-base font-bold uppercase text-white tracking-tight leading-tight drop-shadow-md truncate">
-                        {projectTitle || (isBannerMode ? 'Slide Banner' : isPortraitMode ? 'Ảnh Chân Dung' : 'Tên Dự Án')}
-                      </h3>
-                      {projectSubtitle && (
-                        <p className="text-[10px] text-white/80 font-light drop-shadow line-clamp-1">
-                          {projectSubtitle}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Bottom Dots Mockup for Banner */}
-                    {isBannerMode && (
-                      <div className="absolute bottom-2 sm:bottom-2.5 left-1/2 -translate-x-1/2 flex items-center gap-1 sm:gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-black/60 border border-white/10 pointer-events-none">
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#C3EA39]" />
-                        <div className="w-1.5 h-1.5 rounded-full bg-white/30" />
-                        <div className="w-1.5 h-1.5 rounded-full bg-white/30" />
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {/* Interaction Guide Badge */}
-                <div className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg bg-black/80 backdrop-blur-md text-[9px] sm:text-[10px] font-mono text-[#C3EA39] border border-white/15 pointer-events-none">
-                  ✦ Kéo để dời • Zoom
-                </div>
-              </div>
-
-              {/* Zoom Controls & Slider */}
-              <div className="w-full max-w-[500px] mt-2 sm:mt-2.5 p-2 sm:p-2.5 rounded-2xl bg-black/40 border border-white/10 flex items-center justify-between gap-2 sm:gap-3">
-                <div className="flex items-center gap-1.5 sm:gap-2 flex-1">
-                  <button
-                    type="button"
-                    onClick={() => setScale((s) => Math.max(0.4, Number((s - 0.1).toFixed(2))))}
-                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-white/80 transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center"
-                    title="Thu nhỏ"
-                  >
-                    <ZoomOut className="w-3.5 h-3.5" />
-                  </button>
-
-                  <input
-                    type="range"
-                    min="0.4"
-                    max="3"
-                    step="0.02"
-                    value={scale}
-                    onChange={(e) => setScale(parseFloat(e.target.value))}
-                    className="flex-1 accent-[#C3EA39] cursor-pointer h-2"
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => setScale((s) => Math.min(3, Number((s + 0.1).toFixed(2))))}
-                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-white/80 transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center"
-                    title="Phóng to"
-                  >
-                    <ZoomIn className="w-3.5 h-3.5" />
-                  </button>
-
-                  <span className="text-xs font-mono font-bold text-[#C3EA39] w-10 text-right">
-                    {Math.round(scale * 100)}%
-                  </span>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-xs font-mono text-white/70 flex items-center gap-1 transition-colors cursor-pointer min-h-[32px]"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Căn giữa</span>
-                </button>
-              </div>
+              <span className="text-xs font-mono font-bold text-[#C3EA39] w-10 text-right">
+                {Math.round(scale * 100)}%
+              </span>
             </div>
 
-            {/* Right: Real-time Synchronized Mirror Card */}
-            <div className="lg:col-span-4 flex flex-col items-center lg:items-stretch space-y-2 w-full">
-              <div className="flex items-center justify-between w-full">
-                <label className="text-xs font-mono text-white/60 uppercase block">
-                  {isBannerMode
-                    ? 'Khung Banner (21:9):'
-                    : isRandomMode
-                    ? 'Khung Artwork (1:1):'
-                    : isPortraitMode
-                    ? 'Khung Chân Dung (3:4):'
-                    : 'Khung Dự Án (16:10):'}
-                </label>
-                <span className="text-[10px] font-mono text-[#C3EA39]">Tỉ lệ: {aspectName}</span>
-              </div>
+            <button
+              type="button"
+              onClick={handleReset}
+              className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-xs font-mono text-white/70 hover:text-white flex items-center gap-1 transition-colors cursor-pointer shrink-0"
+            >
+              <RotateCcw className="w-3 h-3" />
+              <span>Căn giữa</span>
+            </button>
+          </div>
+        </div>
 
-              <div
-                style={{
-                  aspectRatio: `${aspectRatio}`,
-                  maxHeight: 'min(34vh, 260px)',
-                  maxWidth: '100%',
-                }}
-                className="relative mx-auto w-full max-w-[240px] rounded-2xl overflow-hidden bg-black border-2 border-white/20 shadow-xl flex flex-col justify-end p-3 sm:p-3.5 group"
-              >
-                {/* Synchronized Real-time Canvas */}
-                <canvas
-                  ref={previewCanvasRef}
-                  className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-                />
-
-                {/* Gradient Vignette at bottom */}
-                <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
-
-                {/* Top Left Tag Mockup */}
-                {isBannerMode && (
-                  <div className="absolute top-2 left-2 sm:top-2.5 sm:left-2.5 px-2 py-0.5 rounded-lg bg-black/75 backdrop-blur-md text-[9px] sm:text-[10px] font-mono font-bold text-[#C3EA39] border border-white/10 flex items-center gap-1 pointer-events-none">
-                    <ImageIcon className="w-2.5 h-2.5" />
-                    <span>Cover #01</span>
-                  </div>
-                )}
-
-                {isRandomMode && (
-                  <div className="absolute top-2 left-2 sm:top-2.5 sm:left-2.5 px-2 py-0.5 rounded-lg bg-black/75 backdrop-blur-md text-[9px] sm:text-[10px] font-mono font-bold text-[#C3EA39] border border-white/10 flex items-center gap-1 pointer-events-none">
-                    <Sparkles className="w-2.5 h-2.5" />
-                    <span>Artwork #01</span>
-                  </div>
-                )}
-
-                {/* Title & Subtitle Mockup */}
-                <div className="relative z-10 space-y-0.5 pointer-events-none">
-                  <h4 className="text-xs sm:text-sm font-bold uppercase text-white tracking-tight truncate">
-                    {projectTitle || (isBannerMode ? 'Slide Banner' : isRandomMode ? 'Artwork' : 'Tên Dự Án')}
-                  </h4>
-                  {projectSubtitle && (
-                    <p className="text-[10px] text-white/70 font-light truncate">
-                      {projectSubtitle}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <p className="text-[10px] sm:text-[11px] text-white/40 font-mono text-center pt-0.5">
-                Xuất WebP: <span className="text-[#C3EA39]">1920 × {Math.round(1920 / aspectRatio)}px</span>
-              </p>
-            </div>
+        {/* Footer */}
+        <div className="flex items-center justify-between pt-3 mt-1 border-t border-white/10 shrink-0">
+          <div className="text-[11px] font-mono text-white/40 hidden sm:block">
+            Xuất WebP: <span className="text-[#C3EA39]">1920 × {exportHeight}px</span>
           </div>
 
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isSaving}
+              className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs font-mono transition-colors cursor-pointer"
+            >
+              Hủy
+            </button>
+
+            <button
+              type="button"
+              onClick={handleConfirmCrop}
+              disabled={isSaving}
+              className="px-5 py-2 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black font-display font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md shadow-[#C3EA39]/20 hover:scale-[1.02] cursor-pointer disabled:opacity-50"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Đang lưu...</span>
+                </>
+              ) : (
+                <>
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Cắt & Áp Dụng</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
-        {/* Sticky Footer Actions */}
-        <div className="flex items-center justify-end gap-2.5 pt-2.5 sm:pt-3 border-t border-white/10 shrink-0 bg-[#121216]">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isSaving}
-            className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs font-mono transition-colors cursor-pointer min-h-[36px]"
-          >
-            Hủy
-          </button>
-
-          <button
-            type="button"
-            onClick={handleConfirmCrop}
-            disabled={isSaving}
-            className="px-5 py-2 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black font-display font-bold text-xs sm:text-sm tracking-wide flex items-center justify-center gap-2 transition-all shadow-md shadow-[#C3EA39]/20 hover:scale-[1.02] cursor-pointer disabled:opacity-50 min-h-[36px]"
-          >
-            {isSaving ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Đang xử lý & lưu R2...</span>
-              </>
-            ) : (
-              <>
-                <Check className="w-4 h-4" />
-                <span>Cắt & Áp Dụng Ảnh Bìa</span>
-              </>
-            )}
-          </button>
-        </div>
       </div>
     </div>
   );
 }
+
