@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Download, ArrowUpRight, Check, Copy, Loader2 } from 'lucide-react';
+import { Download, ArrowUpRight, Check, Copy, Loader2, Sparkles } from 'lucide-react';
 import { usePortfolioData } from '../context/PortfolioDataContext';
 
 export default function AboutSection() {
@@ -8,7 +8,7 @@ export default function AboutSection() {
   const [copiedEmail, setCopiedEmail] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [downloadComplete, setDownloadComplete] = useState(false);
+  const [downloadStatus, setDownloadStatus] = useState('idle'); // 'idle' | 'success' | 'maintenance'
 
   const handleCopyEmail = (e, emailVal) => {
     e.preventDefault();
@@ -22,11 +22,14 @@ export default function AboutSection() {
 
   const handleDownloadCV = (e) => {
     e?.preventDefault();
-    if (isDownloading) return;
+    if (isDownloading || downloadStatus !== 'idle') return;
 
     setIsDownloading(true);
     setDownloadProgress(0);
-    setDownloadComplete(false);
+    setDownloadStatus('idle');
+
+    const cvLink = profile.cvUrl || profile.resumeUrl;
+    const hasLink = Boolean(cvLink && cvLink.trim());
 
     let current = 0;
     const interval = setInterval(() => {
@@ -37,21 +40,29 @@ export default function AboutSection() {
 
       if (current >= 100) {
         clearInterval(interval);
-        setDownloadComplete(true);
+        
+        if (hasLink) {
+          setDownloadStatus('success');
+          // Open/download file upon reaching 100%
+          setTimeout(() => {
+            window.open(cvLink.trim(), '_blank', 'noopener,noreferrer');
+          }, 200);
 
-        // Open/download file upon reaching 100%
-        setTimeout(() => {
-          const cvLink = profile.cvUrl || profile.resumeUrl;
-          const targetUrl = (cvLink && cvLink.trim()) ? cvLink.trim() : '/cv.pdf';
-          window.open(targetUrl, '_blank', 'noopener,noreferrer');
-        }, 200);
-
-        // Reset state after 2.5s
-        setTimeout(() => {
-          setIsDownloading(false);
-          setDownloadProgress(0);
-          setDownloadComplete(false);
-        }, 2500);
+          // Reset state after 3s
+          setTimeout(() => {
+            setIsDownloading(false);
+            setDownloadProgress(0);
+            setDownloadStatus('idle');
+          }, 3000);
+        } else {
+          setDownloadStatus('maintenance');
+          // Reset state after 3.8s so user can read message
+          setTimeout(() => {
+            setIsDownloading(false);
+            setDownloadProgress(0);
+            setDownloadStatus('idle');
+          }, 3800);
+        }
       }
     }, 55);
   };
@@ -271,45 +282,58 @@ export default function AboutSection() {
             {/* Resume / CV Download Button with Interactive 0-100% Progress Simulator */}
             <button
               onClick={handleDownloadCV}
-              disabled={isDownloading}
-              className={`relative overflow-hidden w-full py-4 px-6 rounded-2xl font-display font-bold text-sm tracking-wide transition-all shadow-lg select-none cursor-pointer group ${
-                isDownloading || downloadComplete
+              disabled={isDownloading || downloadStatus !== 'idle'}
+              className={`relative overflow-hidden w-full py-4 px-6 rounded-2xl font-display font-bold text-xs sm:text-sm tracking-wide transition-all shadow-lg select-none cursor-pointer group ${
+                downloadStatus === 'maintenance'
+                  ? 'bg-[#181820] text-[#C3EA39] border border-[#C3EA39]/60 shadow-lg shadow-[#C3EA39]/10'
+                  : downloadStatus === 'success'
+                  ? 'bg-[#C3EA39] text-black border border-[#C3EA39]'
+                  : isDownloading
                   ? 'bg-[#181820] text-black border border-[#C3EA39]'
                   : 'bg-[#C3EA39] hover:bg-[#d4f854] text-black shadow-[#C3EA39]/15 hover:scale-[1.01]'
               }`}
             >
               {/* Background Animated Progress Bar */}
-              {(isDownloading || downloadComplete) && (
+              {(isDownloading || downloadStatus !== 'idle') && (
                 <div
-                  className="absolute inset-0 bg-[#C3EA39] transition-all duration-75 ease-out"
+                  className={`absolute inset-0 transition-all duration-75 ease-out ${
+                    downloadStatus === 'maintenance' ? 'bg-[#C3EA39]/15' : 'bg-[#C3EA39]'
+                  }`}
                   style={{ width: `${downloadProgress}%` }}
                 />
               )}
 
               {/* Shimmer Light effect while downloading */}
-              {isDownloading && (
+              {isDownloading && downloadStatus === 'idle' && (
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/35 to-transparent -skew-x-12 animate-pulse pointer-events-none" />
               )}
 
               {/* Button Label & Status Icon */}
-              <div className="relative z-10 flex items-center justify-center gap-2.5">
-                {downloadComplete ? (
+              <div className="relative z-10 flex items-center justify-center gap-2 text-center">
+                {downloadStatus === 'maintenance' ? (
                   <>
-                    <Check className="w-4 h-4 text-black stroke-[3] animate-bounce" />
+                    <Sparkles className="w-4 h-4 text-[#C3EA39] shrink-0 animate-pulse" />
+                    <span className="font-mono font-bold text-white text-xs sm:text-sm leading-tight">
+                      CV đang được làm lại, vui lòng quay lại sau
+                    </span>
+                  </>
+                ) : downloadStatus === 'success' ? (
+                  <>
+                    <Check className="w-4 h-4 text-black stroke-[3] animate-bounce shrink-0" />
                     <span className="font-mono font-bold text-black uppercase tracking-wider">
                       ĐÃ XONG 100% ✓
                     </span>
                   </>
                 ) : isDownloading ? (
                   <>
-                    <Loader2 className="w-4 h-4 text-black animate-spin" />
+                    <Loader2 className="w-4 h-4 text-black animate-spin shrink-0" />
                     <span className="font-mono font-bold text-black tracking-wider">
                       ĐANG TẢI... {downloadProgress}%
                     </span>
                   </>
                 ) : (
                   <>
-                    <Download className="w-4 h-4 text-black stroke-[2.5]" />
+                    <Download className="w-4 h-4 text-black stroke-[2.5] shrink-0" />
                     <span className="text-black uppercase">
                       {profile?.cvButtonText || 'TẢI CV / RESUME (PDF)'}
                     </span>
