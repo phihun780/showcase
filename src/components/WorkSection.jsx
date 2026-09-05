@@ -114,28 +114,44 @@ export default function WorkSection() {
                 );
               })}
 
-              {/* Placeholder slots if less than 4 projects */}
+              {/* Placeholder slots if less than MIN_SLOTS */}
               {!isScrollable && Array.from({ length: placeholderCount }).map((_, pIdx) => {
                 const slotNum = projects.length + pIdx + 1;
                 const numStr = slotNum < 10 ? `0${slotNum}` : `${slotNum}`;
+                const totalSlots = Math.max(placeholderCount, 1);
+                const cycleDelay = (totalSlots - 1) * 0.6 + 2.0;
 
                 return (
                   <div
                     key={`placeholder-slot-${slotNum}`}
                     className="rounded-2xl transition-all duration-300 relative overflow-hidden flex-1 flex items-center justify-between px-5 sm:px-6 py-3 sm:py-3.5 border border-dashed border-white/10 bg-[#121216]/30 select-none cursor-default"
                   >
+                    {/* Cascading Gentle Light Streak from Top to Bottom */}
+                    <motion.div
+                      className="absolute inset-y-0 w-48 bg-gradient-to-r from-transparent via-[#C3EA39]/12 via-white/[0.08] to-transparent -skew-x-12 pointer-events-none"
+                      initial={{ left: '-120%' }}
+                      animate={{ left: '220%' }}
+                      transition={{
+                        repeat: Infinity,
+                        repeatDelay: cycleDelay,
+                        delay: pIdx * 0.6,
+                        duration: 1.2,
+                        ease: [0.25, 1, 0.5, 1],
+                      }}
+                    />
+
                     {/* Left: Slot Number & Text [Đang thực hiện...] */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 relative z-10">
                       <span className="font-mono font-bold text-xs text-white/25">
                         {numStr}
                       </span>
-                      <span className="font-mono text-xs sm:text-sm tracking-wide font-medium text-white/30">
+                      <span className="font-mono text-xs sm:text-sm tracking-wide font-medium text-white/35">
                         Đang thực hiện...
                       </span>
                     </div>
 
                     {/* Right: Subtle Monochrome SOON badge */}
-                    <span className="font-mono text-[10px] px-2 py-0.5 rounded-md border border-white/10 text-white/25 lowercase bg-white/[0.02]">
+                    <span className="font-mono text-[10px] px-2 py-0.5 rounded-md border border-white/10 text-white/25 lowercase bg-white/[0.02] relative z-10">
                       soon
                     </span>
                   </div>
