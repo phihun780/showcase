@@ -19,12 +19,15 @@ if errorlevel 1 (
     git config user.email "phihun780@users.noreply.github.com"
 )
 
-echo [1/2] Dang luu thay doi code...
+echo [1/3] Dang dong bo du lieu moi tu GitHub...
+git pull origin main --no-edit >nul 2>nul
+
+echo [2/3] Dang luu thay doi code...
 git add .
 git commit -m "Update portfolio: %date% %time%" >nul 2>nul
 
 echo.
-echo [2/2] Dang day code len GitHub...
+echo [3/3] Dang day code len GitHub...
 git push origin main
 if errorlevel 1 goto PUSH_ERROR
 
