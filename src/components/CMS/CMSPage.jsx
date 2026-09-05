@@ -225,7 +225,11 @@ export default function CMSPage({ onBackToPortfolio }) {
   const fileInputRef = useRef(null);
   const projectFileInputRef = useRef(null);
   const coverBannerFileInputRef = useRef(null);
+  const replaceBannerFileInputRef = useRef(null);
   const randomWorkFileInputRef = useRef(null);
+  const replaceRandomFileInputRef = useRef(null);
+  const [replacingBannerIndex, setReplacingBannerIndex] = useState(null);
+  const [replacingRandomIndex, setReplacingRandomIndex] = useState(null);
 
   // Local Working States for Tabs (Changes are applied upon clicking "Lưu Thay Đổi")
   const [localProjects, setLocalProjects] = useState(projects);
@@ -362,24 +366,73 @@ export default function CMSPage({ onBackToPortfolio }) {
     e.target.value = '';
   };
 
-  // 1. Cover Banners Handlers
-  const handleUploadCoverBanner = (e) => {
+  // 1. Cover Banners Handlers (Direct R2 optimization upload & quick replace)
+  const handleUploadCoverBanner = async (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (loadEvent) => {
-        setCropModalConfig({
-          isOpen: true,
-          imageSrc: loadEvent.target.result,
-          mode: 'banner',
-          editingIndex: null,
-          title: "",
+      try {
+        const res = await optimizeAndUploadToR2(file, 'cover_banners');
+        const newBanner = {
+          id: Date.now().toString(),
+          type: 'image',
+          title: file.name.replace(/\.[^/.]+$/, "") || "Slide Banner",
           subtitle: "",
-        });
-      };
-      reader.readAsDataURL(file);
+          image: res.url,
+        };
+        setLocalCoverBanners(prev => [...prev, newBanner]);
+      } catch (err) {
+        console.error("Error uploading banner:", err);
+      }
     }
     e.target.value = '';
+  };
+
+  const handleTriggerReplaceBanner = (idx) => {
+    setReplacingBannerIndex(idx);
+    replaceBannerFileInputRef.current?.click();
+  };
+
+  const handleReplaceBannerFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (file && replacingBannerIndex !== null) {
+      try {
+        const res = await optimizeAndUploadToR2(file, 'cover_banners');
+        setLocalCoverBanners(prev => {
+          const updated = [...prev];
+          const oldImg = updated[replacingBannerIndex]?.image;
+          if (oldImg && oldImg !== res.url && updated[replacingBannerIndex]?.type !== 'embed') {
+            deleteFromR2(oldImg);
+          }
+          updated[replacingBannerIndex] = {
+            ...updated[replacingBannerIndex],
+            image: res.url,
+          };
+          return updated;
+        });
+      } catch (err) {
+        console.error("Error replacing banner image:", err);
+      }
+    }
+    setReplacingBannerIndex(null);
+    e.target.value = '';
+  };
+
+  const handleEditImageBannerInfo = (banner, idx) => {
+    const newTitle = window.prompt("Nhập tiêu đề cho Slide Banner (tuỳ chọn):", banner.title || "");
+    if (newTitle !== null) {
+      const newSubtitle = window.prompt("Nhập mô tả phụ cho Slide Banner (tuỳ chọn):", banner.subtitle || "");
+      if (newSubtitle !== null) {
+        setLocalCoverBanners(prev => {
+          const updated = [...prev];
+          updated[idx] = {
+            ...updated[idx],
+            title: newTitle.trim(),
+            subtitle: newSubtitle.trim(),
+          };
+          return updated;
+        });
+      }
+    }
   };
 
   const handleOpenAddEmbedBanner = () => {
@@ -450,17 +503,6 @@ export default function CMSPage({ onBackToPortfolio }) {
     setEmbedModalConfig(null);
   };
 
-  const handleReCropBanner = (banner, idx) => {
-    setCropModalConfig({
-      isOpen: true,
-      imageSrc: banner.image,
-      mode: 'banner',
-      editingIndex: idx,
-      title: banner.title || '',
-      subtitle: banner.subtitle || '',
-    });
-  };
-
   const handleAddCoverBannerUrl = () => {
     const url = window.prompt("Nhập đường dẫn URL ảnh banner:");
     if (url && url.trim()) {
@@ -495,51 +537,52 @@ export default function CMSPage({ onBackToPortfolio }) {
     }
   };
 
-  // 2. Random Works Handlers
+  // 2. Random Works Handlers (Direct R2 optimization upload & quick replace)
   const handleUploadRandomWork = async (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      const isGif = file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
-      if (isGif) {
-        try {
-          const res = await optimizeAndUploadToR2(file, 'random');
-          const newWork = {
-            id: Date.now().toString(),
-            title: file.name.replace(/\.[^/.]+$/, "") || "Artwork mới",
-            subtitle: "Tác phẩm lúc rảnh rỗi",
-            image: res.url,
-          };
-          setLocalRandomWorks(prev => [...prev, newWork]);
-        } catch (err) {
-          console.error("Error uploading GIF to R2:", err);
-        }
-      } else {
-        const reader = new FileReader();
-        reader.onload = (loadEvent) => {
-          setCropModalConfig({
-            isOpen: true,
-            imageSrc: loadEvent.target.result,
-            mode: 'random',
-            editingIndex: null,
-            title: file.name.replace(/\.[^/.]+$/, "") || "Artwork mới",
-            subtitle: "Tác phẩm lúc rảnh rỗi",
-          });
+      try {
+        const res = await optimizeAndUploadToR2(file, 'random');
+        const newWork = {
+          id: Date.now().toString(),
+          title: file.name.replace(/\.[^/.]+$/, "") || "Artwork mới",
+          subtitle: "Tác phẩm lúc rảnh rỗi",
+          image: res.url,
         };
-        reader.readAsDataURL(file);
+        setLocalRandomWorks(prev => [...prev, newWork]);
+      } catch (err) {
+        console.error("Error uploading artwork to R2:", err);
       }
     }
     e.target.value = '';
   };
 
-  const handleReCropRandomWork = (work, idx) => {
-    setCropModalConfig({
-      isOpen: true,
-      imageSrc: work.image,
-      mode: 'random',
-      editingIndex: idx,
-      title: work.title || `Artwork ${idx + 1}`,
-      subtitle: work.subtitle || '',
-    });
+  const handleTriggerReplaceRandom = (idx) => {
+    setReplacingRandomIndex(idx);
+    replaceRandomFileInputRef.current?.click();
+  };
+
+  const handleReplaceRandomFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (file && replacingRandomIndex !== null) {
+      try {
+        const res = await optimizeAndUploadToR2(file, 'random');
+        setLocalRandomWorks(prev => {
+          const updated = [...prev];
+          const oldImg = updated[replacingRandomIndex]?.image;
+          if (oldImg && oldImg !== res.url) deleteFromR2(oldImg);
+          updated[replacingRandomIndex] = {
+            ...updated[replacingRandomIndex],
+            image: res.url,
+          };
+          return updated;
+        });
+      } catch (err) {
+        console.error("Error replacing artwork image:", err);
+      }
+    }
+    setReplacingRandomIndex(null);
+    e.target.value = '';
   };
 
   const handleAddRandomWorkUrl = () => {
@@ -930,7 +973,7 @@ export default function CMSPage({ onBackToPortfolio }) {
 
           </div>
 
-          {/* Hidden File Inputs for Direct Crop Actions */}
+          {/* Hidden File Inputs for Direct Actions */}
           <input
             ref={projectFileInputRef}
             type="file"
@@ -946,10 +989,24 @@ export default function CMSPage({ onBackToPortfolio }) {
             className="hidden"
           />
           <input
+            ref={replaceBannerFileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleReplaceBannerFile}
+            className="hidden"
+          />
+          <input
             ref={randomWorkFileInputRef}
             type="file"
             accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,.gif,image/*"
             onChange={handleUploadRandomWork}
+            className="hidden"
+          />
+          <input
+            ref={replaceRandomFileInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,.gif,image/*"
+            onChange={handleReplaceRandomFile}
             className="hidden"
           />
         </div>
@@ -1295,24 +1352,32 @@ export default function CMSPage({ onBackToPortfolio }) {
 
                         {/* Top Right: Actions */}
                         <div className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 flex items-center gap-1 sm:gap-1.5 z-20">
-                          <button
-                            onClick={() => handleOpenEditEmbedBanner(banner, idx)}
-                            className="px-2 py-1 rounded-lg bg-black/80 hover:bg-[#C3EA39] text-[#C3EA39] hover:text-black text-[10px] sm:text-[11px] font-mono font-bold flex items-center gap-1 transition-colors cursor-pointer border border-[#C3EA39]/40 shadow-md"
-                            title="Chỉnh sửa nội dung & thông tin banner"
-                          >
-                            <Edit2 className="w-3 h-3" />
-                            <span>Sửa</span>
-                          </button>
-
-                          {!isEmbed && (
+                          {isEmbed ? (
+                            <button
+                              onClick={() => handleOpenEditEmbedBanner(banner, idx)}
+                              className="px-2 py-1 rounded-lg bg-black/80 hover:bg-[#C3EA39] text-[#C3EA39] hover:text-black text-[10px] sm:text-[11px] font-mono font-bold flex items-center gap-1 transition-colors cursor-pointer border border-[#C3EA39]/40 shadow-md"
+                              title="Chỉnh sửa Juxtapose Before / After"
+                            >
+                              <Edit2 className="w-3 h-3" />
+                              <span>Sửa</span>
+                            </button>
+                          ) : (
                             <>
                               <button
-                                onClick={() => handleReCropBanner(banner, idx)}
+                                onClick={() => handleTriggerReplaceBanner(idx)}
                                 className="px-2 py-1 rounded-lg bg-black/80 hover:bg-[#C3EA39] text-[#C3EA39] hover:text-black text-[10px] sm:text-[11px] font-mono font-bold flex items-center gap-1 transition-colors cursor-pointer border border-[#C3EA39]/30"
-                                title="Cắt / Căn chỉnh lại ảnh banner (21:9)"
+                                title="Đổi ảnh mới cho banner này"
                               >
-                                <Crop className="w-3 h-3" />
-                                <span>Cắt</span>
+                                <Upload className="w-3 h-3" />
+                                <span>Đổi ảnh</span>
+                              </button>
+                              <button
+                                onClick={() => handleEditImageBannerInfo(banner, idx)}
+                                className="px-2 py-1 rounded-lg bg-black/80 hover:bg-white text-white/80 hover:text-black text-[10px] sm:text-[11px] font-mono flex items-center gap-1 transition-colors cursor-pointer border border-white/10"
+                                title="Đổi tiêu đề & mô tả"
+                              >
+                                <Edit2 className="w-3 h-3" />
+                                <span>Tên</span>
                               </button>
                               <button
                                 onClick={() => setPreviewingImage(banner.image)}
@@ -1460,12 +1525,12 @@ export default function CMSPage({ onBackToPortfolio }) {
                       {/* Top Right: Actions */}
                       <div className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 flex items-center gap-1 sm:gap-1.5 z-20">
                         <button
-                          onClick={() => handleReCropRandomWork(work, idx)}
+                          onClick={() => handleTriggerReplaceRandom(idx)}
                           className="px-2 py-1 rounded-lg bg-black/80 hover:bg-[#C3EA39] text-[#C3EA39] hover:text-black text-[10px] sm:text-[11px] font-mono font-bold flex items-center gap-1 transition-colors cursor-pointer border border-[#C3EA39]/30"
-                          title="Cắt / Căn chỉnh lại artwork (1:1)"
+                          title="Đổi ảnh mới cho artwork này"
                         >
-                          <Crop className="w-3 h-3" />
-                          <span>Cắt</span>
+                          <Upload className="w-3 h-3" />
+                          <span>Đổi ảnh</span>
                         </button>
                         <button
                           onClick={() => setPreviewingImage(work.image)}
