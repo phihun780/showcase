@@ -37,15 +37,15 @@ export default function CursorSpotlight() {
 
   return (
     <>
-      {/* Concentrated Bright Lime Spotlight */}
+      {/* Compact Focused Lime Spotlight */}
       <div
         className="pointer-events-none fixed inset-0 z-30 transition-opacity duration-300"
         style={{
-          background: `radial-gradient(280px circle at ${position.x}px ${position.y}px, rgba(195, 234, 57, 0.32) 0%, rgba(195, 234, 57, 0.12) 45%, transparent 70%)`,
+          background: `radial-gradient(150px circle at ${position.x}px ${position.y}px, rgba(195, 234, 57, 0.22) 0%, rgba(195, 234, 57, 0.08) 45%, transparent 70%)`,
         }}
       />
 
-      {/* Bright Central Focus Core */}
+      {/* Subtle Central Focus Core */}
       <div
         className="pointer-events-none fixed z-40 transition-transform duration-75 ease-out"
         style={{
@@ -54,7 +54,7 @@ export default function CursorSpotlight() {
           transform: 'translate(-50%, -50%)',
         }}
       >
-        <div className="w-4 h-4 rounded-full bg-[#C3EA39]/40 blur-[3px] animate-pulse" />
+        <div className="w-2.5 h-2.5 rounded-full bg-[#C3EA39]/30 blur-[2px]" />
       </div>
     </>
   );
