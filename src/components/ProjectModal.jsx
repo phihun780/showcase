@@ -12,6 +12,16 @@ export default function ProjectModal({ project, isOpen, onClose, onSelectNextPro
   const gallery = project?.gallery || [];
   const galleryCount = gallery.length;
 
+  // Reset scroll to top whenever the project changes
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollTop = 0;
+    }
+    setScrollProgress(0);
+    setActiveImageIndex(0);
+    setShowBackToTop(false);
+  }, [project?.id, project?.title]);
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') onClose();
@@ -28,6 +38,9 @@ export default function ProjectModal({ project, isOpen, onClose, onSelectNextPro
       document.body.style.overflow = 'hidden';
       window.addEventListener('keydown', handleKeyDown);
       window.addEventListener('wheel', handleGlobalWheel, { passive: false });
+      if (containerRef.current) {
+        containerRef.current.scrollTop = 0;
+      }
       setScrollProgress(0);
       setActiveImageIndex(0);
       setShowBackToTop(false);
@@ -68,6 +81,17 @@ export default function ProjectModal({ project, isOpen, onClose, onSelectNextPro
     if (containerRef.current) {
       containerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  };
+
+  const handleNextProjectClick = (e) => {
+    e?.stopPropagation();
+    if (containerRef.current) {
+      containerRef.current.scrollTop = 0;
+    }
+    setScrollProgress(0);
+    setActiveImageIndex(0);
+    setShowBackToTop(false);
+    onSelectNextProject?.();
   };
 
   if (!isOpen || !project) return null;
@@ -163,7 +187,7 @@ export default function ProjectModal({ project, isOpen, onClose, onSelectNextPro
 
             {onSelectNextProject && (
               <button
-                onClick={onSelectNextProject}
+                onClick={handleNextProjectClick}
                 className="px-5 py-2.5 rounded-full bg-[#C3EA39] hover:bg-[#d4f854] text-black font-display font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-[1.02] cursor-pointer"
               >
                 <span>DỰ ÁN TIẾP THEO</span>
