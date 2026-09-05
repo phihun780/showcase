@@ -39,18 +39,18 @@ function parseMultipart(buffer, boundary) {
 
 function r2DevPlugin() {
   let s3 = null;
-  let bucket = 'portfolio-assets';
-  let publicUrl = 'https://pub-92c2aa5ead2a411ebfe8b083d3ce67d1.r2.dev';
+  let bucket = 'showcase';
+  let publicUrl = 'https://pub-0ad262edfb6a4345a3bd61b2110c549c.r2.dev';
 
   return {
     name: 'r2-dev-api',
     configureServer(server) {
       const env = loadEnv('development', process.cwd(), '');
       const accountId = env.VITE_R2_ACCOUNT_ID || 'a0650e4cdd588f8cab25b3a13a282dc4';
-      const accessKeyId = env.VITE_R2_ACCESS_KEY_ID || '99b974108a9bb71a92d0cbce95e9f88e';
-      const secretAccessKey = env.VITE_R2_SECRET_ACCESS_KEY || '9be2dfef5f4db1815f37fa182b11b62c2a096be5bcd87aed2ff716c9248ff14d';
-      bucket = env.VITE_R2_BUCKET_NAME || 'portfolio-assets';
-      publicUrl = env.VITE_R2_PUBLIC_URL || 'https://pub-92c2aa5ead2a411ebfe8b083d3ce67d1.r2.dev';
+      const accessKeyId = env.VITE_R2_ACCESS_KEY_ID || '72d7fdbd4e7fa547975af270f37f0800';
+      const secretAccessKey = env.VITE_R2_SECRET_ACCESS_KEY || '1af43a02ad0fa9c1219416cc9bd4f467fc0f47efb84e3107b2af0e04737fef2d';
+      bucket = env.VITE_R2_BUCKET_NAME || 'showcase';
+      publicUrl = env.VITE_R2_PUBLIC_URL || 'https://pub-0ad262edfb6a4345a3bd61b2110c549c.r2.dev';
 
       if (accountId && accessKeyId && secretAccessKey) {
         s3 = new S3Client({

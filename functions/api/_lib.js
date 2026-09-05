@@ -1,7 +1,7 @@
 // Tiện ích dùng chung cho các endpoint CMS.
 // File bắt đầu bằng "_" không được Cloudflare Pages biến thành route công khai.
 
-export const PUBLIC_R2_URL = 'https://pub-92c2aa5ead2a411ebfe8b083d3ce67d1.r2.dev';
+export const PUBLIC_R2_URL = 'https://pub-0ad262edfb6a4345a3bd61b2110c549c.r2.dev';
 
 // Phiên đăng nhập CMS có hiệu lực 12 giờ
 const TOKEN_TTL_MS = 12 * 60 * 60 * 1000;

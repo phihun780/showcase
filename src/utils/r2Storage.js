@@ -2,8 +2,8 @@
 // File này KHÔNG chứa khoá bí mật nên an toàn tuyệt đối 100% khi đẩy lên GitHub.
 
 export const R2_CONFIG = {
-  bucketName: 'portfolio-assets',
-  publicUrl: 'https://pub-92c2aa5ead2a411ebfe8b083d3ce67d1.r2.dev',
+  bucketName: 'showcase',
+  publicUrl: 'https://pub-0ad262edfb6a4345a3bd61b2110c549c.r2.dev',
 };
 
 const TOKEN_KEY = 'phihung_cms_token';
