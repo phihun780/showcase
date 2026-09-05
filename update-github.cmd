@@ -4,6 +4,8 @@ cd /d "%~dp0"
 title QUAN LY CODE GITHUB - PHI HUNG PORTFOLIO
 color 0B
 
+set "REPO_URL=https://github.com/phihun780/showcase.git"
+
 rem Kiem tra Git da duoc cai dat chua
 where git >nul 2>nul
 if errorlevel 1 goto NO_GIT
@@ -15,11 +17,20 @@ if errorlevel 1 (
     git config user.email "phihun780@users.noreply.github.com"
 )
 
+rem Dam bao remote origin luon tro dung kho showcase.git
+git remote get-url origin >nul 2>nul
+if errorlevel 1 (
+    git remote add origin %REPO_URL% >nul 2>nul
+) else (
+    git remote set-url origin %REPO_URL% >nul 2>nul
+)
+
 :MENU
 cls
 color 0B
 echo =======================================================
 echo        CONG CU QUAN LY GITHUB - PHI HUNG PORTFOLIO
+echo   Kho: https://github.com/phihun780/showcase.git
 echo =======================================================
 echo.
 echo   [1] Xoa sach toan bo code tren GitHub (Khong up gi ca)
