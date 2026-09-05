@@ -1398,6 +1398,41 @@ export default function CMSPage({ onBackToPortfolio }) {
         {/* Tab 3: Tùm Lum Tà La (Square Rotating Works) */}
         {activeTab === 'random' && (
           <div className="space-y-4 sm:space-y-5">
+            {/* Top Action Controls Bar */}
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-[#121216] border border-white/10 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-[#C3EA39]/15 text-[#C3EA39] flex items-center justify-center shrink-0">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-display font-bold text-white">
+                    Quản Lý Tùm Lum Tà La (1:1)
+                  </h3>
+                  <p className="text-[11px] font-mono text-white/50">
+                    Artwork vuông & GIF xoay vòng ở Section 01
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => randomWorkFileInputRef.current?.click()}
+                  className="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black text-xs font-display font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-[1.02] cursor-pointer min-h-[38px]"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>+ Tải Ảnh (1:1)</span>
+                </button>
+
+                <button
+                  onClick={handleAddRandomWorkUrl}
+                  className="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 text-xs font-mono transition-colors cursor-pointer flex items-center justify-center gap-1 min-h-[38px]"
+                  title="Nhập trực tiếp URL ảnh"
+                >
+                  <span>🔗 URL</span>
+                </button>
+              </div>
+            </div>
+
             {localRandomWorks.length === 0 ? (
               <div
                 onClick={() => randomWorkFileInputRef.current?.click()}
