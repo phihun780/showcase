@@ -17,7 +17,7 @@ export default function WorkSection() {
     setActiveProjectModal(projects[nextIdx]);
   };
 
-  const MIN_SLOTS = 4;
+  const MIN_SLOTS = 5;
   const placeholderCount = Math.max(0, MIN_SLOTS - projects.length);
   const isScrollable = projects.length > MIN_SLOTS;
 
@@ -67,7 +67,7 @@ export default function WorkSection() {
             <div
               className={`lg:col-span-5 flex flex-col ${
                 isScrollable
-                  ? 'h-full max-h-[360px] sm:max-h-[430px] overflow-y-auto custom-scrollbar pr-1.5 space-y-2.5'
+                  ? 'h-full max-h-[340px] sm:max-h-[425px] overflow-y-auto custom-scrollbar pr-1.5 space-y-2.5 sm:space-y-3'
                   : 'justify-between gap-2.5 sm:gap-3 h-full'
               }`}
             >
@@ -85,7 +85,7 @@ export default function WorkSection() {
                     onMouseEnter={() => setSelectedIndex(idx)}
                     onClick={() => setSelectedIndex(idx)}
                     className={`cursor-pointer rounded-2xl transition-all duration-300 relative overflow-hidden ${
-                      isScrollable ? 'py-3.5 px-5 min-h-[64px]' : 'flex-1 py-3 sm:py-3.5 px-5 sm:px-6'
+                      isScrollable ? 'py-3 sm:py-3.5 px-5 sm:px-6 min-h-[58px] sm:min-h-[75px]' : 'flex-1 py-3 sm:py-3.5 px-5 sm:px-6'
                     } flex items-center justify-between ${
                       isActive
                         ? 'bg-[#141418] border-2 border-[#C3EA39] shadow-lg shadow-[#C3EA39]/5'
