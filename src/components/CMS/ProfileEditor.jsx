@@ -479,19 +479,6 @@ export default function ProfileEditor({ profile, onSave }) {
 
               <div className="sm:col-span-2 space-y-1">
                 <label className="text-xs font-mono text-white/70 uppercase block">
-                  Lời giới thiệu Section 1 (Subtitle Hero)
-                </label>
-                <input
-                  type="text"
-                  value={formData.subtitle || ''}
-                  placeholder="Đây là nơi mình lưu giữ..."
-                  onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/50 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm"
-                />
-              </div>
-
-              <div className="sm:col-span-2 space-y-1">
-                <label className="text-xs font-mono text-white/70 uppercase block">
                   Link Tải CV / Resume (PDF / Google Drive / URL)
                 </label>
                 <input
@@ -664,6 +651,19 @@ export default function ProfileEditor({ profile, onSave }) {
                 placeholder="Dạo xem 1 vòng"
                 onChange={(e) => setFormData({ ...formData, heroCtaText: e.target.value })}
                 className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs font-mono"
+              />
+            </div>
+
+            <div className="sm:col-span-3 space-y-1">
+              <label className="text-xs font-mono text-white/70 uppercase block">
+                Lời giới thiệu Hero (Subtitle)
+              </label>
+              <input
+                type="text"
+                value={formData.subtitle || ''}
+                placeholder="Đây là nơi mình lưu giữ các sản phẩm được làm ra trong thời gian qua, bạn ghé rồi thì xem qua thử nhaaa ^^"
+                onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm"
               />
             </div>
           </div>
