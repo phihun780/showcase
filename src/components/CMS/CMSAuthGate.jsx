@@ -1,8 +1,12 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Lock, ShieldCheck, ArrowLeft, Delete, KeyRound, Sparkles } from 'lucide-react';
+import { setCmsToken, clearCmsToken } from '../../utils/r2Storage';
 
-const HASH_TARGET = '8752f24ec0a8ac50ef732fbaa26f2df1cea32e477b8d4ad4160748155ed23054';
+// So chu so cua ma PIN. Muon tang do an toan thi doi so nay (vi du 6 hoac 8)
+// roi doi CMS_PASSWORD tren Cloudflare cho khop — khong can sua gi them.
+const PIN_LENGTH = 4;
+
 const AUTH_STORAGE_KEY = 'phihung_cms_authenticated';
 const AUTH_TIMESTAMP_KEY = 'phihung_cms_last_active';
 
@@ -13,6 +17,8 @@ export default function CMSAuthGate({ onAuthenticated, onBackToPortfolio }) {
   const [rememberMe, setRememberMe] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
   const [infoMsg, setInfoMsg] = useState('');
+  const [isLocked, setIsLocked] = useState(false);
+  const [isChecking, setIsChecking] = useState(false);
 
   // Always reset scroll to top immediately when mounting CMS Auth Gate
   useLayoutEffect(() => {
@@ -31,46 +37,61 @@ export default function CMSAuthGate({ onAuthenticated, onBackToPortfolio }) {
     } catch (e) {}
   }, []);
 
-  // Validate PIN
+  // Kiểm tra mã PIN — chỉ máy chủ mới có quyền phân xử.
+  // (Trước đây có bản sao "dấu vân tay" của PIN nằm ngay trong mã nguồn
+  //  trang web, ai tải về cũng dò ngược ra được trong chưa tới 1 giây. Đã gỡ bỏ.)
   const verifyPin = async (enteredPin) => {
-    // 1. Try Cloudflare Pages Functions /api/auth endpoint
+    setIsChecking(true);
+
+    let data = null;
+    let reachedServer = false;
+
     try {
       const res = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: enteredPin }),
       });
-      if (res.status === 200) {
-        const data = await res.json();
-        if (data.success) {
-          handleSuccess();
-          return;
-        }
-      } else if (res.status === 401) {
-        handleFailure();
-        return;
-      }
-    } catch (e) {}
-
-    // 2. Client-side SHA-256 check
-    try {
-      const buf = new TextEncoder().encode(enteredPin);
-      const hashBuf = await crypto.subtle.digest('SHA-256', buf);
-      const hashHex = Array.from(new Uint8Array(hashBuf))
-        .map(b => b.toString(16).padStart(2, '0'))
-        .join('');
-
-      if (hashHex === HASH_TARGET) {
-        handleSuccess();
-      } else {
-        handleFailure();
-      }
-    } catch (err) {
-      handleFailure();
+      data = await res.json().catch(() => null);
+      // Chỉ coi là "đã gặp máy chủ" khi nhận đúng câu trả lời của /api/auth
+      reachedServer = Boolean(data && (data.success || data.error));
+    } catch {
+      // mất mạng hoặc không gọi được — xử lý bên dưới
     }
+
+    setIsChecking(false);
+
+    if (data && data.success) {
+      handleSuccess(data.token);
+      return;
+    }
+
+    // Không có máy chủ (đang chạy npm run dev ở máy mình): mở CMS để xem giao
+    // diện. Không có vé nên không lưu được gì lên cloud. Đoạn này bị loại bỏ
+    // hoàn toàn khi build bản thật, nên không phải cửa hậu trên web.
+    if (import.meta.env.DEV && !reachedServer) {
+      handleSuccess(null);
+      return;
+    }
+
+    if (!reachedServer) {
+      handleFailure('Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.');
+      return;
+    }
+
+    // data.locked = true khi đang bị khoá vì nhập sai quá nhiều lần
+    handleFailure(data.error, data.locked === true);
   };
 
-  const handleSuccess = () => {
+  const handleSuccess = (token) => {
+    // Vé này là thứ cho phép CMS lưu nội dung & ảnh lên Cloudflare.
+    // Không có vé thì chỉ xem/sửa được tạm trong máy.
+    if (token) {
+      setCmsToken(token, rememberMe);
+    } else {
+      clearCmsToken();
+    }
+
     setIsSuccess(true);
     setIsError(false);
     setErrorMsg('');
@@ -88,9 +109,10 @@ export default function CMSAuthGate({ onAuthenticated, onBackToPortfolio }) {
     }, 400);
   };
 
-  const handleFailure = () => {
+  const handleFailure = (message, isLocked = false) => {
     setIsError(true);
-    setErrorMsg('Mật mã không đúng. Vui lòng thử lại.');
+    setErrorMsg(message || 'Mật mã không đúng. Vui lòng thử lại.');
+    setIsLocked(isLocked);
     setTimeout(() => {
       setPin('');
       setIsError(false);
@@ -99,7 +121,7 @@ export default function CMSAuthGate({ onAuthenticated, onBackToPortfolio }) {
 
   // Check whenever PIN changes
   useEffect(() => {
-    if (pin.length === 4) {
+    if (pin.length === PIN_LENGTH) {
       verifyPin(pin);
     }
   }, [pin]);
@@ -107,20 +129,24 @@ export default function CMSAuthGate({ onAuthenticated, onBackToPortfolio }) {
   // Handle Keyboard Input
   useEffect(() => {
     const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onBackToPortfolio();
+        return;
+      }
+      if (isChecking || isLocked) return;
       if (e.key >= '0' && e.key <= '9') {
         setPin(prev => (prev.length < 4 ? prev + e.key : prev));
       } else if (e.key === 'Backspace') {
         setPin(prev => prev.slice(0, -1));
-      } else if (e.key === 'Escape') {
-        onBackToPortfolio();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onBackToPortfolio]);
+  }, [onBackToPortfolio, isChecking, isLocked]);
 
   const handleButtonClick = (num) => {
-    if (pin.length < 4) {
+    if (isChecking || isLocked) return;
+    if (pin.length < PIN_LENGTH) {
       setPin(prev => prev + num);
     }
   };
@@ -189,13 +215,13 @@ export default function CMSAuthGate({ onAuthenticated, onBackToPortfolio }) {
             Quản Trị CMS
           </h2>
           <p className="text-xs text-white/50 font-mono">
-            Nhập mã PIN 4 số để mở khóa
+            {isLocked ? 'CMS đang tạm khoá' : `Nhập mã PIN ${PIN_LENGTH} số để mở khóa`}
           </p>
         </div>
 
         {/* 4 PIN Indicators */}
         <div className="flex items-center gap-3.5 py-1">
-          {[0, 1, 2, 3].map((idx) => {
+          {Array.from({ length: PIN_LENGTH }, (_, i) => i).map((idx) => {
             const isFilled = pin.length > idx;
             return (
               <motion.div
@@ -252,10 +278,15 @@ export default function CMSAuthGate({ onAuthenticated, onBackToPortfolio }) {
         </div>
 
         {/* Numeric Keypad Grid */}
-        <div className="grid grid-cols-3 gap-2.5 w-full pt-1">
+        <div
+          className={`grid grid-cols-3 gap-2.5 w-full pt-1 transition-opacity ${
+            isChecking || isLocked ? 'opacity-40 pointer-events-none' : ''
+          }`}
+        >
           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
             <button
               key={num}
+              disabled={isChecking || isLocked}
               onClick={() => handleButtonClick(num)}
               className="h-13 rounded-2xl bg-white/5 hover:bg-white/10 active:bg-[#C3EA39] active:text-black border border-white/10 hover:border-white/25 text-lg font-mono font-bold transition-all flex items-center justify-center cursor-pointer hover:scale-[1.02] active:scale-95"
             >
@@ -265,6 +296,7 @@ export default function CMSAuthGate({ onAuthenticated, onBackToPortfolio }) {
 
           {/* Clear button */}
           <button
+            disabled={isChecking || isLocked}
             onClick={handleClear}
             className="h-13 rounded-2xl bg-white/5 hover:bg-white/10 active:bg-white/20 border border-white/10 text-xs font-mono text-white/50 hover:text-white transition-all flex items-center justify-center cursor-pointer"
           >
@@ -273,6 +305,7 @@ export default function CMSAuthGate({ onAuthenticated, onBackToPortfolio }) {
 
           {/* 0 */}
           <button
+            disabled={isChecking || isLocked}
             onClick={() => handleButtonClick(0)}
             className="h-13 rounded-2xl bg-white/5 hover:bg-white/10 active:bg-[#C3EA39] active:text-black border border-white/10 hover:border-white/25 text-lg font-mono font-bold transition-all flex items-center justify-center cursor-pointer hover:scale-[1.02] active:scale-95"
           >
@@ -281,6 +314,7 @@ export default function CMSAuthGate({ onAuthenticated, onBackToPortfolio }) {
 
           {/* Backspace */}
           <button
+            disabled={isChecking || isLocked}
             onClick={handleDelete}
             className="h-13 rounded-2xl bg-white/5 hover:bg-white/10 active:bg-white/20 border border-white/10 text-white/60 hover:text-white transition-all flex items-center justify-center cursor-pointer"
             aria-label="Xóa 1 số"

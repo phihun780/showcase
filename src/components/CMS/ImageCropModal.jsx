@@ -40,7 +40,7 @@ export default function ImageCropModal({
   imageSrc,
   onCropComplete,
   onClose,
-  mode = 'project', // 'banner' | 'project' | 'portrait' | 'avatar' | 'random'
+  mode = 'project', // 'banner' | 'project' | 'portrait' | 'avatar' | 'random' | 'og'
   initialAspectRatio = null,
   folderPrefix = null,
 }) {
@@ -48,7 +48,14 @@ export default function ImageCropModal({
   const isRandomMode = mode === 'random';
   const isPortraitMode = mode === 'portrait' || mode === 'avatar';
 
+  // Ảnh preview khi chia sẻ link: các mạng xã hội đều dùng khung 1200×630.
+  // Không cho đổi tỉ lệ — sai khung là ảnh bị cắt xén lệch khi hiện trên Facebook/Zalo.
+  const isOgMode = mode === 'og';
+  const OG_WIDTH = 1200;
+  const OG_HEIGHT = 630;
+
   const defaultRatio = initialAspectRatio || (
+    isOgMode ? OG_WIDTH / OG_HEIGHT :
     isBannerMode ? 21 / 9 :
     isRandomMode ? 1 :
     isPortraitMode ? 3 / 4 :
@@ -56,6 +63,7 @@ export default function ImageCropModal({
   );
 
   const defaultRatioName = (
+    isOgMode ? '1200×630' :
     isBannerMode ? '21:9' :
     isRandomMode ? '1:1' :
     isPortraitMode ? '3:4' :
@@ -311,8 +319,12 @@ export default function ImageCropModal({
     setIsSaving(true);
 
     try {
-      const exportW = 1920;
-      const exportH = Math.max(1, Math.round(exportW / (aspectRatio || 1)));
+      // Ảnh preview phải đúng 1200×630 và ở định dạng JPEG — WebP bị một số
+      // nơi (Zalo, LinkedIn) bỏ qua, làm link chia sẻ mất ảnh.
+      const exportW = isOgMode ? OG_WIDTH : 1920;
+      const exportH = isOgMode
+        ? OG_HEIGHT
+        : Math.max(1, Math.round(exportW / (aspectRatio || 1)));
 
       const exportCanvas = document.createElement('canvas');
       exportCanvas.width = exportW;
@@ -352,9 +364,12 @@ export default function ImageCropModal({
         ctx.filter = 'none';
       }
 
+      const outputType = isOgMode ? 'image/jpeg' : 'image/webp';
+      const outputExt = isOgMode ? 'jpg' : 'webp';
+
       let dataUrl;
       try {
-        dataUrl = exportCanvas.toDataURL('image/webp', 0.92);
+        dataUrl = exportCanvas.toDataURL(outputType, 0.92);
         if (!dataUrl || dataUrl === 'data:,' || !dataUrl.startsWith('data:image/')) {
           dataUrl = exportCanvas.toDataURL('image/jpeg', 0.92);
         }
@@ -364,7 +379,9 @@ export default function ImageCropModal({
 
       let finalPrefix = folderPrefix;
       if (!finalPrefix) {
-        finalPrefix = isBannerMode
+        finalPrefix = isOgMode
+          ? 'profile'
+          : isBannerMode
           ? 'cover_banners'
           : isRandomMode
           ? 'random_works'
@@ -372,13 +389,13 @@ export default function ImageCropModal({
           ? 'profile'
           : 'projects';
       }
-      const key = `${finalPrefix}/${Date.now()}_cropped.webp`;
+      const key = `${finalPrefix}/${Date.now()}_${isOgMode ? 'og' : 'cropped'}.${outputExt}`;
 
       exportCanvas.toBlob(
         async (blob) => {
           if (blob) {
             try {
-              const res = await uploadToR2(blob, key, 'image/webp');
+              const res = await uploadToR2(blob, key, outputType);
               if (res && res.url) {
                 onCropComplete(res.url);
                 setIsSaving(false);
@@ -393,7 +410,7 @@ export default function ImageCropModal({
           setIsSaving(false);
           onClose();
         },
-        'image/webp',
+        outputType,
         0.92
       );
     } catch (err) {
@@ -407,7 +424,9 @@ export default function ImageCropModal({
   if (!isOpen || !imageSrc) return null;
 
   // Aspect Ratio Presets
-  const presets = isRandomMode
+  const presets = isOgMode
+    ? [{ label: '1200×630 (chuẩn chia sẻ)', value: OG_WIDTH / OG_HEIGHT, name: '1200×630' }]
+    : isRandomMode
     ? [
         { label: '1:1 (Vuông)', value: 1, name: '1:1' },
         { label: '4:3', value: 4 / 3, name: '4:3' },

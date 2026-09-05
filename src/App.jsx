@@ -194,6 +194,10 @@ function PortfolioApp() {
     }
 
     // 4. Dynamic OpenGraph Image
+    //    Lưu ý: phần này chỉ đổi thẻ trên trình duyệt đang mở. Facebook / Zalo
+    //    KHÔNG chạy JavaScript khi đọc link, nên ảnh preview khi chia sẻ luôn lấy
+    //    từ thẻ og:image tĩnh trong index.html. Muốn đổi ảnh preview thật thì thay
+    //    file public/og-image.png (giữ nguyên tên, 1200×630).
     if (profile?.ogImage) {
       let ogImg = document.querySelector("meta[property='og:image']");
       if (!ogImg) {

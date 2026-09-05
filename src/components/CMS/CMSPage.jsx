@@ -10,7 +10,7 @@ import CMSAuthGate from './CMSAuthGate';
 import SeasonalAtmosphere from '../SeasonalAtmosphere';
 import { extractEmbedSrc } from '../../utils/juxtaposeUtils';
 import { optimizeAndUploadToR2, getProjectFolderPath } from '../../utils/imageOptimizer';
-import { deleteFromR2, deleteMultipleFromR2, deleteFolderFromR2 } from '../../utils/r2Storage';
+import { deleteFromR2, deleteMultipleFromR2, deleteFolderFromR2, clearCmsToken } from '../../utils/r2Storage';
 import {
   FolderKanban,
   User,
@@ -98,6 +98,7 @@ export default function CMSPage({ onBackToPortfolio }) {
       if (lastActive) {
         const timePassed = Date.now() - parseInt(lastActive, 10);
         if (timePassed >= INACTIVITY_TIMEOUT_MS) {
+          clearCmsToken();
           localStorage.removeItem(AUTH_STORAGE_KEY);
           sessionStorage.removeItem(AUTH_STORAGE_KEY);
           localStorage.removeItem(AUTH_TIMESTAMP_KEY);
@@ -113,6 +114,7 @@ export default function CMSPage({ onBackToPortfolio }) {
   });
 
   const handleLogout = (isExpired = false) => {
+    clearCmsToken();
     localStorage.removeItem(AUTH_STORAGE_KEY);
     sessionStorage.removeItem(AUTH_STORAGE_KEY);
     localStorage.removeItem(AUTH_TIMESTAMP_KEY);

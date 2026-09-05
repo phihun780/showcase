@@ -63,6 +63,7 @@ export default function ProfileEditor({ profile, onSave }) {
   const [isUploading, setIsUploading] = useState(false);
   const [cropImageSrc, setCropImageSrc] = useState(null);
   const [isCropOpen, setIsCropOpen] = useState(false);
+  const [cropTarget, setCropTarget] = useState('avatar'); // 'avatar' | 'og'
 
   // Drag & drop state for Experience list
   const [draggedExpIndex, setDraggedExpIndex] = useState(null);
@@ -94,24 +95,30 @@ export default function ProfileEditor({ profile, onSave }) {
     e.target.value = '';
   };
 
-  const handleOgImageUpload = async (e) => {
+  // Ảnh preview khi chia sẻ link: cho cắt khung 1200×630 trước khi tải lên,
+  // vì Facebook / Zalo luôn hiển thị theo đúng khung này.
+  const handleOgImageUpload = (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      setIsUploading(true);
-      try {
-        const res = await optimizeAndUploadToR2(file, 'profile');
-        setFormData(prev => ({ ...prev, ogImage: res.url }));
-        setOptimizeNotice('Thumbnail chia sẻ đã tải lên thành công ✓');
-        setTimeout(() => setOptimizeNotice(''), 3000);
-      } catch (err) {
-        const reader = new FileReader();
-        reader.onload = (ev) => setFormData(prev => ({ ...prev, ogImage: ev.target.result }));
-        reader.readAsDataURL(file);
-      } finally {
-        setIsUploading(false);
-      }
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setCropImageSrc(ev.target.result);
+        setCropTarget('og');
+        setIsCropOpen(true);
+      };
+      reader.readAsDataURL(file);
     }
     e.target.value = '';
+  };
+
+  const handleCropOgComplete = (croppedUrl) => {
+    const oldOg = formData.ogImage;
+    if (oldOg && oldOg !== croppedUrl) {
+      deleteFromR2(oldOg);
+    }
+    setFormData(prev => ({ ...prev, ogImage: croppedUrl }));
+    setOptimizeNotice('Ảnh preview đã cắt chuẩn 1200×630 & lưu R2 ✓ — nhớ bấm Lưu bên dưới');
+    setTimeout(() => setOptimizeNotice(''), 4500);
   };
 
   const handleAvatarUpload = async (e) => {
@@ -135,6 +142,7 @@ export default function ProfileEditor({ profile, onSave }) {
         reader.onload = (loadEvt) => {
           const dataUrl = loadEvt.target.result;
           setCropImageSrc(dataUrl);
+          setCropTarget('avatar');
           setIsCropOpen(true);
         };
         reader.readAsDataURL(file);
@@ -1111,6 +1119,11 @@ export default function ProfileEditor({ profile, onSave }) {
               </span>
             </div>
 
+            <p className="text-[11px] font-mono text-white/40 leading-relaxed">
+              Ảnh tải lên sẽ được cắt đúng khung 1200×630 và lưu dưới định dạng JPEG
+              để Zalo / Facebook đều đọc được.
+            </p>
+
             <div className="flex items-center gap-3">
               {/* Preview image */}
               <div className="w-20 aspect-[1.91/1] rounded-lg bg-black border border-white/20 flex items-center justify-center overflow-hidden shrink-0">
@@ -1131,7 +1144,7 @@ export default function ProfileEditor({ profile, onSave }) {
                 />
                 <label className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-[#C3EA39] hover:text-black text-white text-xs sm:text-[11px] font-mono font-bold transition-all cursor-pointer min-h-[36px]">
                   <Upload className="w-3.5 h-3.5" />
-                  <span>Tải ảnh Thumbnail</span>
+                  <span>Tải ảnh & cắt khung</span>
                   <input
                     type="file"
                     accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"
@@ -1191,14 +1204,14 @@ export default function ProfileEditor({ profile, onSave }) {
         </button>
       </div>
 
-      {/* Avatar Image Crop Modal */}
+      {/* Khung cắt ảnh — dùng chung cho ảnh đại diện và ảnh preview chia sẻ */}
       <ImageCropModal
         isOpen={isCropOpen}
         imageSrc={cropImageSrc}
-        mode="portrait"
-        initialAspectRatio={3 / 4}
+        mode={cropTarget === 'og' ? 'og' : 'portrait'}
+        initialAspectRatio={cropTarget === 'og' ? 1200 / 630 : 3 / 4}
         folderPrefix="profile"
-        onCropComplete={handleCropAvatarComplete}
+        onCropComplete={cropTarget === 'og' ? handleCropOgComplete : handleCropAvatarComplete}
         onClose={() => setIsCropOpen(false)}
       />
 

@@ -1,39 +1,58 @@
-﻿export async function onRequestGet(context) {
+import { json, requireAuth } from './_lib.js';
+
+const DATA_KEY = 'data/portfolio.json';
+
+// Đọc nội dung portfolio — công khai, vì trang web ai cũng xem được.
+export async function onRequestGet(context) {
   const { env } = context;
+
   try {
     if (env.PORTFOLIO_ASSETS) {
-      const object = await env.PORTFOLIO_ASSETS.get('data/portfolio.json');
+      const object = await env.PORTFOLIO_ASSETS.get(DATA_KEY);
       if (object) {
-        const data = await object.text();
-        return new Response(data, {
+        return new Response(await object.text(), {
           headers: {
             'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
             'Cache-Control': 'no-cache',
           },
         });
       }
     }
-  } catch (e) {}
-  return new Response(JSON.stringify({ empty: true }), {
-    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-  });
+  } catch (err) {
+    console.error('Data read error:', err);
+  }
+
+  return json({ empty: true });
 }
 
+// Ghi đè nội dung portfolio — chỉ CMS đã đăng nhập mới được phép.
 export async function onRequestPost(context) {
+  const denied = await requireAuth(context);
+  if (denied) return denied;
+
   const { request, env } = context;
+  if (!env.PORTFOLIO_ASSETS) {
+    return json({ error: 'Chưa gắn kho R2 (PORTFOLIO_ASSETS) cho dự án' }, 500);
+  }
+
+  let payload;
   try {
-    const payload = await request.json();
-    if (env.PORTFOLIO_ASSETS) {
-      await env.PORTFOLIO_ASSETS.put('data/portfolio.json', JSON.stringify(payload, null, 2), {
-        httpMetadata: { contentType: 'application/json' },
-      });
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-      });
-    }
-    return new Response(JSON.stringify({ error: 'R2 binding not configured' }), { status: 500 });
+    payload = await request.json();
+  } catch {
+    return json({ error: 'Dữ liệu gửi lên không hợp lệ' }, 400);
+  }
+
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return json({ error: 'Dữ liệu gửi lên không hợp lệ' }, 400);
+  }
+
+  try {
+    await env.PORTFOLIO_ASSETS.put(DATA_KEY, JSON.stringify(payload, null, 2), {
+      httpMetadata: { contentType: 'application/json' },
+    });
+    return json({ success: true });
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+    console.error('Data write error:', err);
+    return json({ error: 'Lưu dữ liệu thất bại' }, 500);
   }
 }
