@@ -359,22 +359,24 @@ export default function ProfileEditor({ profile, onSave }) {
                   />
                 </div>
 
-                <div className="flex items-center gap-2 sm:col-span-5 justify-between">
-                  <div className="w-24 sm:w-full sm:col-span-2">
+                <div className="flex items-center gap-2 sm:contents">
+                  {/* Ô Năm: Ngắn gọn, căn giữa */}
+                  <div className="w-24 sm:w-auto sm:col-span-2">
                     <input
                       type="text"
                       placeholder="Năm"
                       value={exp.period || ''}
                       onChange={(e) => handleExpChange(idx, 'period', e.target.value)}
-                      className="w-full px-3 py-2 sm:py-1.5 rounded-lg bg-black/60 border border-white/10 text-[#C3EA39] text-base sm:text-xs font-mono font-bold"
+                      className="w-full px-2 py-2 sm:py-1.5 rounded-lg bg-black/60 border border-white/10 text-[#C3EA39] text-base sm:text-xs font-mono font-bold text-center placeholder-white/30"
                     />
                   </div>
 
+                  {/* Nút Đang làm / Đã nghỉ: Rộng rãi */}
                   <div className="flex-1 sm:col-span-2">
                     <button
                       type="button"
                       onClick={() => handleExpChange(idx, 'isCurrent', !isCurrent)}
-                      className={`w-full py-2 sm:py-1.5 px-2 rounded-lg text-xs sm:text-[11px] font-mono font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer border min-h-[38px] sm:min-h-[32px] ${
+                      className={`w-full py-2 sm:py-1.5 px-2 rounded-lg text-xs sm:text-[11px] font-mono font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer border min-h-[38px] sm:min-h-[32px] whitespace-nowrap ${
                         isCurrent
                           ? 'bg-[#C3EA39]/15 text-[#C3EA39] border-[#C3EA39]/40 shadow-sm shadow-[#C3EA39]/10'
                           : 'bg-white/5 text-white/40 border-white/10 hover:text-white/70 hover:bg-white/10'
@@ -386,11 +388,12 @@ export default function ProfileEditor({ profile, onSave }) {
                     </button>
                   </div>
 
+                  {/* Nút Xoá */}
                   <div className="shrink-0 sm:col-span-1 flex justify-end">
                     <button
                       type="button"
                       onClick={() => handleRemoveExp(idx)}
-                      className="p-2 sm:p-1.5 rounded-lg text-white/40 hover:text-red-400 transition-colors cursor-pointer min-w-[38px] min-h-[38px] sm:min-w-0 sm:min-h-0 flex items-center justify-center"
+                      className="p-2 sm:p-1.5 rounded-lg text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer min-w-[38px] min-h-[38px] sm:min-w-0 sm:min-h-0 flex items-center justify-center"
                       title="Xoá mục này"
                     >
                       <Trash2 className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
