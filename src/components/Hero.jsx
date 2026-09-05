@@ -32,7 +32,7 @@ export default function Hero() {
   }, []);
 
   return (
-    <section className="relative min-h-screen flex flex-col justify-between pt-24 sm:pt-28 lg:pt-24 pb-6 sm:pb-8 overflow-hidden">
+    <section className="relative min-h-screen w-full max-w-full flex flex-col justify-between pt-24 sm:pt-28 lg:pt-24 pb-6 sm:pb-8 overflow-hidden touch-pan-y">
       
       {/* Subtle Ambient Background Lime Glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[450px] bg-[#C3EA39]/10 blur-[180px] rounded-full pointer-events-none" />
@@ -65,7 +65,7 @@ export default function Hero() {
               transition={{ duration: 0.8, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
               className="mb-6 sm:mb-8"
             >
-              <h1 className="text-6xl xs:text-7xl sm:text-7xl md:text-8xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-black tracking-tighter uppercase leading-[0.88] select-none">
+              <h1 className="text-[4.5rem] xs:text-[5.5rem] sm:text-8xl md:text-8xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-black tracking-tighter uppercase leading-[0.88] select-none">
                 <span
                   className={`block transition-all duration-700 ease-in-out ${
                     !isSwapped
@@ -123,8 +123,8 @@ export default function Hero() {
           </div>
 
           {/* RIGHT COLUMN: Interactive Adobe Illustrator Design Simulation */}
-          <div className="lg:col-span-7 xl:col-span-7 flex flex-col justify-center items-center lg:items-end w-full">
-            <div className="w-full flex justify-center lg:justify-end">
+          <div className="lg:col-span-7 xl:col-span-7 flex flex-col justify-center items-center lg:items-end w-full max-w-full overflow-hidden">
+            <div className="w-full max-w-full flex justify-center lg:justify-end overflow-hidden">
               <PhotoshopSimulator />
             </div>
           </div>
@@ -134,14 +134,9 @@ export default function Hero() {
       </div>
 
       {/* Artistic Tilted Marquee Strip (100% Seamless Infinite Loop) */}
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.9, delay: 0.48, ease: [0.16, 1, 0.3, 1] }}
-        className="relative w-full overflow-hidden py-3 sm:py-5 mt-4 sm:mt-0 translate-y-1 sm:-translate-y-6"
-      >
-        <div className="-rotate-1 sm:-rotate-1.5 scale-105 py-3.5 bg-[#0D0D12] border-y border-[#C3EA39]/60 shadow-2xl text-[#C3EA39] font-mono font-extrabold text-xs sm:text-sm tracking-widest uppercase select-none overflow-hidden">
-          <div className="animate-marquee whitespace-nowrap flex items-center">
+      <div className="relative w-full max-w-full overflow-hidden py-3 sm:py-5 mt-4 sm:mt-0 translate-y-1 sm:-translate-y-6 pointer-events-none">
+        <div className="-rotate-1 sm:-rotate-1.5 py-3 sm:py-3.5 bg-[#0D0D12] border-y border-[#C3EA39]/60 shadow-2xl text-[#C3EA39] font-mono font-extrabold text-xs sm:text-sm tracking-widest uppercase select-none overflow-hidden w-full max-w-full">
+          <div className="animate-marquee whitespace-nowrap flex items-center pointer-events-auto">
             {/* Loop Segment 1 */}
             <div className="flex items-center gap-8 pr-8 shrink-0">
               {items.map((item, idx) => (
@@ -163,7 +158,7 @@ export default function Hero() {
             </div>
           </div>
         </div>
-      </motion.div>
+      </div>
 
     </section>
   );

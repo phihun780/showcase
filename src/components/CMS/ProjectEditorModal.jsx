@@ -205,11 +205,11 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
 
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md overflow-y-auto animate-fadeIn">
-      <div className="relative w-full max-w-2xl bg-[#121216] border border-white/15 rounded-3xl shadow-2xl p-6 sm:p-8 space-y-5 max-h-[92vh] overflow-y-auto custom-scrollbar text-white">
+      <div className="relative w-full max-w-2xl bg-[#121216] border border-white/15 rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[92vh] text-white overflow-hidden">
         
-        {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-white/10">
-          <h3 className="text-lg sm:text-xl font-display font-bold text-white">
+        {/* Sticky Header */}
+        <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-white/10 bg-[#16161c] flex items-center justify-between shrink-0">
+          <h3 className="text-base sm:text-xl font-display font-bold text-white">
             {project ? 'Sửa Dự Án' : 'Thêm Dự Án Mới'}
           </h3>
 
@@ -221,17 +221,17 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
           </button>
         </div>
 
-        {/* Optimized Notice Toast */}
-        {optimizeNotice && (
-          <div className="p-3 rounded-xl bg-[#C3EA39]/10 border border-[#C3EA39]/30 text-[#C3EA39] text-xs font-mono font-bold flex items-center gap-2 animate-fadeIn">
-            <Sparkles className="w-4 h-4 shrink-0" />
-            <span>{optimizeNotice}</span>
-          </div>
-        )}
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Scrollable Form Body */}
+        <form onSubmit={handleSubmit} id="project-editor-form" className="p-4 sm:p-6 overflow-y-auto custom-scrollbar flex-1 space-y-4 text-xs">
           
+          {/* Optimized Notice Toast */}
+          {optimizeNotice && (
+            <div className="p-3 rounded-xl bg-[#C3EA39]/10 border border-[#C3EA39]/30 text-[#C3EA39] text-xs font-mono font-bold flex items-center gap-2 animate-fadeIn">
+              <Sparkles className="w-4 h-4 shrink-0" />
+              <span>{optimizeNotice}</span>
+            </div>
+          )}
+
           {/* Title */}
           <div className="space-y-1">
             <label className="text-xs font-mono text-white/70 uppercase block">
@@ -243,7 +243,7 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
               placeholder="VD: Brand Identity 2024, Visual Design..."
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-black/50 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-sm"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-black/50 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm"
             />
           </div>
 
@@ -257,7 +257,7 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
               placeholder="Mô tả tóm tắt về dự án..."
               value={formData.subtitle}
               onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
-              className="w-full px-3.5 py-2 rounded-xl bg-black/50 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-sm"
+              className="w-full px-3.5 py-2 rounded-xl bg-black/50 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm"
             />
           </div>
 
@@ -272,7 +272,7 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
                 placeholder="VD: 2024"
                 value={formData.year}
                 onChange={(e) => setFormData({ ...formData, year: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-black/50 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-xs font-mono"
+                className="w-full px-3.5 py-2 rounded-xl bg-black/50 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs font-mono"
               />
             </div>
 
@@ -285,19 +285,19 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
                 placeholder="VD: Graphic Design, Branding"
                 value={formData.tags}
                 onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-black/50 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-xs font-mono"
+                className="w-full px-3.5 py-2 rounded-xl bg-black/50 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs font-mono"
               />
             </div>
           </div>
 
           {/* Cover Image */}
-          <div className="space-y-2 p-3.5 rounded-2xl bg-black/30 border border-white/10">
-            <div className="flex items-center justify-between">
+          <div className="space-y-2 p-3 sm:p-3.5 rounded-2xl bg-black/30 border border-white/10">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <label className="text-xs font-mono text-white/80 uppercase block">
                 Ảnh Bìa / GIF
               </label>
-              <label className="cursor-pointer text-xs font-mono text-black bg-[#C3EA39] hover:bg-[#d4f854] px-2.5 py-1 rounded-lg font-bold inline-flex items-center gap-1 transition-colors">
-                <Upload className="w-3 h-3" />
+              <label className="cursor-pointer text-xs font-mono text-black bg-[#C3EA39] hover:bg-[#d4f854] px-3 py-1.5 rounded-lg font-bold inline-flex items-center justify-center gap-1.5 transition-colors">
+                <Upload className="w-3.5 h-3.5" />
                 <span>Chọn ảnh / GIF từ máy</span>
                 <input
                   type="file"
@@ -313,7 +313,7 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
               placeholder="Hoặc dán URL ảnh / GIF (https://...)"
               value={formData.coverImage}
               onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg bg-black/50 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-xs font-mono"
+              className="w-full px-3 py-2 rounded-lg bg-black/50 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs font-mono"
             />
 
             {formData.coverImage && (
@@ -349,14 +349,14 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
           </div>
 
           {/* Gallery Images / GIFs */}
-          <div className="space-y-2.5 p-3.5 rounded-2xl bg-black/30 border border-white/10">
-            <div className="flex items-center justify-between">
+          <div className="space-y-2.5 p-3 sm:p-3.5 rounded-2xl bg-black/30 border border-white/10">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <label className="text-xs font-mono text-white/80 uppercase block">
                 Ảnh & GIF Chi Tiết ({formData.gallery.length})
               </label>
 
-              <label className="cursor-pointer text-xs font-mono text-white bg-white/10 hover:bg-white/20 border border-white/10 px-2.5 py-1 rounded-lg font-medium inline-flex items-center gap-1 transition-colors">
-                <Upload className="w-3 h-3 text-[#C3EA39]" />
+              <label className="cursor-pointer text-xs font-mono text-white bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-1.5 rounded-lg font-medium inline-flex items-center justify-center gap-1.5 transition-colors">
+                <Upload className="w-3.5 h-3.5 text-[#C3EA39]" />
                 <span>Chọn nhiều ảnh / GIF</span>
                 <input
                   type="file"
@@ -380,12 +380,12 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
                     handleAddGalleryUrl();
                   }
                 }}
-                className="flex-1 px-3 py-2 rounded-lg bg-black/50 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-xs font-mono"
+                className="flex-1 px-3 py-2 rounded-lg bg-black/50 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs font-mono"
               />
               <button
                 type="button"
                 onClick={handleAddGalleryUrl}
-                className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-mono flex items-center gap-1"
+                className="px-3.5 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-mono flex items-center justify-center gap-1 min-h-[38px] shrink-0"
               >
                 <Plus className="w-3.5 h-3.5 text-[#C3EA39]" />
                 <span>Thêm</span>
@@ -394,7 +394,7 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
 
             {/* Gallery Thumbnails List */}
             {formData.gallery.length > 0 && (
-              <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mt-2">
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mt-2">
                 {formData.gallery.map((img, idx) => (
                   <div
                     key={idx}
@@ -407,16 +407,16 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
                     />
 
                     {(img.startsWith('data:image/gif') || img.toLowerCase().endsWith('.gif')) && (
-                      <span className="absolute top-1.5 left-1.5 px-1 py-0.2 rounded bg-black/80 text-[#C3EA39] text-[9px] font-mono font-bold border border-[#C3EA39]/40 z-10 pointer-events-none">
+                      <span className="absolute top-1 left-1 px-1 py-0.2 rounded bg-black/80 text-[#C3EA39] text-[8px] font-mono font-bold border border-[#C3EA39]/40 z-10 pointer-events-none">
                         GIF
                       </span>
                     )}
 
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 z-20">
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1 z-20">
                       <button
                         type="button"
                         onClick={() => handleOpenCropForGalleryItem(idx)}
-                        className="p-1 rounded bg-white/20 hover:bg-[#C3EA39] hover:text-black text-white"
+                        className="p-1 rounded bg-white/20 hover:bg-[#C3EA39] hover:text-black text-white min-w-[26px] min-h-[26px] flex items-center justify-center"
                         title="Cắt / Căn chỉnh ảnh này"
                       >
                         <Crop className="w-3 h-3" />
@@ -425,7 +425,7 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
                         <button
                           type="button"
                           onClick={() => handleMoveGalleryItem(idx, 'up')}
-                          className="p-1 rounded bg-white/20 hover:bg-[#C3EA39] hover:text-black text-white"
+                          className="p-1 rounded bg-white/20 hover:bg-[#C3EA39] hover:text-black text-white min-w-[26px] min-h-[26px] flex items-center justify-center"
                           title="Lên trước"
                         >
                           <ArrowUp className="w-3 h-3" />
@@ -435,7 +435,7 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
                         <button
                           type="button"
                           onClick={() => handleMoveGalleryItem(idx, 'down')}
-                          className="p-1 rounded bg-white/20 hover:bg-[#C3EA39] hover:text-black text-white"
+                          className="p-1 rounded bg-white/20 hover:bg-[#C3EA39] hover:text-black text-white min-w-[26px] min-h-[26px] flex items-center justify-center"
                           title="Xuống sau"
                         >
                           <ArrowDown className="w-3 h-3" />
@@ -444,7 +444,7 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
                       <button
                         type="button"
                         onClick={() => handleRemoveGalleryItem(idx)}
-                        className="p-1 rounded bg-red-500/40 hover:bg-red-500 text-white"
+                        className="p-1 rounded bg-red-500/40 hover:bg-red-500 text-white min-w-[26px] min-h-[26px] flex items-center justify-center"
                         title="Xoá ảnh"
                       >
                         <Trash2 className="w-3 h-3" />
@@ -456,25 +456,26 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
             )}
           </div>
 
-          {/* Action buttons */}
-          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-white/10">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-mono text-white/60 hover:text-white transition-colors cursor-pointer"
-            >
-              Hủy
-            </button>
-            <button
-              type="submit"
-              className="px-5 py-2.5 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black font-display font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer"
-            >
-              <Check className="w-3.5 h-3.5" />
-              <span>Lưu Dự Án</span>
-            </button>
-          </div>
-
         </form>
+
+        {/* Sticky Footer */}
+        <div className="px-4 sm:px-6 py-3 sm:py-3.5 border-t border-white/10 bg-[#16161c] flex items-center justify-end gap-2.5 shrink-0">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 rounded-xl text-xs font-mono text-white/60 hover:text-white transition-colors cursor-pointer min-h-[38px]"
+          >
+            Hủy
+          </button>
+          <button
+            type="submit"
+            form="project-editor-form"
+            className="px-5 py-2.5 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black font-display font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md min-h-[38px]"
+          >
+            <Check className="w-3.5 h-3.5" />
+            <span>Lưu Dự Án</span>
+          </button>
+        </div>
 
       </div>
 

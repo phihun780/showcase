@@ -163,36 +163,36 @@ export default function JuxtaposeEmbedModal({ isOpen, initialData, onSave, onClo
         </div>
 
         {/* Mode Selector Tabs */}
-        <div className="px-5 pt-4 pb-1 border-b border-white/5 flex gap-2">
+        <div className="px-4 sm:px-5 pt-3 sm:pt-4 pb-2 border-b border-white/5 flex flex-col sm:flex-row gap-2 shrink-0">
           <button
             type="button"
             onClick={() => setActiveMode('direct')}
-            className={`flex-1 py-2 px-3 rounded-xl text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+            className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer min-h-[38px] ${
               activeMode === 'direct'
                 ? 'bg-[#C3EA39] text-black shadow-md shadow-[#C3EA39]/20'
                 : 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10'
             }`}
           >
             <ImageIcon className="w-3.5 h-3.5" />
-            <span>Tải / Chọn 2 Ảnh (Khuyên dùng - 0% Logo)</span>
+            <span>Tải / Chọn 2 Ảnh (0% Logo Juxtapose)</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveMode('embed')}
-            className={`py-2 px-4 rounded-xl text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+            className={`py-2.5 px-4 rounded-xl text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer min-h-[38px] ${
               activeMode === 'embed'
                 ? 'bg-[#C3EA39] text-black shadow-md shadow-[#C3EA39]/20'
                 : 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10'
             }`}
           >
             <LinkIcon className="w-3.5 h-3.5" />
-            <span>Mã Nhúng Iframe Juxtapose</span>
+            <span>Mã Nhúng Iframe</span>
           </button>
         </div>
 
         {/* Modal Body */}
-        <form onSubmit={handleSubmit} className="p-5 space-y-4 overflow-y-auto flex-1 text-xs">
+        <form onSubmit={handleSubmit} id="juxtapose-modal-form" className="p-4 sm:p-5 space-y-4 overflow-y-auto custom-scrollbar flex-1 text-xs">
           
           {/* 1. DIRECT 2-IMAGE MODE */}
           {activeMode === 'direct' && (
@@ -202,15 +202,15 @@ export default function JuxtaposeEmbedModal({ isOpen, initialData, onSave, onClo
               <div className="p-3 rounded-xl bg-[#C3EA39]/10 border border-[#C3EA39]/25 flex items-center gap-2.5 text-[#C3EA39]">
                 <Sparkles className="w-4 h-4 shrink-0" />
                 <p className="text-[11px] text-white/90 leading-relaxed font-sans">
-                  <b>Khuyên dùng:</b> Tải trực tiếp 2 bức ảnh hoặc dán URL ảnh để website tự tạo slider 60fps mượt mà, không phụ thuộc máy chủ bên ngoài và <b>hoàn toàn không có logo / watermark Juxtapose</b>!
+                  <b>Khuyên dùng:</b> Tải trực tiếp 2 bức ảnh hoặc dán URL ảnh để website tự tạo slider 60fps mượt mà, không phụ thuộc máy chủ bên ngoài và <b>hoàn toàn không có watermark</b>!
                 </p>
               </div>
 
               {/* Two Images Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
                 
                 {/* Image 1: Before */}
-                <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 space-y-2.5">
+                <div className="p-3 sm:p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="font-mono font-bold text-[#C3EA39] uppercase text-[11px]">
                       1. Ảnh Trước (Before / Nháp)
@@ -228,14 +228,14 @@ export default function JuxtaposeEmbedModal({ isOpen, initialData, onSave, onClo
                       value={beforeImage.startsWith('data:') ? '[Đã tải ảnh lên từ máy]' : beforeImage}
                       onChange={(e) => setBeforeImage(e.target.value)}
                       placeholder="Dán link ảnh trước..."
-                      className="flex-1 px-3 py-1.5 rounded-xl bg-black/60 border border-white/15 focus:border-[#C3EA39] focus:outline-none text-white font-mono text-[11px]"
+                      className="flex-1 px-3 py-2 rounded-xl bg-black/60 border border-white/15 focus:border-[#C3EA39] focus:outline-none text-white font-mono text-base sm:text-[11px]"
                     />
                     <button
                       type="button"
                       onClick={() => beforeFileRef.current?.click()}
-                      className="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-[#C3EA39] hover:text-black text-white font-mono text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer shrink-0"
+                      className="px-3 py-2 rounded-xl bg-white/10 hover:bg-[#C3EA39] hover:text-black text-white font-mono text-xs sm:text-[11px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer shrink-0 min-h-[38px]"
                     >
-                      <Upload className="w-3 h-3" />
+                      <Upload className="w-3.5 h-3.5" />
                       <span>Tải ảnh</span>
                     </button>
                     <input
@@ -256,13 +256,13 @@ export default function JuxtaposeEmbedModal({ isOpen, initialData, onSave, onClo
                       value={beforeLabel}
                       onChange={(e) => setBeforeLabel(e.target.value)}
                       placeholder="Để trống hoặc nhập nhãn..."
-                      className="w-full px-3 py-1 rounded-lg bg-black/40 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-[11px]"
+                      className="w-full px-3 py-2 rounded-lg bg-black/40 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-[11px]"
                     />
                   </div>
                 </div>
 
                 {/* Image 2: After */}
-                <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 space-y-2.5">
+                <div className="p-3 sm:p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="font-mono font-bold text-[#C3EA39] uppercase text-[11px]">
                       2. Ảnh Sau (After / Hoàn thiện)
@@ -280,14 +280,14 @@ export default function JuxtaposeEmbedModal({ isOpen, initialData, onSave, onClo
                       value={afterImage.startsWith('data:') ? '[Đã tải ảnh lên từ máy]' : afterImage}
                       onChange={(e) => setAfterImage(e.target.value)}
                       placeholder="Dán link ảnh sau..."
-                      className="flex-1 px-3 py-1.5 rounded-xl bg-black/60 border border-white/15 focus:border-[#C3EA39] focus:outline-none text-white font-mono text-[11px]"
+                      className="flex-1 px-3 py-2 rounded-xl bg-black/60 border border-white/15 focus:border-[#C3EA39] focus:outline-none text-white font-mono text-base sm:text-[11px]"
                     />
                     <button
                       type="button"
                       onClick={() => afterFileRef.current?.click()}
-                      className="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-[#C3EA39] hover:text-black text-white font-mono text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer shrink-0"
+                      className="px-3 py-2 rounded-xl bg-white/10 hover:bg-[#C3EA39] hover:text-black text-white font-mono text-xs sm:text-[11px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer shrink-0 min-h-[38px]"
                     >
-                      <Upload className="w-3 h-3" />
+                      <Upload className="w-3.5 h-3.5" />
                       <span>Tải ảnh</span>
                     </button>
                     <input
@@ -308,7 +308,7 @@ export default function JuxtaposeEmbedModal({ isOpen, initialData, onSave, onClo
                       value={afterLabel}
                       onChange={(e) => setAfterLabel(e.target.value)}
                       placeholder="Để trống hoặc nhập nhãn..."
-                      className="w-full px-3 py-1 rounded-lg bg-black/40 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-[11px]"
+                      className="w-full px-3 py-2 rounded-lg bg-black/40 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-[11px]"
                     />
                   </div>
                 </div>
@@ -352,7 +352,7 @@ export default function JuxtaposeEmbedModal({ isOpen, initialData, onSave, onClo
                   value={embedCode}
                   onChange={(e) => handleCodeChange(e.target.value)}
                   placeholder='<iframe frameborder="0" class="juxtapose" width="100%" height="500" src="https://cdn.knightlab.com/libs/juxtapose/latest/embed/index.html?uid=..."></iframe>'
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/60 border border-white/15 focus:border-[#C3EA39] focus:outline-none text-white font-mono text-xs leading-relaxed placeholder-white/20"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/60 border border-white/15 focus:border-[#C3EA39] focus:outline-none text-white font-mono text-base sm:text-xs leading-relaxed placeholder-white/20"
                 />
               </div>
             </div>
@@ -421,7 +421,7 @@ export default function JuxtaposeEmbedModal({ isOpen, initialData, onSave, onClo
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="VD: Phác thảo vs Bản vẽ hoàn thiện"
-                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/15 focus:border-[#C3EA39] focus:outline-none text-white text-xs"
+                className="w-full px-3.5 py-2.5 sm:py-2 rounded-xl bg-black/60 border border-white/15 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs"
               />
             </div>
 
@@ -434,30 +434,31 @@ export default function JuxtaposeEmbedModal({ isOpen, initialData, onSave, onClo
                 value={subtitle}
                 onChange={(e) => setSubtitle(e.target.value)}
                 placeholder="VD: Kéo thanh trượt để so sánh chi tiết"
-                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/15 focus:border-[#C3EA39] focus:outline-none text-white text-xs"
+                className="w-full px-3.5 py-2.5 sm:py-2 rounded-xl bg-black/60 border border-white/15 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs"
               />
             </div>
           </div>
 
-          {/* Footer Actions */}
-          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-white/10">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 text-xs font-mono transition-colors"
-            >
-              Hủy
-            </button>
-            <button
-              type="submit"
-              className="px-5 py-2 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black font-display font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-[1.01] cursor-pointer"
-            >
-              <Check className="w-3.5 h-3.5" />
-              <span>Lưu Banner So Sánh</span>
-            </button>
-          </div>
-
         </form>
+
+        {/* Sticky Footer Actions */}
+        <div className="px-4 sm:px-5 py-3 sm:py-3.5 border-t border-white/10 bg-[#16161c] flex items-center justify-end gap-2.5 shrink-0">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 text-xs font-mono transition-colors min-h-[38px]"
+          >
+            Hủy
+          </button>
+          <button
+            type="submit"
+            form="juxtapose-modal-form"
+            className="px-5 py-2.5 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black font-display font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-[1.01] cursor-pointer min-h-[38px]"
+          >
+            <Check className="w-3.5 h-3.5" />
+            <span>Lưu Banner So Sánh</span>
+          </button>
+        </div>
 
       </div>
     </div>

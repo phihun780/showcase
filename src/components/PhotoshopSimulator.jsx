@@ -48,11 +48,22 @@ export default function PhotoshopSimulator() {
   const [drawStage, setDrawStage] = useState('drawing'); // 'drawing' | 'coloring' | 'detailing' | 'complete'
   const [showVectorNodes, setShowVectorNodes] = useState(true);
 
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(typeof window !== 'undefined' && (window.innerWidth < 768 || window.matchMedia('(pointer: coarse)').matches));
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   const containerRef = useRef(null);
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
 
-  // Smooth Spring physics for 3D Tilt
+  // Smooth Spring physics for 3D Tilt (Desktop only)
   const springConfig = { damping: 25, stiffness: 150 };
   const rotateX = useTransform(mouseY, [-200, 200], [6, -6]);
   const rotateY = useTransform(mouseX, [-200, 200], [-8, 8]);
@@ -95,8 +106,7 @@ export default function PhotoshopSimulator() {
 
   // Handle 3D Pointer Move (Desktop only for smooth interaction, stable on mobile)
   const handleContainerMouseMove = (e) => {
-    if (!containerRef.current) return;
-    if (typeof window !== 'undefined' && window.innerWidth < 768) return;
+    if (!containerRef.current || isMobile) return;
     const rect = containerRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left - rect.width / 2;
     const y = e.clientY - rect.top - rect.height / 2;
@@ -114,18 +124,18 @@ export default function PhotoshopSimulator() {
       ref={containerRef}
       onMouseMove={handleContainerMouseMove}
       onMouseLeave={handleContainerMouseLeave}
-      style={{ perspective: 1200 }}
-      className="relative w-full max-w-[630px] lg:max-w-[670px] xl:max-w-[690px] mx-auto lg:mr-0 lg:ml-auto flex flex-col items-center justify-center py-1 sm:py-3"
+      style={{ perspective: isMobile ? 'none' : 1200 }}
+      className="relative w-full max-w-[630px] lg:max-w-[670px] xl:max-w-[690px] mx-auto lg:mr-0 lg:ml-auto flex flex-col items-center justify-center py-1 sm:py-3 overflow-hidden"
     >
       
       {/* 3D Floating Shadow on the floor */}
       <motion.div
-        animate={{
+        animate={isMobile ? { opacity: 0.35 } : {
           scale: [0.92, 1.04, 0.92],
           opacity: [0.35, 0.55, 0.35],
           y: [0, 6, 0]
         }}
-        transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+        transition={isMobile ? {} : { duration: 6, repeat: Infinity, ease: 'easeInOut' }}
         className="absolute -bottom-3 sm:-bottom-5 w-4/5 h-8 bg-black/80 blur-2xl rounded-full pointer-events-none"
       />
 
@@ -135,19 +145,19 @@ export default function PhotoshopSimulator() {
       {/* 3D FLOATING MAIN WINDOW */}
       <motion.div
         style={{
-          rotateX: springRotateX,
-          rotateY: springRotateY,
-          transformStyle: 'preserve-3d'
+          rotateX: isMobile ? 0 : springRotateX,
+          rotateY: isMobile ? 0 : springRotateY,
+          transformStyle: isMobile ? 'flat' : 'preserve-3d'
         }}
-        animate={{
+        animate={isMobile ? { y: 0, rotateZ: 0 } : {
           y: [0, -8, 0],
           rotateZ: [-0.3, 0.3, -0.3]
         }}
-        transition={{
+        transition={isMobile ? {} : {
           y: { duration: 5.5, repeat: Infinity, ease: 'easeInOut' },
           rotateZ: { duration: 7, repeat: Infinity, ease: 'easeInOut' }
         }}
-        className="w-full rounded-xl bg-[#282828] border border-[#444]/90 shadow-[0_22px_55px_rgba(0,0,0,0.85)] overflow-hidden text-[#d5d5d5] font-sans text-xs select-none backdrop-blur-xl relative group transition-shadow duration-500 hover:shadow-[0_30px_70px_rgba(0,0,0,0.95)]"
+        className="w-full max-w-full rounded-xl bg-[#282828] border border-[#444]/90 shadow-[0_22px_55px_rgba(0,0,0,0.85)] overflow-hidden text-[#d5d5d5] font-sans text-xs select-none backdrop-blur-xl relative group transition-shadow duration-500 hover:shadow-[0_30px_70px_rgba(0,0,0,0.95)]"
       >
         
         {/* 1. TOP MENU BAR */}

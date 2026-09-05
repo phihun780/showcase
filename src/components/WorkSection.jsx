@@ -22,7 +22,7 @@ export default function WorkSection() {
   const isScrollable = projects.length > MIN_SLOTS;
 
   return (
-    <section id="work" className="pt-8 sm:pt-16 pb-8 sm:pb-16 scroll-mt-16 relative overflow-hidden">
+    <section id="work" className="pt-8 sm:pt-16 pb-8 sm:pb-16 scroll-mt-16 relative w-full max-w-full overflow-hidden touch-pan-y">
       
       {/* Ambient background glow mapped to stage */}
       <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-[500px] h-[350px] bg-[#C3EA39]/10 blur-[150px] rounded-full pointer-events-none" />

@@ -94,7 +94,7 @@ export default function CoverBannerSection() {
   return (
     <section 
       id="cover-banner" 
-      className="pt-8 sm:pt-14 pb-4 sm:pb-8 relative overflow-hidden"
+      className="pt-8 sm:pt-14 pb-4 sm:pb-8 relative w-full max-w-full overflow-hidden touch-pan-y"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -128,7 +128,7 @@ export default function CoverBannerSection() {
             className="relative"
           >
             {/* Widescreen Banner Container (Responsive 16:9 Mobile / 21:9 Desktop) */}
-            <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] rounded-2xl sm:rounded-3xl overflow-hidden bg-black border-2 border-white/10 shadow-2xl select-none group">
+            <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] rounded-2xl sm:rounded-3xl overflow-hidden bg-black border-2 border-white/10 shadow-2xl select-none group touch-pan-y">
               
               {/* Render All Banners */}
               {banners.map((banner, idx) => (

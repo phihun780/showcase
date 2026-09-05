@@ -522,31 +522,40 @@ export default function CMSPage({ onBackToPortfolio }) {
       <SeasonalAtmosphere />
 
       {/* Topbar */}
-      <header className="sticky top-0 z-40 bg-[#08080A]/90 backdrop-blur-xl border-b border-white/10 py-3">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+      {/* Topbar */}
+      <header className="sticky top-0 z-40 bg-[#08080A]/95 backdrop-blur-xl border-b border-white/10 py-2.5 sm:py-3">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-4">
           
-          {/* Left: Brand & Exit */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={onBackToPortfolio}
-              className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-white/80 hover:text-white text-xs font-mono font-medium flex items-center gap-1.5 border border-white/10 transition-all cursor-pointer shadow-sm hover:scale-[1.02]"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Xem Web</span>
-            </button>
-            <span className="text-white/20">/</span>
-            <div className="flex items-center gap-2">
+          {/* Top Line on Mobile: Brand, Exit & Lock */}
+          <div className="flex items-center justify-between gap-2 w-full sm:w-auto">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <button
+                onClick={onBackToPortfolio}
+                className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-white/80 hover:text-white text-xs font-mono font-medium flex items-center gap-1.5 border border-white/10 transition-all cursor-pointer shadow-sm active:scale-95"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Xem Web</span>
+              </button>
+              <span className="text-white/20">/</span>
               <span className="font-mono font-bold text-xs sm:text-sm tracking-wider text-white flex items-center gap-1.5">
                 <span className="text-[#C3EA39] text-base leading-none">✦</span> PHI HÙNG CMS
               </span>
-              <span className="hidden sm:inline-block text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-white/50">
-                v2.0 PRO
-              </span>
+            </div>
+
+            {/* Lock button on mobile top line */}
+            <div className="flex sm:hidden items-center gap-1.5">
+              <button
+                onClick={handleLogout}
+                className="p-1.5 rounded-xl bg-white/5 hover:bg-[#C3EA39] hover:text-black text-white/80 border border-white/10 transition-all cursor-pointer"
+                title="Khóa bảo mật CMS"
+              >
+                <Lock className="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
 
-          {/* Right actions */}
-          <div className="flex items-center gap-2 text-xs font-mono">
+          {/* Action buttons (Cloud sync, export, import, reset, lock) */}
+          <div className="flex items-center justify-between sm:justify-end gap-1.5 sm:gap-2 text-xs font-mono overflow-x-auto no-scrollbar py-0.5">
             {/* Interactive Cloudflare R2 Sync Button / Status */}
             <button
               onClick={async () => {
@@ -558,7 +567,7 @@ export default function CMSPage({ onBackToPortfolio }) {
                 }
               }}
               disabled={isCloudSyncing}
-              className={`px-3 py-1.5 rounded-xl font-mono text-xs flex items-center gap-1.5 border transition-all cursor-pointer shadow-sm hover:scale-[1.02] ${
+              className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-xl font-mono text-xs flex items-center justify-center gap-1.5 border transition-all cursor-pointer shadow-sm active:scale-95 shrink-0 ${
                 isCloudSyncing
                   ? 'bg-[#C3EA39]/20 border-[#C3EA39] text-[#C3EA39] animate-pulse'
                   : 'bg-[#C3EA39]/15 border-[#C3EA39]/40 hover:bg-[#C3EA39] hover:text-black text-[#C3EA39]'
@@ -580,7 +589,7 @@ export default function CMSPage({ onBackToPortfolio }) {
 
             <button
               onClick={exportDataJSON}
-              className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-white/75 hover:text-white flex items-center gap-1.5 border border-white/10 transition-all cursor-pointer shadow-sm hover:scale-[1.02]"
+              className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-white/75 hover:text-white flex items-center gap-1.5 border border-white/10 transition-all cursor-pointer shadow-sm active:scale-95 shrink-0"
               title="Xuất bản sao lưu dữ liệu toàn bộ website ra file JSON"
             >
               <Download className="w-3.5 h-3.5 text-[#C3EA39]" />
@@ -590,7 +599,7 @@ export default function CMSPage({ onBackToPortfolio }) {
 
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-white/75 hover:text-white flex items-center gap-1.5 border border-white/10 transition-all cursor-pointer shadow-sm hover:scale-[1.02]"
+              className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-white/75 hover:text-white flex items-center gap-1.5 border border-white/10 transition-all cursor-pointer shadow-sm active:scale-95 shrink-0"
               title="Nhập dữ liệu website từ file sao lưu JSON"
             >
               <Upload className="w-3.5 h-3.5 text-[#C3EA39]" />
@@ -607,7 +616,7 @@ export default function CMSPage({ onBackToPortfolio }) {
 
             <button
               onClick={resetToDefault}
-              className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-red-500/20 text-white/50 hover:text-red-300 flex items-center gap-1.5 border border-white/10 transition-all cursor-pointer shadow-sm"
+              className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/5 hover:bg-red-500/20 text-white/50 hover:text-red-300 flex items-center gap-1.5 border border-white/10 transition-all cursor-pointer shadow-sm shrink-0"
               title="Khôi phục dữ liệu mẫu mặc định ban đầu"
             >
               <RefreshCw className="w-3.5 h-3.5" />
@@ -616,7 +625,7 @@ export default function CMSPage({ onBackToPortfolio }) {
 
             <button
               onClick={handleLogout}
-              className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-[#C3EA39] hover:text-black text-white/80 flex items-center gap-1.5 border border-white/10 transition-all cursor-pointer shadow-sm hover:scale-[1.02]"
+              className="hidden sm:flex px-3 py-1.5 rounded-xl bg-white/5 hover:bg-[#C3EA39] hover:text-black text-white/80 items-center gap-1.5 border border-white/10 transition-all cursor-pointer shadow-sm hover:scale-[1.02] shrink-0"
               title="Khóa bảo mật CMS"
             >
               <Lock className="w-3.5 h-3.5" />
@@ -628,111 +637,101 @@ export default function CMSPage({ onBackToPortfolio }) {
       </header>
 
       {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-7 space-y-6">
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-7 space-y-4 sm:space-y-6">
         
-        {/* Sleek Full-Width Tab Navigation Bar */}
-        <div className="w-full pb-4 border-b border-white/10">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 p-1.5 rounded-2xl bg-[#121216] border border-white/10 shadow-lg w-full divide-x divide-white/10">
-            <div className="px-1">
-              <button
-                onClick={() => setActiveTab('projects')}
-                className={`w-full py-2.5 px-3 rounded-xl text-xs sm:text-sm font-mono font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                  activeTab === 'projects'
-                    ? 'text-[#C3EA39]'
-                    : 'text-white/50 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <span>Dự Án</span>
-                <span className={`text-[11px] px-1.5 py-0.2 rounded-md ${
-                  activeTab === 'projects' ? 'bg-[#C3EA39]/15 text-[#C3EA39]' : 'bg-white/10 text-white/50'
-                }`}>
-                  {projects.length < 10 ? `0${projects.length}` : projects.length}
-                </span>
-              </button>
-            </div>
+        {/* Sleek Tab Navigation Bar (Swipeable Pills on Mobile, Grid on Desktop) */}
+        <div className="w-full pb-2 sm:pb-4 border-b border-white/10">
+          <div className="flex sm:grid sm:grid-cols-3 lg:grid-cols-6 gap-1.5 p-1.5 rounded-2xl bg-[#121216] border border-white/10 shadow-lg w-full overflow-x-auto no-scrollbar scroll-smooth">
+            
+            <button
+              onClick={() => setActiveTab('projects')}
+              className={`shrink-0 sm:shrink py-2 px-3.5 sm:px-3 rounded-xl text-xs sm:text-sm font-mono font-bold flex items-center justify-center gap-2 transition-all cursor-pointer select-none active:scale-95 ${
+                activeTab === 'projects'
+                  ? 'bg-[#C3EA39] text-black shadow-md shadow-[#C3EA39]/15'
+                  : 'text-white/60 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <span>Dự Án</span>
+              <span className={`text-[10px] sm:text-[11px] px-1.5 py-0.2 rounded-md ${
+                activeTab === 'projects' ? 'bg-black/20 text-black' : 'bg-white/10 text-white/50'
+              }`}>
+                {projects.length < 10 ? `0${projects.length}` : projects.length}
+              </span>
+            </button>
 
-            <div className="px-1">
-              <button
-                onClick={() => setActiveTab('banner')}
-                className={`w-full py-2.5 px-3 rounded-xl text-xs sm:text-sm font-mono font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                  activeTab === 'banner'
-                    ? 'text-[#C3EA39]'
-                    : 'text-white/50 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <span>Slide Banner</span>
-                <span className={`text-[11px] px-1.5 py-0.2 rounded-md ${
-                  activeTab === 'banner' ? 'bg-[#C3EA39]/15 text-[#C3EA39]' : 'bg-white/10 text-white/50'
-                }`}>
-                  {coverBanners.length < 10 ? `0${coverBanners.length}` : coverBanners.length}
-                </span>
-              </button>
-            </div>
+            <button
+              onClick={() => setActiveTab('banner')}
+              className={`shrink-0 sm:shrink py-2 px-3.5 sm:px-3 rounded-xl text-xs sm:text-sm font-mono font-bold flex items-center justify-center gap-2 transition-all cursor-pointer select-none active:scale-95 ${
+                activeTab === 'banner'
+                  ? 'bg-[#C3EA39] text-black shadow-md shadow-[#C3EA39]/15'
+                  : 'text-white/60 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <span>Slide Banner</span>
+              <span className={`text-[10px] sm:text-[11px] px-1.5 py-0.2 rounded-md ${
+                activeTab === 'banner' ? 'bg-black/20 text-black' : 'bg-white/10 text-white/50'
+              }`}>
+                {coverBanners.length < 10 ? `0${coverBanners.length}` : coverBanners.length}
+              </span>
+            </button>
 
-            <div className="px-1">
-              <button
-                onClick={() => setActiveTab('random')}
-                className={`w-full py-2.5 px-3 rounded-xl text-xs sm:text-sm font-mono font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                  activeTab === 'random'
-                    ? 'text-[#C3EA39]'
-                    : 'text-white/50 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <span>Tùm Lum Tà La</span>
-                <span className={`text-[11px] px-1.5 py-0.2 rounded-md ${
-                  activeTab === 'random' ? 'bg-[#C3EA39]/15 text-[#C3EA39]' : 'bg-white/10 text-white/50'
-                }`}>
-                  {randomWorks.length < 10 ? `0${randomWorks.length}` : randomWorks.length}
-                </span>
-              </button>
-            </div>
+            <button
+              onClick={() => setActiveTab('random')}
+              className={`shrink-0 sm:shrink py-2 px-3.5 sm:px-3 rounded-xl text-xs sm:text-sm font-mono font-bold flex items-center justify-center gap-2 transition-all cursor-pointer select-none active:scale-95 ${
+                activeTab === 'random'
+                  ? 'bg-[#C3EA39] text-black shadow-md shadow-[#C3EA39]/15'
+                  : 'text-white/60 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <span>Tùm Lum Tà La</span>
+              <span className={`text-[10px] sm:text-[11px] px-1.5 py-0.2 rounded-md ${
+                activeTab === 'random' ? 'bg-black/20 text-black' : 'bg-white/10 text-white/50'
+              }`}>
+                {randomWorks.length < 10 ? `0${randomWorks.length}` : randomWorks.length}
+              </span>
+            </button>
 
-            <div className="px-1">
-              <button
-                onClick={() => setActiveTab('marquee')}
-                className={`w-full py-2.5 px-3 rounded-xl text-xs sm:text-sm font-mono font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                  activeTab === 'marquee'
-                    ? 'text-[#C3EA39]'
-                    : 'text-white/50 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <span>Chữ Chạy</span>
-                <span className={`text-[11px] px-1.5 py-0.2 rounded-md ${
-                  activeTab === 'marquee' ? 'bg-[#C3EA39]/15 text-[#C3EA39]' : 'bg-white/10 text-white/50'
-                }`}>
-                  {marqueeItems.length < 10 ? `0${marqueeItems.length}` : marqueeItems.length}
-                </span>
-              </button>
-            </div>
+            <button
+              onClick={() => setActiveTab('marquee')}
+              className={`shrink-0 sm:shrink py-2 px-3.5 sm:px-3 rounded-xl text-xs sm:text-sm font-mono font-bold flex items-center justify-center gap-2 transition-all cursor-pointer select-none active:scale-95 ${
+                activeTab === 'marquee'
+                  ? 'bg-[#C3EA39] text-black shadow-md shadow-[#C3EA39]/15'
+                  : 'text-white/60 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <span>Chữ Chạy</span>
+              <span className={`text-[10px] sm:text-[11px] px-1.5 py-0.2 rounded-md ${
+                activeTab === 'marquee' ? 'bg-black/20 text-black' : 'bg-white/10 text-white/50'
+              }`}>
+                {marqueeItems.length < 10 ? `0${marqueeItems.length}` : marqueeItems.length}
+              </span>
+            </button>
 
-            <div className="px-1">
-              <button
-                onClick={() => setActiveTab('seasonal')}
-                className={`w-full py-2.5 px-3 rounded-xl text-xs sm:text-sm font-mono font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                  activeTab === 'seasonal'
-                    ? 'text-[#C3EA39]'
-                    : 'text-white/50 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <span>Hiệu Ứng</span>
-                {seasonalEffect !== 'none' && (
-                  <span className="w-2 h-2 rounded-full bg-[#C3EA39] animate-ping" />
-                )}
-              </button>
-            </div>
+            <button
+              onClick={() => setActiveTab('seasonal')}
+              className={`shrink-0 sm:shrink py-2 px-3.5 sm:px-3 rounded-xl text-xs sm:text-sm font-mono font-bold flex items-center justify-center gap-2 transition-all cursor-pointer select-none active:scale-95 ${
+                activeTab === 'seasonal'
+                  ? 'bg-[#C3EA39] text-black shadow-md shadow-[#C3EA39]/15'
+                  : 'text-white/60 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <span>Hiệu Ứng</span>
+              {seasonalEffect !== 'none' && (
+                <span className="w-2 h-2 rounded-full bg-[#C3EA39] animate-ping" />
+              )}
+            </button>
 
-            <div className="px-1">
-              <button
-                onClick={() => setActiveTab('profile')}
-                className={`w-full py-2.5 px-3 rounded-xl text-xs sm:text-sm font-mono font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                  activeTab === 'profile'
-                    ? 'text-[#C3EA39]'
-                    : 'text-white/50 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <span>Thông Tin</span>
-              </button>
-            </div>
+            <button
+              onClick={() => setActiveTab('profile')}
+              className={`shrink-0 sm:shrink py-2 px-3.5 sm:px-3 rounded-xl text-xs sm:text-sm font-mono font-bold flex items-center justify-center gap-2 transition-all cursor-pointer select-none active:scale-95 ${
+                activeTab === 'profile'
+                  ? 'bg-[#C3EA39] text-black shadow-md shadow-[#C3EA39]/15'
+                  : 'text-white/60 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <span>Thông Tin</span>
+            </button>
+
           </div>
 
           {/* Hidden File Inputs for Direct Crop Actions */}
@@ -765,18 +764,18 @@ export default function CMSPage({ onBackToPortfolio }) {
             {projects.length === 0 ? (
               <div
                 onClick={handleOpenCreate}
-                className="p-12 sm:p-16 rounded-3xl border-2 border-dashed border-white/15 hover:border-[#C3EA39]/50 bg-[#121216]/50 hover:bg-[#121216] transition-all flex flex-col items-center justify-center text-center cursor-pointer group"
+                className="p-8 sm:p-16 rounded-3xl border-2 border-dashed border-white/15 hover:border-[#C3EA39]/50 bg-[#121216]/50 hover:bg-[#121216] transition-all flex flex-col items-center justify-center text-center cursor-pointer group"
               >
-                <div className="w-14 h-14 rounded-2xl bg-[#C3EA39]/10 text-[#C3EA39] flex items-center justify-center mb-3.5 group-hover:scale-110 transition-transform">
-                  <Plus className="w-7 h-7" />
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#C3EA39]/10 text-[#C3EA39] flex items-center justify-center mb-3.5 group-hover:scale-110 transition-transform">
+                  <Plus className="w-6 h-6 sm:w-7 sm:h-7" />
                 </div>
-                <p className="font-display font-bold text-white text-lg">Chưa có dự án nào</p>
+                <p className="font-display font-bold text-white text-base sm:text-lg">Chưa có dự án nào</p>
                 <p className="text-xs sm:text-sm text-white/50 mt-1 font-mono max-w-md">
                   Bấm vào đây để tạo và tải ảnh dự án đầu tiên lên website
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-3.5">
+              <div className="grid grid-cols-1 gap-3 sm:gap-3.5">
                 {projects.map((proj, idx) => {
                   const isGif = proj.coverImage && (proj.coverImage.startsWith('data:image/gif') || proj.coverImage.toLowerCase().endsWith('.gif'));
                   const galleryCount = Array.isArray(proj.gallery) ? proj.gallery.length : 0;
@@ -785,16 +784,16 @@ export default function CMSPage({ onBackToPortfolio }) {
                   return (
                     <div
                       key={proj.id || idx}
-                      className="p-4 sm:p-5 rounded-2xl bg-[#121216] border border-white/10 hover:border-white/20 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4 group shadow-lg"
+                      className="p-3.5 sm:p-5 rounded-2xl bg-[#121216] border border-white/10 hover:border-white/20 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-3.5 sm:gap-4 group shadow-lg"
                     >
                       {/* Left: Thumbnail, Number & Info */}
-                      <div className="flex items-center gap-4 flex-1 min-w-0">
-                        <span className="text-xs font-mono font-bold text-[#C3EA39] w-7 text-center shrink-0">
+                      <div className="flex items-start sm:items-center gap-3 sm:gap-4 flex-1 min-w-0 w-full">
+                        <span className="text-xs font-mono font-bold text-[#C3EA39] w-6 sm:w-7 text-center shrink-0 pt-1 sm:pt-0">
                           #{idx + 1 < 10 ? `0${idx + 1}` : idx + 1}
                         </span>
                         
                         {/* Thumbnail with overlay crop button */}
-                        <div className="relative w-24 sm:w-32 aspect-[16/10] rounded-xl overflow-hidden bg-black border border-white/10 shrink-0 group/thumb">
+                        <div className="relative w-20 sm:w-32 aspect-[16/10] rounded-xl overflow-hidden bg-black border border-white/10 shrink-0 group/thumb">
                           {proj.coverImage ? (
                             <>
                               <img
@@ -803,7 +802,7 @@ export default function CMSPage({ onBackToPortfolio }) {
                                 className="w-full h-full object-cover group-hover/thumb:scale-105 transition-transform duration-300"
                               />
                               {isGif && (
-                                <span className="absolute top-1.5 left-1.5 px-1 py-0.2 rounded bg-black/80 text-[#C3EA39] text-[9px] font-mono font-bold border border-[#C3EA39]/40">
+                                <span className="absolute top-1 left-1 px-1 py-0.2 rounded bg-black/80 text-[#C3EA39] text-[8px] sm:text-[9px] font-mono font-bold border border-[#C3EA39]/40">
                                   GIF
                                 </span>
                               )}
@@ -819,24 +818,24 @@ export default function CMSPage({ onBackToPortfolio }) {
                                     subtitle: proj.subtitle,
                                   });
                                 }}
-                                className="absolute inset-0 bg-black/60 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center gap-1 text-[11px] font-mono font-bold text-[#C3EA39] cursor-pointer"
+                                className="absolute inset-0 bg-black/60 opacity-0 sm:group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center gap-1 text-[11px] font-mono font-bold text-[#C3EA39] cursor-pointer"
                                 title="Cắt lại ảnh bìa này (16:10)"
                               >
                                 <Crop className="w-3.5 h-3.5" />
-                                <span>Cắt lại</span>
+                                <span className="hidden sm:inline">Cắt lại</span>
                               </button>
                             </>
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-white/25 text-[10px] font-mono">
-                              Không có ảnh
+                            <div className="w-full h-full flex items-center justify-center text-white/25 text-[10px] font-mono text-center p-1">
+                              Trống
                             </div>
                           )}
                         </div>
 
                         {/* Title & Metadata */}
                         <div className="min-w-0 flex-1 space-y-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="text-sm sm:text-base font-display font-bold text-white truncate">
+                          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                            <h3 className="text-sm sm:text-base font-display font-bold text-white truncate max-w-full">
                               {proj.title}
                             </h3>
                             {proj.year && (
@@ -846,7 +845,7 @@ export default function CMSPage({ onBackToPortfolio }) {
                             )}
                             {galleryCount > 0 && (
                               <span className="text-[10px] font-mono text-white/50 px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
-                                {galleryCount} ảnh chi tiết
+                                {galleryCount} ảnh
                               </span>
                             )}
                           </div>
@@ -856,52 +855,61 @@ export default function CMSPage({ onBackToPortfolio }) {
                           </p>
 
                           {tagsArr.length > 0 && (
-                            <div className="flex flex-wrap gap-1.5 pt-0.5">
-                              {tagsArr.map((tag, tIdx) => (
-                                <span key={tIdx} className="text-[10px] font-mono text-white/40 bg-white/[0.04] px-2 py-0.2 rounded-md border border-white/5">
+                            <div className="flex flex-wrap gap-1 pt-0.5">
+                              {tagsArr.slice(0, 3).map((tag, tIdx) => (
+                                <span key={tIdx} className="text-[10px] font-mono text-white/40 bg-white/[0.04] px-1.5 py-0.2 rounded border border-white/5">
                                   {tag}
                                 </span>
                               ))}
+                              {tagsArr.length > 3 && (
+                                <span className="text-[10px] font-mono text-white/30">
+                                  +{tagsArr.length - 3}
+                                </span>
+                              )}
                             </div>
                           )}
                         </div>
                       </div>
 
-                      {/* Right: Action Buttons */}
-                      <div className="flex items-center gap-1.5 w-full md:w-auto justify-end pt-2 md:pt-0 border-t md:border-t-0 border-white/5 shrink-0">
-                        <button
-                          onClick={() => moveProject(idx, 'up')}
-                          disabled={idx === 0}
-                          className="p-2 rounded-xl bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/80 transition-colors cursor-pointer"
-                          title="Di chuyển lên trên"
-                        >
-                          <ArrowUp className="w-3.5 h-3.5" />
-                        </button>
+                      {/* Right: Action Buttons (Responsive Mobile Layout) */}
+                      <div className="flex items-center justify-between sm:justify-end gap-1.5 w-full md:w-auto pt-2.5 md:pt-0 border-t md:border-t-0 border-white/10 shrink-0">
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => moveProject(idx, 'up')}
+                            disabled={idx === 0}
+                            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/80 transition-colors cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
+                            title="Di chuyển lên trên"
+                          >
+                            <ArrowUp className="w-3.5 h-3.5" />
+                          </button>
 
-                        <button
-                          onClick={() => moveProject(idx, 'down')}
-                          disabled={idx === projects.length - 1}
-                          className="p-2 rounded-xl bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/80 transition-colors cursor-pointer"
-                          title="Di chuyển xuống dưới"
-                        >
-                          <ArrowDown className="w-3.5 h-3.5" />
-                        </button>
+                          <button
+                            onClick={() => moveProject(idx, 'down')}
+                            disabled={idx === projects.length - 1}
+                            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/80 transition-colors cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
+                            title="Di chuyển xuống dưới"
+                          >
+                            <ArrowDown className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
 
-                        <button
-                          onClick={() => handleOpenEdit(proj)}
-                          className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-[#C3EA39] hover:text-black text-white text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                          <span>Sửa Dự Án</span>
-                        </button>
+                        <div className="flex items-center gap-1.5 flex-1 sm:flex-initial justify-end">
+                          <button
+                            onClick={() => handleOpenEdit(proj)}
+                            className="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-white/10 hover:bg-[#C3EA39] hover:text-black text-white text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm min-h-[36px]"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                            <span>Sửa</span>
+                          </button>
 
-                        <button
-                          onClick={() => handleDeleteProject(proj)}
-                          className="p-2 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white transition-colors cursor-pointer"
-                          title="Xoá dự án"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                          <button
+                            onClick={() => handleDeleteProject(proj)}
+                            className="p-2 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white transition-colors cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
+                            title="Xoá dự án"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
 
                     </div>
@@ -910,7 +918,7 @@ export default function CMSPage({ onBackToPortfolio }) {
                 {/* Quick Add Project Card */}
                 <div
                   onClick={handleOpenCreate}
-                  className="p-4 rounded-2xl border-2 border-dashed border-white/15 hover:border-[#C3EA39]/50 bg-white/[0.02] hover:bg-white/[0.05] transition-all flex items-center justify-center gap-2 cursor-pointer group"
+                  className="p-4 rounded-2xl border-2 border-dashed border-white/15 hover:border-[#C3EA39]/50 bg-white/[0.02] hover:bg-white/[0.05] transition-all flex items-center justify-center gap-2 cursor-pointer group active:scale-[0.99]"
                 >
                   <Plus className="w-4 h-4 text-white/40 group-hover:text-[#C3EA39] group-hover:scale-110 transition-all" />
                   <span className="text-xs font-mono font-bold text-white/60 group-hover:text-white transition-colors">
@@ -924,12 +932,12 @@ export default function CMSPage({ onBackToPortfolio }) {
 
         {/* Tab 2: Slide Banner Cover (Hỗ trợ Ảnh 21:9 & Juxtapose Before/After Embed) */}
         {activeTab === 'banner' && (
-          <div className="space-y-5">
+          <div className="space-y-4 sm:space-y-5">
             
             {/* Top Action Controls Bar */}
-            <div className="p-4 rounded-2xl bg-[#121216] border border-white/10 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-[#C3EA39]/15 text-[#C3EA39] flex items-center justify-center">
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-[#121216] border border-white/10 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-[#C3EA39]/15 text-[#C3EA39] flex items-center justify-center shrink-0">
                   <SlidersHorizontal className="w-4 h-4" />
                 </div>
                 <div>
@@ -937,31 +945,31 @@ export default function CMSPage({ onBackToPortfolio }) {
                     Quản Lý Banner Cover & Juxtapose
                   </h3>
                   <p className="text-[11px] font-mono text-white/50">
-                    Hỗ trợ slide ảnh tĩnh (21:9) và mã nhúng so sánh ảnh Trước/Sau (Juxtapose)
+                    Ảnh tĩnh góc rộng (21:9) và Before / After
                   </p>
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
                 <button
                   onClick={() => coverBannerFileInputRef.current?.click()}
-                  className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-mono font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                  className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer min-h-[38px]"
                 >
-                  <Upload className="w-3.5 h-3.5" />
+                  <Upload className="w-3.5 h-3.5 text-[#C3EA39]" />
                   <span>+ Tải Ảnh (21:9)</span>
                 </button>
 
                 <button
                   onClick={handleOpenAddEmbedBanner}
-                  className="px-4 py-2 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black text-xs font-display font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-[1.02] cursor-pointer"
+                  className="px-3.5 py-2 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black text-xs font-display font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-[1.02] cursor-pointer min-h-[38px]"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>+ Thêm Juxtapose Embed</span>
+                  <span>+ Juxtapose</span>
                 </button>
 
                 <button
                   onClick={handleAddCoverBannerUrl}
-                  className="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 text-xs font-mono transition-colors cursor-pointer"
+                  className="col-span-2 sm:col-span-1 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 text-xs font-mono transition-colors cursor-pointer flex items-center justify-center gap-1 min-h-[38px]"
                   title="Nhập trực tiếp URL ảnh"
                 >
                   <span>🔗 URL Ảnh</span>
@@ -974,7 +982,7 @@ export default function CMSPage({ onBackToPortfolio }) {
                 {/* Option 1: Upload 21:9 Image */}
                 <div
                   onClick={() => coverBannerFileInputRef.current?.click()}
-                  className="p-10 rounded-3xl border-2 border-dashed border-white/15 hover:border-[#C3EA39]/50 bg-[#121216]/50 hover:bg-[#121216] transition-all flex flex-col items-center justify-center text-center cursor-pointer group"
+                  className="p-8 sm:p-10 rounded-3xl border-2 border-dashed border-white/15 hover:border-[#C3EA39]/50 bg-[#121216]/50 hover:bg-[#121216] transition-all flex flex-col items-center justify-center text-center cursor-pointer group"
                 >
                   <div className="w-12 h-12 rounded-2xl bg-white/5 text-white/70 group-hover:text-[#C3EA39] flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                     <Upload className="w-6 h-6" />
@@ -988,19 +996,19 @@ export default function CMSPage({ onBackToPortfolio }) {
                 {/* Option 2: Add Juxtapose Embed */}
                 <div
                   onClick={handleOpenAddEmbedBanner}
-                  className="p-10 rounded-3xl border-2 border-dashed border-[#C3EA39]/30 hover:border-[#C3EA39] bg-[#C3EA39]/5 hover:bg-[#C3EA39]/10 transition-all flex flex-col items-center justify-center text-center cursor-pointer group"
+                  className="p-8 sm:p-10 rounded-3xl border-2 border-dashed border-[#C3EA39]/30 hover:border-[#C3EA39] bg-[#C3EA39]/5 hover:bg-[#C3EA39]/10 transition-all flex flex-col items-center justify-center text-center cursor-pointer group"
                 >
                   <div className="w-12 h-12 rounded-2xl bg-[#C3EA39]/20 text-[#C3EA39] flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                     <SlidersHorizontal className="w-6 h-6" />
                   </div>
                   <p className="font-display font-bold text-white text-base">Thêm Juxtapose Before / After</p>
                   <p className="text-xs text-white/50 mt-1 font-mono max-w-xs">
-                    Dán mã embed hoặc link từ juxtapose.knightlab.com để tạo thanh kéo so sánh 2 ảnh.
+                    Tạo slider so sánh 2 ảnh Before / After mượt mà.
                   </p>
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
                 {coverBanners.map((banner, idx) => {
                   const isEmbed = banner.type === 'embed' || Boolean(banner.embedCode || banner.embedUrl);
                   const embedSrc = extractEmbedSrc(banner.embedUrl || banner.embedCode || banner.image);
@@ -1040,7 +1048,7 @@ export default function CMSPage({ onBackToPortfolio }) {
                         )}
 
                         {/* Top Left: Badge Type */}
-                        <div className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-lg bg-black/85 backdrop-blur-md text-xs font-mono font-bold text-[#C3EA39] border border-white/15 flex items-center gap-1.5 shadow-md">
+                        <div className="absolute top-2 left-2 sm:top-2.5 sm:left-2.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg bg-black/85 backdrop-blur-md text-[10px] sm:text-xs font-mono font-bold text-[#C3EA39] border border-white/15 flex items-center gap-1.5 shadow-md z-20">
                           {isEmbed ? (
                             <>
                               <SlidersHorizontal className="w-3 h-3 text-[#C3EA39]" />
@@ -1055,32 +1063,32 @@ export default function CMSPage({ onBackToPortfolio }) {
                         </div>
 
                         {/* Top Right: Actions */}
-                        <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5">
+                        <div className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 flex items-center gap-1 sm:gap-1.5 z-20">
                           {isEmbed ? (
                             <button
                               onClick={() => handleOpenEditEmbedBanner(banner, idx)}
-                              className="px-2 py-1 rounded-lg bg-black/80 hover:bg-[#C3EA39] text-[#C3EA39] hover:text-black text-[11px] font-mono font-bold flex items-center gap-1 transition-colors cursor-pointer border border-[#C3EA39]/40 shadow-md"
+                              className="px-2 py-1 rounded-lg bg-black/80 hover:bg-[#C3EA39] text-[#C3EA39] hover:text-black text-[10px] sm:text-[11px] font-mono font-bold flex items-center gap-1 transition-colors cursor-pointer border border-[#C3EA39]/40 shadow-md"
                               title="Chỉnh sửa mã nhúng & thông tin Juxtapose"
                             >
                               <Edit2 className="w-3 h-3" />
-                              <span>Sửa mã</span>
+                              <span>Sửa</span>
                             </button>
                           ) : (
                             <>
                               <button
                                 onClick={() => handleReCropBanner(banner, idx)}
-                                className="px-2 py-1 rounded-lg bg-black/80 hover:bg-[#C3EA39] text-[#C3EA39] hover:text-black text-[11px] font-mono font-bold flex items-center gap-1 transition-colors cursor-pointer border border-[#C3EA39]/30"
+                                className="px-2 py-1 rounded-lg bg-black/80 hover:bg-[#C3EA39] text-[#C3EA39] hover:text-black text-[10px] sm:text-[11px] font-mono font-bold flex items-center gap-1 transition-colors cursor-pointer border border-[#C3EA39]/30"
                                 title="Cắt / Căn chỉnh lại ảnh banner (21:9)"
                               >
                                 <Crop className="w-3 h-3" />
-                                <span>Cắt lại</span>
+                                <span>Cắt</span>
                               </button>
                               <button
                                 onClick={() => setPreviewingImage(banner.image)}
-                                className="p-1.5 rounded-lg bg-black/75 hover:bg-white text-white/80 hover:text-black transition-colors cursor-pointer border border-white/10"
+                                className="p-1 sm:p-1.5 rounded-lg bg-black/75 hover:bg-white text-white/80 hover:text-black transition-colors cursor-pointer border border-white/10"
                                 title="Xem ảnh đầy đủ"
                               >
-                                <Eye className="w-3.5 h-3.5" />
+                                <Eye className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                               </button>
                             </>
                           )}
@@ -1092,17 +1100,17 @@ export default function CMSPage({ onBackToPortfolio }) {
                                 deleteCoverBanner(banner.id || idx);
                               }
                             }}
-                            className="p-1.5 rounded-lg bg-black/75 hover:bg-red-500 text-white/80 hover:text-white transition-colors cursor-pointer border border-white/10 shadow-md"
+                            className="p-1 sm:p-1.5 rounded-lg bg-black/75 hover:bg-red-500 text-white/80 hover:text-white transition-colors cursor-pointer border border-white/10 shadow-md"
                             title="Xoá banner"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                           </button>
                         </div>
                       </div>
 
                       {/* Bottom Form Fields & Reorder Controls */}
-                      <div className="p-4 space-y-3 bg-[#121216] flex-1 flex flex-col justify-between">
-                        <div className="space-y-2">
+                      <div className="p-3.5 sm:p-4 space-y-3 bg-[#121216] flex-1 flex flex-col justify-between">
+                        <div className="space-y-2.5">
                           <div>
                             <label className="text-[10px] font-mono text-white/40 block mb-1 uppercase tracking-wider">
                               Tiêu đề banner (tuỳ chọn)
@@ -1116,7 +1124,7 @@ export default function CMSPage({ onBackToPortfolio }) {
                                 newArr[idx] = { ...newArr[idx], title: e.target.value };
                                 updateCoverBannersList(newArr);
                               }}
-                              className="w-full px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs font-medium text-white placeholder-white/20 focus:outline-none focus:border-[#C3EA39] focus:text-[#C3EA39] transition-all"
+                              className="w-full px-3 py-2 sm:py-1.5 rounded-xl bg-white/5 border border-white/10 text-base sm:text-xs font-medium text-white placeholder-white/20 focus:outline-none focus:border-[#C3EA39] focus:text-[#C3EA39] transition-all"
                             />
                           </div>
 
@@ -1133,19 +1141,19 @@ export default function CMSPage({ onBackToPortfolio }) {
                                 newArr[idx] = { ...newArr[idx], subtitle: e.target.value };
                                 updateCoverBannersList(newArr);
                               }}
-                              className="w-full px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs font-light text-white/80 placeholder-white/20 focus:outline-none focus:border-[#C3EA39] transition-all"
+                              className="w-full px-3 py-2 sm:py-1.5 rounded-xl bg-white/5 border border-white/10 text-base sm:text-xs font-light text-white/80 placeholder-white/20 focus:outline-none focus:border-[#C3EA39] transition-all"
                             />
                           </div>
                         </div>
 
                         {/* Footer: Position Reorder */}
                         <div className="flex items-center justify-between pt-2.5 border-t border-white/5 text-xs font-mono">
-                          <span className="text-[11px] text-white/40">Thứ tự hiển thị:</span>
+                          <span className="text-[11px] text-white/40">Thứ tự:</span>
                           <div className="flex items-center gap-1.5">
                             <button
                               onClick={() => moveCoverBanner(idx, 'up')}
                               disabled={idx === 0}
-                              className="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/80 hover:text-white transition-colors flex items-center gap-1 text-[11px] cursor-pointer"
+                              className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/80 hover:text-white transition-colors flex items-center gap-1 text-[11px] cursor-pointer min-h-[32px]"
                               title="Di chuyển lên trước"
                             >
                               <ArrowUp className="w-3 h-3" />
@@ -1154,7 +1162,7 @@ export default function CMSPage({ onBackToPortfolio }) {
                             <button
                               onClick={() => moveCoverBanner(idx, 'down')}
                               disabled={idx === coverBanners.length - 1}
-                              className="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/80 hover:text-white transition-colors flex items-center gap-1 text-[11px] cursor-pointer"
+                              className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/80 hover:text-white transition-colors flex items-center gap-1 text-[11px] cursor-pointer min-h-[32px]"
                               title="Di chuyển ra sau"
                             >
                               <span>Sau</span>
@@ -1174,22 +1182,22 @@ export default function CMSPage({ onBackToPortfolio }) {
 
         {/* Tab 3: Tùm Lum Tà La (Square Rotating Works) */}
         {activeTab === 'random' && (
-          <div className="space-y-5">
+          <div className="space-y-4 sm:space-y-5">
             {randomWorks.length === 0 ? (
               <div
                 onClick={() => randomWorkFileInputRef.current?.click()}
-                className="p-12 sm:p-16 rounded-3xl border-2 border-dashed border-white/15 hover:border-[#C3EA39]/50 bg-[#121216]/50 hover:bg-[#121216] transition-all flex flex-col items-center justify-center text-center cursor-pointer group"
+                className="p-8 sm:p-16 rounded-3xl border-2 border-dashed border-white/15 hover:border-[#C3EA39]/50 bg-[#121216]/50 hover:bg-[#121216] transition-all flex flex-col items-center justify-center text-center cursor-pointer group"
               >
-                <div className="w-14 h-14 rounded-2xl bg-[#C3EA39]/10 text-[#C3EA39] flex items-center justify-center mb-3.5 group-hover:scale-110 transition-transform">
-                  <Upload className="w-7 h-7" />
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#C3EA39]/10 text-[#C3EA39] flex items-center justify-center mb-3.5 group-hover:scale-110 transition-transform">
+                  <Upload className="w-6 h-6 sm:w-7 sm:h-7" />
                 </div>
-                <p className="font-display font-bold text-white text-lg">Chưa có Artwork Tùm Lum Tà La nào</p>
+                <p className="font-display font-bold text-white text-base sm:text-lg">Chưa có Artwork Tùm Lum Tà La nào</p>
                 <p className="text-xs sm:text-sm text-white/50 mt-1 font-mono max-w-md">
                   Bấm vào đây để tải ảnh vuông hoặc GIF hiển thị trong khung xoay Section 01 Tùm lum tà la.
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
                 {randomWorks.map((work, idx) => (
                   <div
                     key={work.id || idx}
@@ -1204,27 +1212,27 @@ export default function CMSPage({ onBackToPortfolio }) {
                       />
 
                       {/* Top Left: Artwork Number Tag */}
-                      <div className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-lg bg-black/75 backdrop-blur-md text-xs font-mono font-bold text-[#C3EA39] border border-white/10 flex items-center gap-1.5">
+                      <div className="absolute top-2 left-2 sm:top-2.5 sm:left-2.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg bg-black/75 backdrop-blur-md text-[10px] sm:text-xs font-mono font-bold text-[#C3EA39] border border-white/10 flex items-center gap-1.5 z-20">
                         <Sparkles className="w-3 h-3" />
                         <span>Artwork #{idx + 1 < 10 ? `0${idx + 1}` : idx + 1}</span>
                       </div>
 
                       {/* Top Right: Actions */}
-                      <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5">
+                      <div className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 flex items-center gap-1 sm:gap-1.5 z-20">
                         <button
                           onClick={() => handleReCropRandomWork(work, idx)}
-                          className="px-2 py-1 rounded-lg bg-black/80 hover:bg-[#C3EA39] text-[#C3EA39] hover:text-black text-[11px] font-mono font-bold flex items-center gap-1 transition-colors cursor-pointer border border-[#C3EA39]/30"
+                          className="px-2 py-1 rounded-lg bg-black/80 hover:bg-[#C3EA39] text-[#C3EA39] hover:text-black text-[10px] sm:text-[11px] font-mono font-bold flex items-center gap-1 transition-colors cursor-pointer border border-[#C3EA39]/30"
                           title="Cắt / Căn chỉnh lại artwork (1:1)"
                         >
                           <Crop className="w-3 h-3" />
-                          <span>Cắt lại</span>
+                          <span>Cắt</span>
                         </button>
                         <button
                           onClick={() => setPreviewingImage(work.image)}
-                          className="p-1.5 rounded-lg bg-black/75 hover:bg-white text-white/80 hover:text-black transition-colors cursor-pointer border border-white/10"
+                          className="p-1 sm:p-1.5 rounded-lg bg-black/75 hover:bg-white text-white/80 hover:text-black transition-colors cursor-pointer border border-white/10"
                           title="Xem ảnh đầy đủ"
                         >
-                          <Eye className="w-3.5 h-3.5" />
+                          <Eye className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                         </button>
                         <button
                           onClick={() => {
@@ -1233,17 +1241,17 @@ export default function CMSPage({ onBackToPortfolio }) {
                               deleteRandomWork(work.id || idx);
                             }
                           }}
-                          className="p-1.5 rounded-lg bg-black/75 hover:bg-red-500 text-white/80 hover:text-white transition-colors cursor-pointer border border-white/10"
+                          className="p-1 sm:p-1.5 rounded-lg bg-black/75 hover:bg-red-500 text-white/80 hover:text-white transition-colors cursor-pointer border border-white/10"
                           title="Xoá artwork"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                         </button>
                       </div>
                     </div>
 
                     {/* Bottom Form Fields & Reorder Controls */}
-                    <div className="p-4 space-y-3 bg-[#121216] flex-1 flex flex-col justify-between">
-                      <div className="space-y-2">
+                    <div className="p-3.5 sm:p-4 space-y-3 bg-[#121216] flex-1 flex flex-col justify-between">
+                      <div className="space-y-2.5">
                         <div>
                           <label className="text-[10px] font-mono text-white/40 block mb-1 uppercase tracking-wider">
                             Tên tác phẩm
@@ -1257,7 +1265,7 @@ export default function CMSPage({ onBackToPortfolio }) {
                               newArr[idx] = { ...newArr[idx], title: e.target.value };
                               updateRandomWorksList(newArr);
                             }}
-                            className="w-full px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs font-medium text-white placeholder-white/20 focus:outline-none focus:border-[#C3EA39] focus:text-[#C3EA39] transition-all"
+                            className="w-full px-3 py-2 sm:py-1.5 rounded-xl bg-white/5 border border-white/10 text-base sm:text-xs font-medium text-white placeholder-white/20 focus:outline-none focus:border-[#C3EA39] focus:text-[#C3EA39] transition-all"
                           />
                         </div>
 
@@ -1274,19 +1282,19 @@ export default function CMSPage({ onBackToPortfolio }) {
                               newArr[idx] = { ...newArr[idx], subtitle: e.target.value };
                               updateRandomWorksList(newArr);
                             }}
-                            className="w-full px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs font-light text-white/80 placeholder-white/20 focus:outline-none focus:border-[#C3EA39] transition-all"
+                            className="w-full px-3 py-2 sm:py-1.5 rounded-xl bg-white/5 border border-white/10 text-base sm:text-xs font-light text-white/80 placeholder-white/20 focus:outline-none focus:border-[#C3EA39] transition-all"
                           />
                         </div>
                       </div>
 
                       {/* Footer: Position Reorder */}
                       <div className="flex items-center justify-between pt-2.5 border-t border-white/5 text-xs font-mono">
-                        <span className="text-[11px] text-white/40">Thứ tự hiển thị:</span>
+                        <span className="text-[11px] text-white/40">Thứ tự:</span>
                         <div className="flex items-center gap-1.5">
                           <button
                             onClick={() => moveRandomWork(idx, 'up')}
                             disabled={idx === 0}
-                            className="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/80 hover:text-white transition-colors flex items-center gap-1 text-[11px] cursor-pointer"
+                            className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/80 hover:text-white transition-colors flex items-center gap-1 text-[11px] cursor-pointer min-h-[32px]"
                             title="Di chuyển lên trước"
                           >
                             <ArrowUp className="w-3 h-3" />
@@ -1295,7 +1303,7 @@ export default function CMSPage({ onBackToPortfolio }) {
                           <button
                             onClick={() => moveRandomWork(idx, 'down')}
                             disabled={idx === randomWorks.length - 1}
-                            className="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/80 hover:text-white transition-colors flex items-center gap-1 text-[11px] cursor-pointer"
+                            className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/80 hover:text-white transition-colors flex items-center gap-1 text-[11px] cursor-pointer min-h-[32px]"
                             title="Di chuyển ra sau"
                           >
                             <span>Sau</span>
@@ -1311,9 +1319,9 @@ export default function CMSPage({ onBackToPortfolio }) {
                 {/* Quick Add Card */}
                 <div
                   onClick={() => randomWorkFileInputRef.current?.click()}
-                  className="aspect-square rounded-2xl border-2 border-dashed border-white/15 hover:border-[#C3EA39]/50 bg-white/[0.02] hover:bg-white/[0.05] transition-all flex flex-col items-center justify-center text-center cursor-pointer p-4 group"
+                  className="aspect-square rounded-2xl border-2 border-dashed border-white/15 hover:border-[#C3EA39]/50 bg-white/[0.02] hover:bg-white/[0.05] transition-all flex flex-col items-center justify-center text-center cursor-pointer p-4 group active:scale-[0.99]"
                 >
-                  <Plus className="w-8 h-8 text-white/40 group-hover:text-[#C3EA39] group-hover:scale-110 transition-all mb-2" />
+                  <Plus className="w-7 h-7 sm:w-8 sm:h-8 text-white/40 group-hover:text-[#C3EA39] group-hover:scale-110 transition-all mb-2" />
                   <span className="text-xs font-mono font-bold text-white/60 group-hover:text-white transition-colors">
                     + Thêm Artwork Mới
                   </span>
@@ -1323,21 +1331,21 @@ export default function CMSPage({ onBackToPortfolio }) {
           </div>
         )}
 
-        {/* Tab 3: Chữ Chạy Slide (Marquee) */}
+        {/* Tab 4: Chữ Chạy Slide (Marquee) */}
         {activeTab === 'marquee' && (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             
             {/* Live Ticker Preview */}
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs font-mono text-white/50">
                 <span className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-[#C3EA39] animate-ping" />
-                  <span>Xem trước dòng chữ chạy trực tiếp:</span>
+                  <span>Dòng chữ chạy trực tiếp:</span>
                 </span>
                 <span>{marqueeItems.length} cụm từ</span>
               </div>
 
-              <div className="py-3.5 px-4 rounded-2xl bg-[#0D0D12] border border-[#C3EA39]/40 overflow-hidden shadow-lg">
+              <div className="py-3 px-4 rounded-2xl bg-[#0D0D12] border border-[#C3EA39]/40 overflow-hidden shadow-lg">
                 {(() => {
                   const previewList = marqueeItems && marqueeItems.length > 0 ? marqueeItems : defaultMarqueeItems;
                   const repeatCount = Math.max(2, Math.ceil(16 / (previewList.length || 1)));
@@ -1367,48 +1375,48 @@ export default function CMSPage({ onBackToPortfolio }) {
             </div>
 
             {/* Add New Phrase Form */}
-            <form onSubmit={handleAddNewMarquee} className="flex gap-2 p-2 rounded-2xl bg-[#121216] border border-white/10">
+            <form onSubmit={handleAddNewMarquee} className="flex flex-col sm:flex-row gap-2 p-2 rounded-2xl bg-[#121216] border border-white/10">
               <input
                 type="text"
                 value={newMarqueeText}
                 onChange={(e) => setNewMarqueeText(e.target.value)}
                 placeholder="Nhập cụm từ mới (VD: 3D MOTION DESIGN, TYPOGRAPHY...)..."
-                className="flex-1 bg-transparent px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none font-mono"
+                className="flex-1 bg-transparent px-3.5 py-2.5 text-base sm:text-sm text-white placeholder-white/30 focus:outline-none font-mono"
               />
               <button
                 type="submit"
                 disabled={!newMarqueeText.trim()}
-                className="px-5 py-2.5 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] disabled:opacity-40 text-black font-mono font-bold text-xs sm:text-sm flex items-center gap-1.5 transition-all cursor-pointer"
+                className="px-5 py-2.5 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] disabled:opacity-40 text-black font-mono font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer min-h-[40px]"
               >
                 <Plus className="w-4 h-4" />
-                <span>Thêm</span>
+                <span>Thêm Cụm Từ</span>
               </button>
             </form>
 
             {/* List of Phrases */}
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               {marqueeItems.map((item, idx) => (
                 <div
                   key={idx}
-                  className="p-3 sm:p-4 rounded-2xl bg-[#121216] border border-white/10 hover:border-white/20 transition-all flex items-center justify-between gap-3 group"
+                  className="p-3 sm:p-4 rounded-2xl bg-[#121216] border border-white/10 hover:border-white/20 transition-all flex items-center justify-between gap-2.5 group"
                 >
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <span className="text-xs font-mono font-bold text-[#C3EA39] w-6 text-center shrink-0">
+                  <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                    <span className="text-xs font-mono font-bold text-[#C3EA39] w-5 sm:w-6 text-center shrink-0">
                       #{idx + 1}
                     </span>
                     <input
                       type="text"
                       value={item}
                       onChange={(e) => updateMarqueeItem(idx, e.target.value)}
-                      className="flex-1 bg-transparent text-sm font-mono font-bold text-white focus:outline-none focus:text-[#C3EA39] transition-colors"
+                      className="flex-1 bg-transparent text-base sm:text-sm font-mono font-bold text-white focus:outline-none focus:text-[#C3EA39] transition-colors py-1"
                     />
                   </div>
 
-                  <div className="flex items-center gap-1.5 shrink-0">
+                  <div className="flex items-center gap-1 shrink-0">
                     <button
                       onClick={() => moveMarqueeItem(idx, 'up')}
                       disabled={idx === 0}
-                      className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/70 hover:text-white transition-colors"
+                      className="p-2 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/70 hover:text-white transition-colors min-w-[34px] min-h-[34px] flex items-center justify-center cursor-pointer"
                       title="Lên"
                     >
                       <ArrowUp className="w-3.5 h-3.5" />
@@ -1417,7 +1425,7 @@ export default function CMSPage({ onBackToPortfolio }) {
                     <button
                       onClick={() => moveMarqueeItem(idx, 'down')}
                       disabled={idx === marqueeItems.length - 1}
-                      className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/70 hover:text-white transition-colors"
+                      className="p-2 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-20 text-white/70 hover:text-white transition-colors min-w-[34px] min-h-[34px] flex items-center justify-center cursor-pointer"
                       title="Xuống"
                     >
                       <ArrowDown className="w-3.5 h-3.5" />
@@ -1431,7 +1439,7 @@ export default function CMSPage({ onBackToPortfolio }) {
                         }
                         deleteMarqueeItem(idx);
                       }}
-                      className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white transition-colors cursor-pointer"
+                      className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white transition-colors min-w-[34px] min-h-[34px] flex items-center justify-center cursor-pointer"
                       title="Xoá cụm từ"
                     >
                       <Trash2 className="w-3.5 h-3.5" />

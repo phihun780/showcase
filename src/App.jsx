@@ -77,25 +77,7 @@ function SecurityShield() {
       }
     };
 
-    // 4. Mobile Anti-Zoom & Double-Tap Zoom Prevention
-    const handleTouchMove = (e) => {
-      if (e.touches && e.touches.length > 1) {
-        e.preventDefault();
-      }
-    };
-
-    let lastTap = 0;
-    const handleTouchEnd = (e) => {
-      const now = Date.now();
-      if (now - lastTap <= 300) {
-        const isInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target?.tagName);
-        if (!isInput) {
-          e.preventDefault();
-        }
-      }
-      lastTap = now;
-    };
-
+    // 4. Mobile Gesture Zoom Prevention (Lightweight & 100% Non-blocking)
     const handleGesture = (e) => {
       e.preventDefault();
     };
@@ -103,8 +85,6 @@ function SecurityShield() {
     window.addEventListener('contextmenu', handleContextMenu, true);
     window.addEventListener('dragstart', handleDragStart, true);
     window.addEventListener('keydown', handleKeyDown, true);
-    window.addEventListener('touchmove', handleTouchMove, { passive: false });
-    window.addEventListener('touchend', handleTouchEnd, { passive: false });
     document.addEventListener('gesturestart', handleGesture, { passive: false });
     document.addEventListener('gesturechange', handleGesture, { passive: false });
     document.addEventListener('gestureend', handleGesture, { passive: false });
@@ -113,8 +93,6 @@ function SecurityShield() {
       window.removeEventListener('contextmenu', handleContextMenu, true);
       window.removeEventListener('dragstart', handleDragStart, true);
       window.removeEventListener('keydown', handleKeyDown, true);
-      window.removeEventListener('touchmove', handleTouchMove);
-      window.removeEventListener('touchend', handleTouchEnd);
       document.removeEventListener('gesturestart', handleGesture);
       document.removeEventListener('gesturechange', handleGesture);
       document.removeEventListener('gestureend', handleGesture);
@@ -249,7 +227,7 @@ function PortfolioApp() {
 
   // Otherwise, render main Portfolio
   return (
-    <div className="min-h-screen bg-[#08080A] text-[#EDEDED] antialiased selection:bg-[#C3EA39] selection:text-black relative">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#08080A] text-[#EDEDED] antialiased selection:bg-[#C3EA39] selection:text-black relative">
       {/* Active Anti-Theft Protection Shield */}
       <SecurityShield />
 
@@ -270,7 +248,7 @@ function PortfolioApp() {
       />
 
       {/* Main Content Sections */}
-      <main id="top" className="relative z-10">
+      <main id="top" className="relative z-10 w-full max-w-full overflow-x-hidden">
         <Hero />
         <CoverBannerSection />
         <RandomWorkSection />

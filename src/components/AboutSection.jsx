@@ -57,7 +57,7 @@ export default function AboutSection() {
   };
 
   return (
-    <section id="about" className="pt-10 sm:pt-16 pb-16 sm:pb-24 scroll-mt-16 relative">
+    <section id="about" className="pt-10 sm:pt-16 pb-16 sm:pb-24 scroll-mt-16 relative w-full max-w-full overflow-hidden touch-pan-y">
       
       {/* Background Ambient Glow */}
       <div className="absolute top-1/3 left-1/4 -translate-y-1/2 w-[550px] h-[350px] bg-[#C3EA39]/10 blur-[170px] rounded-full pointer-events-none" />

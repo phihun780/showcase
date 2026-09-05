@@ -175,8 +175,8 @@ export default function ProfileEditor({ profile, onSave }) {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
           
           {/* Left Column: Portrait Avatar + Subtle dimension note */}
-          <div className="md:col-span-4 lg:col-span-3 flex flex-col items-center sm:items-start gap-3">
-            <div className="relative w-full max-w-[200px] aspect-[3/4] rounded-2xl overflow-hidden border border-white/15 bg-black shadow-xl group">
+          <div className="md:col-span-4 lg:col-span-3 flex flex-col items-center sm:items-start gap-3 w-full">
+            <div className="relative w-full max-w-[200px] aspect-[3/4] rounded-2xl overflow-hidden border border-white/15 bg-black shadow-xl group mx-auto sm:mx-0">
               {formData.avatar ? (
                 <>
                   <img
@@ -190,7 +190,7 @@ export default function ProfileEditor({ profile, onSave }) {
                       setCropImageSrc(formData.avatar);
                       setIsCropOpen(true);
                     }}
-                    className="absolute top-2 right-2 px-2 py-1 rounded-lg bg-black/80 hover:bg-[#C3EA39] text-[#C3EA39] hover:text-black text-[11px] font-mono font-bold flex items-center gap-1 border border-[#C3EA39]/40 transition-all cursor-pointer shadow-lg z-20"
+                    className="absolute top-2 right-2 px-2.5 py-1 rounded-lg bg-black/80 hover:bg-[#C3EA39] text-[#C3EA39] hover:text-black text-[11px] font-mono font-bold flex items-center gap-1 border border-[#C3EA39]/40 transition-all cursor-pointer shadow-lg z-20"
                     title="Cắt / Căn chỉnh lại ảnh đại diện"
                   >
                     <Crop className="w-3 h-3" />
@@ -215,8 +215,8 @@ export default function ProfileEditor({ profile, onSave }) {
             </div>
 
             {/* Upload button & Subtle note */}
-            <div className="w-full max-w-[200px] space-y-1.5 text-center sm:text-left">
-              <label className="w-full cursor-pointer text-xs font-mono text-black bg-[#C3EA39] hover:bg-[#d4f854] px-3 py-2 rounded-xl font-bold inline-flex items-center justify-center gap-1.5 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-[1.02]">
+            <div className="w-full max-w-[200px] space-y-1.5 text-center sm:text-left mx-auto sm:mx-0">
+              <label className="w-full cursor-pointer text-xs font-mono text-black bg-[#C3EA39] hover:bg-[#d4f854] px-3 py-2.5 rounded-xl font-bold inline-flex items-center justify-center gap-1.5 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-[1.02] min-h-[40px]">
                 <Upload className="w-3.5 h-3.5" />
                 <span>Tải ảnh / GIF</span>
                 <input
@@ -233,15 +233,15 @@ export default function ProfileEditor({ profile, onSave }) {
           </div>
 
           {/* Right Column: Basic Information Form Inputs */}
-          <div className="md:col-span-8 lg:col-span-9 space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="md:col-span-8 lg:col-span-9 space-y-4 w-full">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
               <div className="space-y-1">
                 <label className="text-xs font-mono text-white/70 uppercase block">Tên</label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/50 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-sm"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/50 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm"
                 />
               </div>
 
@@ -251,7 +251,7 @@ export default function ProfileEditor({ profile, onSave }) {
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/50 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-sm"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/50 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm"
                 />
               </div>
 
@@ -261,7 +261,7 @@ export default function ProfileEditor({ profile, onSave }) {
                   type="text"
                   value={formData.location}
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/50 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-sm"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/50 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm"
                 />
               </div>
 
@@ -271,11 +271,9 @@ export default function ProfileEditor({ profile, onSave }) {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/50 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-sm"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/50 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm"
                 />
               </div>
-
-
 
               <div className="sm:col-span-2 space-y-1">
                 <label className="text-xs font-mono text-white/70 uppercase block">
@@ -286,7 +284,7 @@ export default function ProfileEditor({ profile, onSave }) {
                   value={formData.subtitle || ''}
                   placeholder="Đây là nơi mình lưu giữ..."
                   onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/50 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-sm"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/50 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm"
                 />
               </div>
 
@@ -299,7 +297,7 @@ export default function ProfileEditor({ profile, onSave }) {
                   value={formData.cvUrl || ''}
                   placeholder="https://drive.google.com/... hoặc /cv.pdf"
                   onChange={(e) => setFormData({ ...formData, cvUrl: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/50 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-xs font-mono"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/50 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs font-mono"
                 />
               </div>
             </div>
@@ -309,7 +307,7 @@ export default function ProfileEditor({ profile, onSave }) {
       </div>
 
       {/* Quá Khứ Của Tui (Timeline) */}
-      <div className="p-5 sm:p-6 rounded-2xl bg-[#121216] border border-white/10 space-y-4">
+      <div className="p-4 sm:p-6 rounded-2xl bg-[#121216] border border-white/10 space-y-4">
         <div className="flex items-center justify-between pb-2 border-b border-white/10">
           <h3 className="text-base font-display font-bold text-white">
             Quá Khứ Của Tui
@@ -318,21 +316,21 @@ export default function ProfileEditor({ profile, onSave }) {
           <button
             type="button"
             onClick={handleAddExp}
-            className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-[#C3EA39] hover:text-black text-white text-xs font-mono font-bold flex items-center gap-1 transition-colors cursor-pointer"
+            className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-[#C3EA39] hover:text-black text-white text-xs font-mono font-bold flex items-center gap-1 transition-colors cursor-pointer min-h-[34px]"
           >
-            <Plus className="w-3 h-3" />
+            <Plus className="w-3.5 h-3.5" />
             <span>Thêm</span>
           </button>
         </div>
 
-        <div className="space-y-2.5">
+        <div className="space-y-3">
           {formData.experience.map((exp, idx) => {
             const isCurrent = Boolean(exp.isCurrent);
 
             return (
               <div
                 key={idx}
-                className="p-3 rounded-xl bg-black/40 border border-white/10 grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center"
+                className="p-3.5 rounded-xl bg-black/40 border border-white/10 flex flex-col sm:grid sm:grid-cols-12 gap-2.5 items-stretch sm:items-center"
               >
                 <div className="sm:col-span-4">
                   <input
@@ -340,7 +338,7 @@ export default function ProfileEditor({ profile, onSave }) {
                     placeholder="Tên công ty"
                     value={exp.company || ''}
                     onChange={(e) => handleExpChange(idx, 'company', e.target.value)}
-                    className="w-full px-3 py-1.5 rounded-lg bg-black/60 border border-white/10 text-white text-xs font-bold"
+                    className="w-full px-3 py-2 sm:py-1.5 rounded-lg bg-black/60 border border-white/10 text-white text-base sm:text-xs font-bold"
                   />
                 </div>
 
@@ -350,45 +348,47 @@ export default function ProfileEditor({ profile, onSave }) {
                     placeholder="Chức vụ / Vị trí"
                     value={exp.role || ''}
                     onChange={(e) => handleExpChange(idx, 'role', e.target.value)}
-                    className="w-full px-3 py-1.5 rounded-lg bg-black/60 border border-white/10 text-white/60 text-xs font-mono"
+                    className="w-full px-3 py-2 sm:py-1.5 rounded-lg bg-black/60 border border-white/10 text-white/80 text-base sm:text-xs font-mono"
                   />
                 </div>
 
-                <div className="sm:col-span-2">
-                  <input
-                    type="text"
-                    placeholder="Năm"
-                    value={exp.period || ''}
-                    onChange={(e) => handleExpChange(idx, 'period', e.target.value)}
-                    className="w-full px-3 py-1.5 rounded-lg bg-black/60 border border-white/10 text-[#C3EA39] text-xs font-mono font-bold"
-                  />
-                </div>
+                <div className="flex items-center gap-2 sm:col-span-5 justify-between">
+                  <div className="w-24 sm:w-full sm:col-span-2">
+                    <input
+                      type="text"
+                      placeholder="Năm"
+                      value={exp.period || ''}
+                      onChange={(e) => handleExpChange(idx, 'period', e.target.value)}
+                      className="w-full px-3 py-2 sm:py-1.5 rounded-lg bg-black/60 border border-white/10 text-[#C3EA39] text-base sm:text-xs font-mono font-bold"
+                    />
+                  </div>
 
-                <div className="sm:col-span-2">
-                  <button
-                    type="button"
-                    onClick={() => handleExpChange(idx, 'isCurrent', !isCurrent)}
-                    className={`w-full py-1.5 px-2 rounded-lg text-[11px] font-mono font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer border ${
-                      isCurrent
-                        ? 'bg-[#C3EA39]/15 text-[#C3EA39] border-[#C3EA39]/40 shadow-sm shadow-[#C3EA39]/10'
-                        : 'bg-white/5 text-white/40 border-white/10 hover:text-white/70 hover:bg-white/10'
-                    }`}
-                    title="Bật: Đang làm việc tại đây (sáng) / Tắt: Quá khứ (mờ)"
-                  >
-                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isCurrent ? 'bg-[#C3EA39] animate-pulse' : 'bg-white/30'}`} />
-                    <span>{isCurrent ? 'Đang làm' : 'Đã nghỉ'}</span>
-                  </button>
-                </div>
+                  <div className="flex-1 sm:col-span-2">
+                    <button
+                      type="button"
+                      onClick={() => handleExpChange(idx, 'isCurrent', !isCurrent)}
+                      className={`w-full py-2 sm:py-1.5 px-2 rounded-lg text-xs sm:text-[11px] font-mono font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer border min-h-[38px] sm:min-h-[32px] ${
+                        isCurrent
+                          ? 'bg-[#C3EA39]/15 text-[#C3EA39] border-[#C3EA39]/40 shadow-sm shadow-[#C3EA39]/10'
+                          : 'bg-white/5 text-white/40 border-white/10 hover:text-white/70 hover:bg-white/10'
+                      }`}
+                      title="Bật: Đang làm việc tại đây (sáng) / Tắt: Quá khứ (mờ)"
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isCurrent ? 'bg-[#C3EA39] animate-pulse' : 'bg-white/30'}`} />
+                      <span>{isCurrent ? 'Đang làm' : 'Đã nghỉ'}</span>
+                    </button>
+                  </div>
 
-                <div className="sm:col-span-1 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveExp(idx)}
-                    className="p-1.5 rounded-lg text-white/40 hover:text-red-400 transition-colors cursor-pointer"
-                    title="Xoá mục này"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  <div className="shrink-0 sm:col-span-1 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveExp(idx)}
+                      className="p-2 sm:p-1.5 rounded-lg text-white/40 hover:text-red-400 transition-colors cursor-pointer min-w-[38px] min-h-[38px] sm:min-w-0 sm:min-h-0 flex items-center justify-center"
+                      title="Xoá mục này"
+                    >
+                      <Trash2 className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             );
@@ -397,7 +397,7 @@ export default function ProfileEditor({ profile, onSave }) {
       </div>
 
       {/* Những Nơi Khác (Socials) */}
-      <div className="p-5 sm:p-6 rounded-2xl bg-[#121216] border border-white/10 space-y-4">
+      <div className="p-4 sm:p-6 rounded-2xl bg-[#121216] border border-white/10 space-y-4">
         <div className="flex items-center justify-between pb-2 border-b border-white/10">
           <h3 className="text-base font-display font-bold text-white">
             Những Nơi Khác
@@ -406,9 +406,9 @@ export default function ProfileEditor({ profile, onSave }) {
           <button
             type="button"
             onClick={handleAddSocial}
-            className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-[#C3EA39] hover:text-black text-white text-xs font-mono font-bold flex items-center gap-1 transition-colors cursor-pointer"
+            className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-[#C3EA39] hover:text-black text-white text-xs font-mono font-bold flex items-center gap-1 transition-colors cursor-pointer min-h-[34px]"
           >
-            <Plus className="w-3 h-3" />
+            <Plus className="w-3.5 h-3.5" />
             <span>Thêm</span>
           </button>
         </div>
@@ -417,7 +417,7 @@ export default function ProfileEditor({ profile, onSave }) {
           {formData.socials.map((soc, idx) => (
             <div
               key={idx}
-              className="p-3 rounded-xl bg-black/40 border border-white/10 space-y-2"
+              className="p-3.5 rounded-xl bg-black/40 border border-white/10 space-y-2"
             >
               <div className="flex items-center justify-between gap-2">
                 <input
@@ -425,12 +425,13 @@ export default function ProfileEditor({ profile, onSave }) {
                   value={soc.name}
                   onChange={(e) => handleSocialChange(idx, 'name', e.target.value)}
                   placeholder="Tên nút"
-                  className="px-2.5 py-1 rounded-lg bg-black/60 border border-white/10 text-white font-bold text-xs flex-1"
+                  className="px-3 py-1.5 rounded-lg bg-black/60 border border-white/10 text-white font-bold text-base sm:text-xs flex-1"
                 />
                 <button
                   type="button"
                   onClick={() => handleRemoveSocial(idx)}
-                  className="p-1 text-white/40 hover:text-red-400 transition-colors"
+                  className="p-2 text-white/40 hover:text-red-400 transition-colors min-w-[34px] min-h-[34px] flex items-center justify-center cursor-pointer"
+                  title="Xoá liên kết"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
@@ -441,7 +442,7 @@ export default function ProfileEditor({ profile, onSave }) {
                 value={soc.url}
                 onChange={(e) => handleSocialChange(idx, 'url', e.target.value)}
                 placeholder="URL (https://...)"
-                className="w-full px-2.5 py-1 rounded-lg bg-black/60 border border-white/10 text-xs font-mono text-white/70"
+                className="w-full px-3 py-2 sm:py-1.5 rounded-lg bg-black/60 border border-white/10 text-base sm:text-xs font-mono text-white/70"
               />
             </div>
           ))}
@@ -449,7 +450,7 @@ export default function ProfileEditor({ profile, onSave }) {
       </div>
 
       {/* Nhận Diện, Tiêu Đề Tab & Thumbnail (SEO / Favicon / OpenGraph) */}
-      <div className="p-5 sm:p-6 rounded-2xl bg-[#121216] border border-white/10 space-y-4">
+      <div className="p-4 sm:p-6 rounded-2xl bg-[#121216] border border-white/10 space-y-4">
         <div className="pb-2 border-b border-white/10">
           <h3 className="text-base font-display font-bold text-white">
             Tiêu Đề Tab Trình Duyệt, Favicon & Thumbnail Chia Sẻ
@@ -457,12 +458,12 @@ export default function ProfileEditor({ profile, onSave }) {
         </div>
 
         {/* 1. Tiêu đề Tab Trình duyệt */}
-        <div className="p-4 rounded-xl bg-black/40 border border-white/10 space-y-2">
-          <div className="flex items-center justify-between">
+        <div className="p-3.5 sm:p-4 rounded-xl bg-black/40 border border-white/10 space-y-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
             <span className="font-mono font-bold text-xs text-[#C3EA39] uppercase">
               1. Tiêu đề Tab Trình duyệt (Browser Tab Title)
             </span>
-            <span className="text-[10px] font-mono text-white/40 bg-white/5 px-2 py-0.5 rounded border border-white/10">
+            <span className="text-[10px] font-mono text-white/40 bg-white/5 px-2 py-0.5 rounded border border-white/10 w-fit">
               Hiển thị trên tab Chrome, Safari...
             </span>
           </div>
@@ -471,19 +472,19 @@ export default function ProfileEditor({ profile, onSave }) {
             value={formData.tabTitle || ''}
             onChange={(e) => setFormData({ ...formData, tabTitle: e.target.value })}
             placeholder="Phi Hùng — Graphic Designer | Portfolio Showcase"
-            className="w-full px-3.5 py-2.5 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-sm font-medium placeholder-white/30"
+            className="w-full px-3.5 py-2.5 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm font-medium placeholder-white/30"
           />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* 2. Favicon */}
-          <div className="p-4 rounded-xl bg-black/40 border border-white/10 space-y-3">
+          <div className="p-3.5 sm:p-4 rounded-xl bg-black/40 border border-white/10 space-y-3">
             <div className="flex items-center justify-between">
               <span className="font-mono font-bold text-xs text-[#C3EA39] uppercase">
                 2. Favicon (Icon tab web)
               </span>
               <span className="text-[10px] font-mono text-white/40 bg-white/5 px-2 py-0.5 rounded border border-white/10">
-                1:1 • 64×64px / 32×32px
+                1:1 • 64×64px
               </span>
             </div>
 
@@ -503,10 +504,10 @@ export default function ProfileEditor({ profile, onSave }) {
                   value={formData.favicon}
                   onChange={(e) => setFormData({ ...formData, favicon: e.target.value })}
                   placeholder="Dán link ảnh favicon..."
-                  className="w-full px-3 py-1.5 rounded-lg bg-black/60 border border-white/10 text-xs font-mono text-white focus:outline-none focus:border-[#C3EA39]"
+                  className="w-full px-3 py-2 sm:py-1.5 rounded-lg bg-black/60 border border-white/10 text-base sm:text-xs font-mono text-white focus:outline-none focus:border-[#C3EA39]"
                 />
-                <label className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/10 hover:bg-[#C3EA39] hover:text-black text-white text-[11px] font-mono font-bold transition-all cursor-pointer">
-                  <Upload className="w-3 h-3" />
+                <label className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-[#C3EA39] hover:text-black text-white text-xs sm:text-[11px] font-mono font-bold transition-all cursor-pointer min-h-[36px]">
+                  <Upload className="w-3.5 h-3.5" />
                   <span>Tải ảnh Favicon</span>
                   <input
                     type="file"
@@ -520,13 +521,13 @@ export default function ProfileEditor({ profile, onSave }) {
           </div>
 
           {/* Social Preview Thumbnail (OpenGraph) */}
-          <div className="p-4 rounded-xl bg-black/40 border border-white/10 space-y-3">
+          <div className="p-3.5 sm:p-4 rounded-xl bg-black/40 border border-white/10 space-y-3">
             <div className="flex items-center justify-between">
               <span className="font-mono font-bold text-xs text-[#C3EA39] uppercase">
                 3. Thumbnail Chia Sẻ (Zalo / FB)
               </span>
               <span className="text-[10px] font-mono text-white/40 bg-white/5 px-2 py-0.5 rounded border border-white/10">
-                1200×630px (Tỷ lệ 1.91:1)
+                1200×630px
               </span>
             </div>
 
@@ -546,10 +547,10 @@ export default function ProfileEditor({ profile, onSave }) {
                   value={formData.ogImage}
                   onChange={(e) => setFormData({ ...formData, ogImage: e.target.value })}
                   placeholder="Dán link ảnh thumbnail..."
-                  className="w-full px-3 py-1.5 rounded-lg bg-black/60 border border-white/10 text-xs font-mono text-white focus:outline-none focus:border-[#C3EA39]"
+                  className="w-full px-3 py-2 sm:py-1.5 rounded-lg bg-black/60 border border-white/10 text-base sm:text-xs font-mono text-white focus:outline-none focus:border-[#C3EA39]"
                 />
-                <label className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/10 hover:bg-[#C3EA39] hover:text-black text-white text-[11px] font-mono font-bold transition-all cursor-pointer">
-                  <Upload className="w-3 h-3" />
+                <label className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-[#C3EA39] hover:text-black text-white text-xs sm:text-[11px] font-mono font-bold transition-all cursor-pointer min-h-[36px]">
+                  <Upload className="w-3.5 h-3.5" />
                   <span>Tải ảnh Thumbnail</span>
                   <input
                     type="file"
@@ -564,22 +565,24 @@ export default function ProfileEditor({ profile, onSave }) {
         </div>
       </div>
 
-      {/* Save Button */}
-      <div className="flex items-center justify-between pt-2">
+      {/* Sticky Bottom Save Bar */}
+      <div className="sticky bottom-4 z-30 p-3.5 sm:p-4 rounded-2xl bg-[#121216]/95 backdrop-blur-xl border border-white/15 shadow-2xl flex items-center justify-between gap-3">
         {savedAlert ? (
-          <span className="text-xs font-mono text-[#C3EA39] flex items-center gap-1.5 animate-fadeIn">
-            <Check className="w-3.5 h-3.5" />
-            <span>Đã lưu!</span>
+          <span className="text-xs font-mono text-[#C3EA39] font-bold flex items-center gap-1.5 animate-fadeIn">
+            <Check className="w-4 h-4" />
+            <span>Đã lưu thành công!</span>
           </span>
         ) : (
-          <div />
+          <span className="text-xs font-mono text-white/40 hidden sm:inline">
+            Nhớ bấm lưu sau khi thay đổi thông tin
+          </span>
         )}
 
         <button
           type="submit"
-          className="px-6 py-2.5 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black font-display font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-[1.01] cursor-pointer"
+          className="ml-auto px-6 py-2.5 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black font-display font-bold text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-[1.01] cursor-pointer min-h-[42px]"
         >
-          <Check className="w-3.5 h-3.5" />
+          <Check className="w-4 h-4" />
           <span>Lưu Thay Đổi</span>
         </button>
       </div>

@@ -24,11 +24,13 @@ export default function SeasonalAtmosphere() {
     };
     window.addEventListener('resize', handleResize);
 
+    const isMobile = window.innerWidth < 768;
+
     // ==========================================
     // 1. SNOW PARTICLES (Tuyết Rơi - Thưa & Nhẹ Nhàng)
     // ==========================================
     const createSnowFlakes = () => {
-      const count = Math.min(Math.floor(width / 75), 24);
+      const count = isMobile ? 8 : Math.min(Math.floor(width / 75), 24);
       const flakes = [];
       for (let i = 0; i < count; i++) {
         flakes.push({
@@ -49,7 +51,7 @@ export default function SeasonalAtmosphere() {
     // 2. TET BLOSSOM PETALS (Hoa Mai & Hoa Đào - Thưa & Bay Bổng)
     // ==========================================
     const createTetPetals = () => {
-      const count = Math.min(Math.floor(width / 95), 16);
+      const count = isMobile ? 6 : Math.min(Math.floor(width / 95), 16);
       const petals = [];
       const colors = [
         { fill: '#FFD700', stroke: '#FFA500', type: 'mai' }, // Mai vàng
@@ -84,9 +86,9 @@ export default function SeasonalAtmosphere() {
     // 3. MID-AUTUMN (Đèn Lồng, Lá Thu & Sao - Thưa & Thơ Mộng)
     // ==========================================
     const createMidAutumnItems = () => {
-      const lanternCount = Math.min(Math.floor(width / 250), 5);
-      const leafCount = Math.min(Math.floor(width / 130), 10);
-      const starCount = Math.min(Math.floor(width / 100), 15);
+      const lanternCount = isMobile ? 2 : Math.min(Math.floor(width / 250), 5);
+      const leafCount = isMobile ? 4 : Math.min(Math.floor(width / 130), 10);
+      const starCount = isMobile ? 6 : Math.min(Math.floor(width / 100), 15);
 
       const lanterns = [];
       for (let i = 0; i < lanternCount; i++) {
@@ -164,10 +166,12 @@ export default function SeasonalAtmosphere() {
           ctx.beginPath();
           ctx.arc(f.x, f.y, f.radius, 0, Math.PI * 2);
           ctx.fillStyle = `rgba(255, 255, 255, ${f.opacity})`;
-          ctx.shadowColor = 'rgba(255, 255, 255, 0.6)';
-          ctx.shadowBlur = f.radius * 2;
+          if (!isMobile) {
+            ctx.shadowColor = 'rgba(255, 255, 255, 0.6)';
+            ctx.shadowBlur = f.radius * 2;
+          }
           ctx.fill();
-          ctx.shadowBlur = 0;
+          if (!isMobile) ctx.shadowBlur = 0;
         }
       }
 
@@ -200,9 +204,12 @@ export default function SeasonalAtmosphere() {
           ctx.bezierCurveTo(-p.size * 0.8, p.size * 0.5, -p.size * 0.7, -p.size * 0.5, 0, -p.size);
           ctx.fillStyle = p.color;
           ctx.globalAlpha = p.opacity;
-          ctx.shadowColor = p.strokeColor;
-          ctx.shadowBlur = 4;
+          if (!isMobile) {
+            ctx.shadowColor = p.strokeColor;
+            ctx.shadowBlur = 4;
+          }
           ctx.fill();
+          if (!isMobile) ctx.shadowBlur = 0;
 
           // Subtle center petal vein
           ctx.beginPath();
@@ -302,10 +309,12 @@ export default function SeasonalAtmosphere() {
           ctx.beginPath();
           ctx.arc(0, h * 0.1, lan.size * 0.22, 0, Math.PI * 2);
           ctx.fillStyle = '#FFFFFF';
-          ctx.shadowColor = '#FFD700';
-          ctx.shadowBlur = 8;
+          if (!isMobile) {
+            ctx.shadowColor = '#FFD700';
+            ctx.shadowBlur = 8;
+          }
           ctx.fill();
-          ctx.shadowBlur = 0;
+          if (!isMobile) ctx.shadowBlur = 0;
 
           ctx.restore();
         }

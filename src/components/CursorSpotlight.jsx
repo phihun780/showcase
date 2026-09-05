@@ -5,8 +5,15 @@ export default function CursorSpotlight() {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    // Only enable on pointer devices (desktop mouse)
-    if (window.matchMedia('(pointer: coarse)').matches) return;
+    // Only enable on desktop mouse pointer devices (never on mobile touch)
+    if (
+      typeof window === 'undefined' ||
+      window.innerWidth < 1024 ||
+      window.matchMedia('(pointer: coarse)').matches ||
+      'ontouchstart' in window
+    ) {
+      return;
+    }
 
     const handleMouseMove = (e) => {
       setPosition({ x: e.clientX, y: e.clientY });
