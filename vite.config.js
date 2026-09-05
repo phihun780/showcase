@@ -118,9 +118,25 @@ function r2DevPlugin() {
               const fileData = filePart ? filePart.data : totalBuffer;
 
               if (s3) {
+                const cleanKey = key.replace(/^\/+/, '');
+                const slashIndex = cleanKey.lastIndexOf('/');
+                if (slashIndex > 0) {
+                  const dirKey = cleanKey.substring(0, slashIndex + 1);
+                  try {
+                    await s3.send(new PutObjectCommand({
+                      Bucket: bucket,
+                      Key: dirKey,
+                      Body: Buffer.from(''),
+                      ContentType: 'application/x-directory',
+                    }));
+                  } catch (dirErr) {
+                    // Ignore directory marker creation error
+                  }
+                }
+
                 await s3.send(new PutObjectCommand({
                   Bucket: bucket,
-                  Key: key.replace(/^\/+/, ''),
+                  Key: cleanKey,
                   Body: fileData,
                   ContentType: fileContentType,
                 }));

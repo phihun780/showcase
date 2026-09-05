@@ -73,6 +73,17 @@ export async function onRequestPost(context) {
       return json({ error: 'Đường dẫn lưu trữ không hợp lệ' }, 400);
     }
 
+    // Tự động tạo marker thư mục ảo để Cloudflare R2 UI hiển thị dạng folder bấm được
+    const slashIndex = key.lastIndexOf('/');
+    if (slashIndex > 0) {
+      const dirKey = key.substring(0, slashIndex + 1);
+      try {
+        await env.PORTFOLIO_ASSETS.put(dirKey, '', {
+          httpMetadata: { contentType: 'application/x-directory' },
+        });
+      } catch {}
+    }
+
     await env.PORTFOLIO_ASSETS.put(key, file.stream(), {
       httpMetadata: { contentType, cacheControl: 'public, max-age=31536000, immutable' },
     });
