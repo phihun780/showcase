@@ -119,24 +119,25 @@ export default function WorkSection() {
                 const slotNum = projects.length + pIdx + 1;
                 const numStr = slotNum < 10 ? `0${slotNum}` : `${slotNum}`;
                 const totalSlots = Math.max(placeholderCount, 1);
-                const cycleDelay = (totalSlots - 1) * 0.6 + 2.0;
+                const stepDelay = 1.0;
+                const cycleDelay = (totalSlots - 1) * stepDelay + 2.2;
 
                 return (
                   <div
                     key={`placeholder-slot-${slotNum}`}
                     className="rounded-2xl transition-all duration-300 relative overflow-hidden flex-1 flex items-center justify-between px-5 sm:px-6 py-3 sm:py-3.5 border border-dashed border-white/10 bg-[#121216]/30 select-none cursor-default"
                   >
-                    {/* Cascading Gentle Light Streak from Top to Bottom */}
+                    {/* Cascading Gentle Light Streak from Top to Bottom (Slow & Relaxed) */}
                     <motion.div
-                      className="absolute inset-y-0 w-48 bg-gradient-to-r from-transparent via-[#C3EA39]/12 via-white/[0.08] to-transparent -skew-x-12 pointer-events-none"
-                      initial={{ left: '-120%' }}
-                      animate={{ left: '220%' }}
+                      className="absolute inset-y-0 w-64 bg-gradient-to-r from-transparent via-[#C3EA39]/12 via-white/[0.08] to-transparent -skew-x-12 pointer-events-none"
+                      initial={{ left: '-140%' }}
+                      animate={{ left: '240%' }}
                       transition={{
                         repeat: Infinity,
                         repeatDelay: cycleDelay,
-                        delay: pIdx * 0.6,
-                        duration: 1.2,
-                        ease: [0.25, 1, 0.5, 1],
+                        delay: pIdx * stepDelay,
+                        duration: 2.8,
+                        ease: [0.4, 0, 0.2, 1],
                       }}
                     />
 
