@@ -1003,15 +1003,15 @@ export default function CMSPage({ onBackToPortfolio }) {
             
             <button
               onClick={() => setActiveTab('projects')}
-              className={`shrink-0 sm:shrink py-2 px-3.5 sm:px-3 rounded-xl text-xs sm:text-sm font-mono font-bold flex items-center justify-center gap-2 transition-all cursor-pointer select-none active:scale-95 ${
+              className={`shrink-0 sm:shrink py-2 px-3.5 sm:px-3 rounded-xl text-xs sm:text-sm font-display font-bold flex items-center justify-center gap-2 transition-all cursor-pointer select-none active:scale-95 ${
                 activeTab === 'projects'
                   ? 'bg-[#C3EA39] text-black shadow-md shadow-[#C3EA39]/15'
                   : 'text-white/60 hover:text-white hover:bg-white/5'
               }`}
             >
               <span>Dự Án</span>
-              <span className={`text-[10px] sm:text-[11px] px-1.5 py-0.2 rounded-md ${
-                activeTab === 'projects' ? 'bg-black/20 text-black' : 'bg-white/10 text-white/50'
+              <span className={`text-[10px] sm:text-[11px] font-mono px-1.5 py-0.2 rounded-md ${
+                activeTab === 'projects' ? 'bg-black/20 text-black font-bold' : 'bg-white/10 text-white/50'
               }`}>
                 {localProjects.length < 10 ? `0${localProjects.length}` : localProjects.length}
               </span>
@@ -1019,15 +1019,15 @@ export default function CMSPage({ onBackToPortfolio }) {
 
             <button
               onClick={() => setActiveTab('banner')}
-              className={`shrink-0 sm:shrink py-2 px-3.5 sm:px-3 rounded-xl text-xs sm:text-sm font-mono font-bold flex items-center justify-center gap-2 transition-all cursor-pointer select-none active:scale-95 ${
+              className={`shrink-0 sm:shrink py-2 px-3.5 sm:px-3 rounded-xl text-xs sm:text-sm font-display font-bold flex items-center justify-center gap-2 transition-all cursor-pointer select-none active:scale-95 ${
                 activeTab === 'banner'
                   ? 'bg-[#C3EA39] text-black shadow-md shadow-[#C3EA39]/15'
                   : 'text-white/60 hover:text-white hover:bg-white/5'
               }`}
             >
               <span>Slide Banner</span>
-              <span className={`text-[10px] sm:text-[11px] px-1.5 py-0.2 rounded-md ${
-                activeTab === 'banner' ? 'bg-black/20 text-black' : 'bg-white/10 text-white/50'
+              <span className={`text-[10px] sm:text-[11px] font-mono px-1.5 py-0.2 rounded-md ${
+                activeTab === 'banner' ? 'bg-black/20 text-black font-bold' : 'bg-white/10 text-white/50'
               }`}>
                 {localCoverBanners.length < 10 ? `0${localCoverBanners.length}` : localCoverBanners.length}
               </span>
@@ -1035,15 +1035,15 @@ export default function CMSPage({ onBackToPortfolio }) {
 
             <button
               onClick={() => setActiveTab('random')}
-              className={`shrink-0 sm:shrink py-2 px-3.5 sm:px-3 rounded-xl text-xs sm:text-sm font-mono font-bold flex items-center justify-center gap-2 transition-all cursor-pointer select-none active:scale-95 ${
+              className={`shrink-0 sm:shrink py-2 px-3.5 sm:px-3 rounded-xl text-xs sm:text-sm font-display font-bold flex items-center justify-center gap-2 transition-all cursor-pointer select-none active:scale-95 ${
                 activeTab === 'random'
                   ? 'bg-[#C3EA39] text-black shadow-md shadow-[#C3EA39]/15'
                   : 'text-white/60 hover:text-white hover:bg-white/5'
               }`}
             >
               <span>Tùm Lum Tà La</span>
-              <span className={`text-[10px] sm:text-[11px] px-1.5 py-0.2 rounded-md ${
-                activeTab === 'random' ? 'bg-black/20 text-black' : 'bg-white/10 text-white/50'
+              <span className={`text-[10px] sm:text-[11px] font-mono px-1.5 py-0.2 rounded-md ${
+                activeTab === 'random' ? 'bg-black/20 text-black font-bold' : 'bg-white/10 text-white/50'
               }`}>
                 {localRandomWorks.length < 10 ? `0${localRandomWorks.length}` : localRandomWorks.length}
               </span>
@@ -1051,15 +1051,15 @@ export default function CMSPage({ onBackToPortfolio }) {
 
             <button
               onClick={() => setActiveTab('marquee')}
-              className={`shrink-0 sm:shrink py-2 px-3.5 sm:px-3 rounded-xl text-xs sm:text-sm font-mono font-bold flex items-center justify-center gap-2 transition-all cursor-pointer select-none active:scale-95 ${
+              className={`shrink-0 sm:shrink py-2 px-3.5 sm:px-3 rounded-xl text-xs sm:text-sm font-display font-bold flex items-center justify-center gap-2 transition-all cursor-pointer select-none active:scale-95 ${
                 activeTab === 'marquee'
                   ? 'bg-[#C3EA39] text-black shadow-md shadow-[#C3EA39]/15'
                   : 'text-white/60 hover:text-white hover:bg-white/5'
               }`}
             >
               <span>Chữ Chạy</span>
-              <span className={`text-[10px] sm:text-[11px] px-1.5 py-0.2 rounded-md ${
-                activeTab === 'marquee' ? 'bg-black/20 text-black' : 'bg-white/10 text-white/50'
+              <span className={`text-[10px] sm:text-[11px] font-mono px-1.5 py-0.2 rounded-md ${
+                activeTab === 'marquee' ? 'bg-black/20 text-black font-bold' : 'bg-white/10 text-white/50'
               }`}>
                 {localMarqueeItems.length < 10 ? `0${localMarqueeItems.length}` : localMarqueeItems.length}
               </span>
@@ -1067,7 +1067,7 @@ export default function CMSPage({ onBackToPortfolio }) {
 
             <button
               onClick={() => setActiveTab('seasonal')}
-              className={`shrink-0 sm:shrink py-2 px-3.5 sm:px-3 rounded-xl text-xs sm:text-sm font-mono font-bold flex items-center justify-center gap-2 transition-all cursor-pointer select-none active:scale-95 ${
+              className={`shrink-0 sm:shrink py-2 px-3.5 sm:px-3 rounded-xl text-xs sm:text-sm font-display font-bold flex items-center justify-center gap-2 transition-all cursor-pointer select-none active:scale-95 ${
                 activeTab === 'seasonal'
                   ? 'bg-[#C3EA39] text-black shadow-md shadow-[#C3EA39]/15'
                   : 'text-white/60 hover:text-white hover:bg-white/5'
@@ -1081,7 +1081,7 @@ export default function CMSPage({ onBackToPortfolio }) {
 
             <button
               onClick={() => setActiveTab('profile')}
-              className={`shrink-0 sm:shrink py-2 px-3.5 sm:px-3 rounded-xl text-xs sm:text-sm font-mono font-bold flex items-center justify-center gap-2 transition-all cursor-pointer select-none active:scale-95 ${
+              className={`shrink-0 sm:shrink py-2 px-3.5 sm:px-3 rounded-xl text-xs sm:text-sm font-display font-bold flex items-center justify-center gap-2 transition-all cursor-pointer select-none active:scale-95 ${
                 activeTab === 'profile'
                   ? 'bg-[#C3EA39] text-black shadow-md shadow-[#C3EA39]/15'
                   : 'text-white/60 hover:text-white hover:bg-white/5'

@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: 'Be Vietnam Pro', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Be Vietnam Pro', 'Space Grotesk', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
 @layer base {
   :root {
     --color-lime: #C3EA39;

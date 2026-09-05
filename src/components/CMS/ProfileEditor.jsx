@@ -495,7 +495,7 @@ export default function ProfileEditor({ profile, onSave }) {
                 value={formData.headerTitle1 || ''}
                 placeholder="PORTFOLIO // SHOWCASE"
                 onChange={(e) => setFormData({ ...formData, headerTitle1: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs font-mono"
+                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm"
               />
             </div>
 
@@ -508,7 +508,7 @@ export default function ProfileEditor({ profile, onSave }) {
                 value={formData.headerTitle2 || ''}
                 placeholder="GRAPHIC DESIGNER"
                 onChange={(e) => setFormData({ ...formData, headerTitle2: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs font-mono"
+                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm"
               />
             </div>
 
@@ -521,7 +521,7 @@ export default function ProfileEditor({ profile, onSave }) {
                 value={formData.headerNavWork || ''}
                 placeholder="Dự án của tui"
                 onChange={(e) => setFormData({ ...formData, headerNavWork: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs font-mono"
+                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm"
               />
             </div>
 
@@ -534,7 +534,7 @@ export default function ProfileEditor({ profile, onSave }) {
                 value={formData.headerNavAbout || ''}
                 placeholder="Về tui"
                 onChange={(e) => setFormData({ ...formData, headerNavAbout: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs font-mono"
+                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm"
               />
             </div>
           </div>
@@ -556,7 +556,7 @@ export default function ProfileEditor({ profile, onSave }) {
                 value={formData.footerCopyright || ''}
                 placeholder="Phi Hùng"
                 onChange={(e) => setFormData({ ...formData, footerCopyright: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs font-mono"
+                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm"
               />
             </div>
 
@@ -569,7 +569,7 @@ export default function ProfileEditor({ profile, onSave }) {
                 value={formData.footerTagline || ''}
                 placeholder="Graphic Designer Portfolio"
                 onChange={(e) => setFormData({ ...formData, footerTagline: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs font-mono"
+                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm"
               />
             </div>
           </div>
@@ -600,7 +600,7 @@ export default function ProfileEditor({ profile, onSave }) {
                 value={formData.location || ''}
                 placeholder="Tp. Buôn Ma Thuột, Đắk Lắk"
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs"
+                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm"
               />
             </div>
 
@@ -613,7 +613,7 @@ export default function ProfileEditor({ profile, onSave }) {
                 value={formData.heroTitleRow1 || ''}
                 placeholder="SHOW"
                 onChange={(e) => setFormData({ ...formData, heroTitleRow1: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white font-bold text-base sm:text-xs font-mono"
+                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white font-bold text-base sm:text-sm"
               />
             </div>
 
@@ -626,7 +626,7 @@ export default function ProfileEditor({ profile, onSave }) {
                 value={formData.heroTitleRow2 || ''}
                 placeholder="CASE."
                 onChange={(e) => setFormData({ ...formData, heroTitleRow2: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white font-bold text-base sm:text-xs font-mono"
+                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white font-bold text-base sm:text-sm"
               />
             </div>
 
@@ -639,7 +639,7 @@ export default function ProfileEditor({ profile, onSave }) {
                 value={formData.heroCtaText || ''}
                 placeholder="Dạo xem 1 vòng"
                 onChange={(e) => setFormData({ ...formData, heroCtaText: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs font-mono"
+                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm font-medium"
               />
             </div>
 
@@ -767,7 +767,7 @@ export default function ProfileEditor({ profile, onSave }) {
                 value={formData.cvButtonText || ''}
                 placeholder="TẢI CV / RESUME (PDF)"
                 onChange={(e) => setFormData({ ...formData, cvButtonText: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white font-bold text-base sm:text-xs font-mono"
+                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white font-bold text-base sm:text-sm"
               />
             </div>
 
@@ -780,7 +780,7 @@ export default function ProfileEditor({ profile, onSave }) {
                 value={formData.cvUrl || ''}
                 placeholder="https://drive.google.com/... hoặc /cv.pdf"
                 onChange={(e) => setFormData({ ...formData, cvUrl: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs font-mono"
+                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm font-mono"
               />
             </div>
           </div>
