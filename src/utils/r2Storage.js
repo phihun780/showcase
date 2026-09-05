@@ -1,11 +1,11 @@
 // Cloudflare R2 Direct Integration & Storage Utility
 
 export const R2_CONFIG = {
-  accountId: 'a0650e4cdd588f8cab25b3a13a282dc4',
-  accessKeyId: '99b974108a9bb71a92d0cbce95e9f88e',
-  secretAccessKey: '9be2dfef5f4db1815f37fa182b11b62c2a096be5bcd87aed2ff716c9248ff14d',
-  bucketName: 'portfolio-assets',
-  publicUrl: 'https://pub-92c2aa5ead2a411ebfe8b083d3ce67d1.r2.dev',
+  accountId: import.meta.env.VITE_R2_ACCOUNT_ID || '',
+  accessKeyId: import.meta.env.VITE_R2_ACCESS_KEY_ID || '',
+  secretAccessKey: import.meta.env.VITE_R2_SECRET_ACCESS_KEY || '',
+  bucketName: import.meta.env.VITE_R2_BUCKET_NAME || 'portfolio-assets',
+  publicUrl: import.meta.env.VITE_R2_PUBLIC_URL || 'https://pub-92c2aa5ead2a411ebfe8b083d3ce67d1.r2.dev',
 };
 
 const TOKEN_KEY = 'phihung_cms_token';
