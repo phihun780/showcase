@@ -1187,7 +1187,6 @@ export default function CMSPage({ onBackToPortfolio }) {
                 {localProjects.map((proj, idx) => {
                   const isGif = proj.coverImage && (proj.coverImage.startsWith('data:image/gif') || proj.coverImage.toLowerCase().endsWith('.gif'));
                   const galleryCount = Array.isArray(proj.gallery) ? proj.gallery.length : 0;
-                  const tagsArr = Array.isArray(proj.tags) ? proj.tags : (typeof proj.tags === 'string' ? proj.tags.split(',').map(t => t.trim()).filter(Boolean) : []);
 
                   return (
                     <div
@@ -1261,21 +1260,6 @@ export default function CMSPage({ onBackToPortfolio }) {
                           <p className="text-xs text-white/60 font-light truncate max-w-xl">
                             {proj.subtitle || 'Chưa có mô tả ngắn'}
                           </p>
-
-                          {tagsArr.length > 0 && (
-                            <div className="flex flex-wrap gap-1 pt-0.5">
-                              {tagsArr.slice(0, 3).map((tag, tIdx) => (
-                                <span key={tIdx} className="text-[10px] font-mono text-white/40 bg-white/[0.04] px-1.5 py-0.2 rounded border border-white/5">
-                                  {tag}
-                                </span>
-                              ))}
-                              {tagsArr.length > 3 && (
-                                <span className="text-[10px] font-mono text-white/30">
-                                  +{tagsArr.length - 3}
-                                </span>
-                              )}
-                            </div>
-                          )}
                         </div>
                       </div>
 

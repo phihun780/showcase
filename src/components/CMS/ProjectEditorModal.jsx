@@ -25,7 +25,6 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
     coverImage: '',
     gallery: [],
     year: `${new Date().getFullYear()}`,
-    tags: 'Graphic Design, Branding',
   });
 
   const [showCoverUrlInput, setShowCoverUrlInput] = useState(false);
@@ -56,7 +55,6 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
         coverImage: project.coverImage || '',
         gallery: Array.isArray(project.gallery) ? [...project.gallery] : [],
         year: project.year || `${new Date().getFullYear()}`,
-        tags: Array.isArray(project.tags) ? project.tags.join(', ') : (project.tags || ''),
       });
     } else {
       setFormData({
@@ -65,7 +63,6 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
         coverImage: '',
         gallery: [],
         year: `${new Date().getFullYear()}`,
-        tags: 'Graphic Design, Branding',
       });
     }
     setShowCoverUrlInput(false);
@@ -232,19 +229,11 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
       return;
     }
 
-    let parsedTags = ["Graphic Design", "Branding"];
-    if (typeof formData.tags === 'string') {
-      parsedTags = formData.tags.split(',').map(t => t.trim()).filter(Boolean);
-    } else if (Array.isArray(formData.tags)) {
-      parsedTags = formData.tags.map(t => typeof t === 'string' ? t.trim() : t).filter(Boolean);
-    }
-
     const payload = {
       ...formData,
       title: formData.title.trim(),
       subtitle: (formData.subtitle || '').trim(),
       year: (formData.year || `${new Date().getFullYear()}`).trim(),
-      tags: parsedTags.length > 0 ? parsedTags : ["Graphic Design"],
       coverImage: formData.coverImage || "",
       gallery: Array.isArray(formData.gallery) ? formData.gallery : [],
     };
@@ -316,33 +305,18 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
               />
             </div>
 
-            {/* Year & Tags (2 Columns) */}
-            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-              <div className="sm:col-span-4">
-                <label className="text-[11px] font-mono text-white/50 block mb-1 uppercase tracking-wider">
-                  Năm thực hiện
-                </label>
-                <input
-                  type="text"
-                  placeholder="2025"
-                  value={formData.year}
-                  onChange={(e) => setFormData({ ...formData, year: e.target.value })}
-                  className="w-full px-3.5 py-2 rounded-xl bg-black/40 border border-white/10 focus:border-[#C3EA39] text-white text-sm font-mono focus:outline-none transition-colors"
-                />
-              </div>
-
-              <div className="sm:col-span-8">
-                <label className="text-[11px] font-mono text-white/50 block mb-1 uppercase tracking-wider">
-                  Thẻ / Tags
-                </label>
-                <input
-                  type="text"
-                  placeholder="E-Commerce, Branding, Packaging"
-                  value={formData.tags}
-                  onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                  className="w-full px-3.5 py-2 rounded-xl bg-black/40 border border-white/10 focus:border-[#C3EA39] text-white text-sm font-mono focus:outline-none transition-colors"
-                />
-              </div>
+            {/* Year */}
+            <div>
+              <label className="text-[11px] font-mono text-white/50 block mb-1 uppercase tracking-wider">
+                Năm thực hiện
+              </label>
+              <input
+                type="text"
+                placeholder="2025"
+                value={formData.year}
+                onChange={(e) => setFormData({ ...formData, year: e.target.value })}
+                className="w-full px-3.5 py-2 rounded-xl bg-black/40 border border-white/10 focus:border-[#C3EA39] text-white text-sm font-mono focus:outline-none transition-colors"
+              />
             </div>
 
             {/* Short Description */}
