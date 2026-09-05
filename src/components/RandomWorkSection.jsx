@@ -61,7 +61,7 @@ export default function RandomWorkSection() {
             transition={{ duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
             className="lg:col-span-7 flex justify-center lg:justify-end"
           >
-            <div className="relative w-full max-w-[560px] sm:max-w-[620px] lg:max-w-[660px] xl:max-w-[700px] aspect-square rounded-3xl overflow-hidden border border-white/10 bg-[#121216] shadow-2xl p-2.5 sm:p-3.5 group">
+            <div className="relative w-full max-w-[560px] sm:max-w-[620px] lg:max-w-[660px] xl:max-w-[700px] aspect-square rounded-3xl overflow-hidden border border-white/10 hover:border-[#C3EA39]/40 bg-[#121216] shadow-2xl p-2.5 sm:p-3.5 group transition-all duration-500">
               
               {/* Inner Image Frame with Stacked Seamless Cross-Fade */}
               <div className="relative w-full h-full rounded-2xl overflow-hidden bg-black border border-white/5">
@@ -71,10 +71,10 @@ export default function RandomWorkSection() {
                     return (
                       <div
                         key={item.id || idx}
-                        className={`absolute inset-0 w-full h-full transition-all duration-1000 ease-in-out pointer-events-none ${
+                        className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out ${
                           isActive
-                            ? 'opacity-100 scale-100 z-10'
-                            : 'opacity-0 scale-105 z-0'
+                            ? 'opacity-100 z-10'
+                            : 'opacity-0 z-0 pointer-events-none'
                         }`}
                       >
                         <img
@@ -82,7 +82,7 @@ export default function RandomWorkSection() {
                           alt={item.title || `Random Artwork ${idx + 1}`}
                           onContextMenu={(e) => e.preventDefault()}
                           onDragStart={(e) => e.preventDefault()}
-                          className="w-full h-full object-cover select-none"
+                          className="w-full h-full object-cover select-none group-hover:scale-105 transition-transform duration-700 ease-out"
                         />
                       </div>
                     );
