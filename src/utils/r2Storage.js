@@ -174,18 +174,35 @@ export async function savePortfolioDataToR2(portfolioData) {
 }
 
 /**
- * Đọc nội dung portfolio từ kho công khai.
+ * Đọc nội dung portfolio từ kho công khai hoặc API server.
  */
 export async function fetchPortfolioDataFromR2() {
+  // 1. Thử đọc từ /api/data trước (hỗ trợ cả dev server lẫn Cloudflare Pages)
+  try {
+    const apiRes = await fetch(`/api/data?t=${Date.now()}`, { cache: 'no-store' });
+    if (apiRes.ok) {
+      const data = await apiRes.json();
+      if (data && !data.empty && (data.profile || Array.isArray(data.projects) || Array.isArray(data.coverBanners))) {
+        return data;
+      }
+    }
+  } catch (e) {}
+
+  // 2. Thử đọc trực tiếp từ kho R2 công khai
   try {
     const url = `${R2_CONFIG.publicUrl}/data/portfolio.json?t=${Date.now()}`;
     const res = await fetch(url, { cache: 'no-store' });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
-    console.log('Không đọc được portfolio.json online, dùng dữ liệu lưu trong máy.');
-    return null;
+    if (res.ok) {
+      const data = await res.json();
+      if (data && (data.profile || Array.isArray(data.projects) || Array.isArray(data.coverBanners))) {
+        return data;
+      }
+    }
+  } catch (err) {
+    console.warn('Không đọc được portfolio.json online, dùng dữ liệu lưu trong máy:', err);
   }
+
+  return null;
 }
 
 

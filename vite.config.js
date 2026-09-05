@@ -1,7 +1,7 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
-import { S3Client, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command, DeleteObjectsCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, ListObjectsV2Command, DeleteObjectsCommand } from '@aws-sdk/client-s3';
 
 function parseMultipart(buffer, boundary) {
   const boundaryBuf = Buffer.from('--' + boundary);
@@ -69,7 +69,26 @@ function r2DevPlugin() {
           return res.end(JSON.stringify({ success: true, token: 'dev-token' }));
         }
 
-        // 2. /api/data (Save portfolio data)
+        // 2. /api/data (Read & Save portfolio data)
+        if (req.url && (req.url === '/api/data' || req.url.startsWith('/api/data?')) && req.method === 'GET') {
+          if (s3) {
+            try {
+              const resObj = await s3.send(new GetObjectCommand({
+                Bucket: bucket,
+                Key: 'data/portfolio.json',
+              }));
+              const text = await resObj.Body.transformToString();
+              res.setHeader('Content-Type', 'application/json');
+              res.setHeader('Cache-Control', 'no-store');
+              return res.end(text);
+            } catch (err) {
+              console.warn('R2 Dev Get Data error:', err.message);
+            }
+          }
+          res.setHeader('Content-Type', 'application/json');
+          return res.end(JSON.stringify({ empty: true }));
+        }
+
         if (req.url === '/api/data' && req.method === 'POST') {
           const buffers = [];
           for await (const chunk of req) buffers.push(chunk);

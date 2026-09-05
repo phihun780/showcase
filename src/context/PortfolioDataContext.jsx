@@ -132,16 +132,16 @@ export function PortfolioDataProvider({ children }) {
       try {
         const cloudData = await fetchPortfolioDataFromR2();
         if (cloudData && isMounted) {
-          if (Array.isArray(cloudData.projects) && cloudData.projects.length > 0) {
+          if (Array.isArray(cloudData.projects)) {
             setProjects(cloudData.projects);
           }
-          if (cloudData.profile && cloudData.profile.name) {
+          if (cloudData.profile && typeof cloudData.profile === 'object') {
             setProfile(cloudData.profile);
           }
-          if (Array.isArray(cloudData.coverBanners) && cloudData.coverBanners.length > 0) {
+          if (Array.isArray(cloudData.coverBanners)) {
             setCoverBanners(cloudData.coverBanners);
           }
-          if (Array.isArray(cloudData.randomWorks) && cloudData.randomWorks.length > 0) {
+          if (Array.isArray(cloudData.randomWorks)) {
             setRandomWorks(cloudData.randomWorks);
           }
           if (Array.isArray(cloudData.marqueeItems) && cloudData.marqueeItems.length > 0) {
