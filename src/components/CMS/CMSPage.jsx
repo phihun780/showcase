@@ -957,6 +957,42 @@ export default function CMSPage({ onBackToPortfolio }) {
         {/* Tab 1: Dự án */}
         {activeTab === 'projects' && (
           <div className="space-y-4">
+            {/* Top Action Controls Bar */}
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-[#121216] border border-white/10 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-[#C3EA39]/15 text-[#C3EA39] flex items-center justify-center shrink-0">
+                  <FolderKanban className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-display font-bold text-white">
+                    Quản Lý Danh Sách Dự Án
+                  </h3>
+                  <p className="text-[11px] font-mono text-white/50">
+                    Thêm, chỉnh sửa và sắp xếp các dự án trưng bày
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleOpenCreate}
+                  className="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black text-xs font-display font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-[1.02] cursor-pointer min-h-[38px]"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>+ Thêm Dự Án Mới</span>
+                </button>
+
+                <button
+                  onClick={() => projectFileInputRef.current?.click()}
+                  className="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 text-xs font-mono transition-colors cursor-pointer flex items-center justify-center gap-1.5 min-h-[38px]"
+                  title="Tải nhanh ảnh bìa để tạo dự án mới"
+                >
+                  <Upload className="w-3.5 h-3.5 text-[#C3EA39]" />
+                  <span>+ Tải Ảnh Bìa</span>
+                </button>
+              </div>
+            </div>
+
             {localProjects.length === 0 ? (
               <div
                 onClick={handleOpenCreate}
@@ -1111,16 +1147,6 @@ export default function CMSPage({ onBackToPortfolio }) {
                     </div>
                   );
                 })}
-                {/* Quick Add Project Card */}
-                <div
-                  onClick={handleOpenCreate}
-                  className="p-4 rounded-2xl border-2 border-dashed border-white/15 hover:border-[#C3EA39]/50 bg-white/[0.02] hover:bg-white/[0.05] transition-all flex items-center justify-center gap-2 cursor-pointer group active:scale-[0.99]"
-                >
-                  <Plus className="w-4 h-4 text-white/40 group-hover:text-[#C3EA39] group-hover:scale-110 transition-all" />
-                  <span className="text-xs font-mono font-bold text-white/60 group-hover:text-white transition-colors">
-                    + Thêm Dự Án Mới
-                  </span>
-                </div>
               </div>
             )}
 
@@ -1530,17 +1556,6 @@ export default function CMSPage({ onBackToPortfolio }) {
 
                   </div>
                 ))}
-
-                {/* Quick Add Card */}
-                <div
-                  onClick={() => randomWorkFileInputRef.current?.click()}
-                  className="aspect-square rounded-2xl border-2 border-dashed border-white/15 hover:border-[#C3EA39]/50 bg-white/[0.02] hover:bg-white/[0.05] transition-all flex flex-col items-center justify-center text-center cursor-pointer p-4 group active:scale-[0.99]"
-                >
-                  <Plus className="w-7 h-7 sm:w-8 sm:h-8 text-white/40 group-hover:text-[#C3EA39] group-hover:scale-110 transition-all mb-2" />
-                  <span className="text-xs font-mono font-bold text-white/60 group-hover:text-white transition-colors">
-                    + Thêm Artwork Mới
-                  </span>
-                </div>
               </div>
             )}
 
