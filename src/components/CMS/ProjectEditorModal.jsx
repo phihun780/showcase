@@ -603,7 +603,7 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
                   >
                     <Plus className="w-4 h-4 text-white/40 group-hover:text-[#C3EA39] group-hover:scale-110 transition-all" />
                     <span className="text-[10px] font-mono text-white/40 group-hover:text-white transition-colors mt-0.5">
-                      + Thêm
+                      Thêm
                     </span>
                   </div>
                 </div>

@@ -1083,244 +1083,244 @@ export default function CMSPage({ onBackToPortfolio }) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
-                <button
-                  onClick={() => projectFileInputRef.current?.click()}
-                  className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer min-h-[38px]"
-                  title="Tải ảnh bìa trực tiếp từ máy tính"
-                >
-                  <Upload className="w-3.5 h-3.5 text-[#C3EA39]" />
-                  <span>+ Tải Ảnh Bìa</span>
-                </button>
+                <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
+                  <button
+                    onClick={() => projectFileInputRef.current?.click()}
+                    className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer min-h-[38px]"
+                    title="Tải ảnh bìa trực tiếp từ máy tính"
+                  >
+                    <Upload className="w-3.5 h-3.5 text-[#C3EA39]" />
+                    <span>Tải Ảnh Bìa</span>
+                  </button>
 
-                <button
-                  onClick={handleOpenCreate}
-                  className="px-4 py-2 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black text-xs font-display font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-[1.02] cursor-pointer min-h-[38px]"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Thêm Dự Án</span>
-                </button>
-              </div>
-            </div>
-
-            {localProjects.length === 0 ? (
-              <div
-                onClick={handleOpenCreate}
-                className="p-8 sm:p-16 rounded-3xl border-2 border-dashed border-white/15 hover:border-[#C3EA39]/50 bg-[#121216]/50 hover:bg-[#121216] transition-all flex flex-col items-center justify-center text-center cursor-pointer group"
-              >
-                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#C3EA39]/10 text-[#C3EA39] flex items-center justify-center mb-3.5 group-hover:scale-110 transition-transform">
-                  <Plus className="w-6 h-6 sm:w-7 sm:h-7" />
+                  <button
+                    onClick={handleOpenCreate}
+                    className="px-4 py-2 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black text-xs font-display font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-[1.02] cursor-pointer min-h-[38px]"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Thêm Dự Án</span>
+                  </button>
                 </div>
-                <p className="font-display font-bold text-white text-base sm:text-lg">Chưa có dự án nào</p>
-                <p className="text-xs sm:text-sm text-white/50 mt-1 font-mono max-w-md">
-                  Bấm vào đây để tạo và tải ảnh dự án đầu tiên lên website
-                </p>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-3 sm:gap-3.5">
-                {localProjects.map((proj, idx) => {
-                  const isGif = proj.coverImage && (proj.coverImage.startsWith('data:image/gif') || proj.coverImage.toLowerCase().endsWith('.gif'));
-                  const galleryCount = Array.isArray(proj.gallery) ? proj.gallery.length : 0;
 
-                  return (
-                    <div
-                      key={proj.id || idx}
-                      className="p-3.5 sm:p-5 rounded-2xl bg-[#121216] border border-white/10 hover:border-white/20 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-3.5 sm:gap-4 group shadow-lg"
-                    >
-                      {/* Left: Thumbnail, Number & Info */}
-                      <div className="flex items-start sm:items-center gap-3 sm:gap-4 flex-1 min-w-0 w-full">
-                        <span className="text-xs font-mono font-bold text-[#C3EA39] w-6 sm:w-7 text-center shrink-0 pt-1 sm:pt-0">
-                          #{idx + 1 < 10 ? `0${idx + 1}` : idx + 1}
-                        </span>
-                        
-                        {/* Thumbnail with overlay crop button */}
-                        <div className="relative w-20 sm:w-32 aspect-[16/10] rounded-xl overflow-hidden bg-black border border-white/10 shrink-0 group/thumb">
-                          {proj.coverImage ? (
-                            <>
-                              <img
-                                src={proj.coverImage}
-                                alt={proj.title}
-                                className="w-full h-full object-cover group-hover/thumb:scale-105 transition-transform duration-300"
-                              />
-                              {isGif && (
-                                <span className="absolute top-1 left-1 px-1 py-0.2 rounded bg-black/80 text-[#C3EA39] text-[8px] sm:text-[9px] font-mono font-bold border border-[#C3EA39]/40">
-                                  GIF
-                                </span>
-                              )}
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setCropModalConfig({
-                                    isOpen: true,
-                                    imageSrc: proj.coverImage,
-                                    mode: 'project',
-                                    editingIndex: idx,
-                                    title: proj.title,
-                                    subtitle: proj.subtitle,
-                                  });
-                                }}
-                                className="absolute inset-0 bg-black/60 opacity-0 sm:group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center gap-1 text-[11px] font-mono font-bold text-[#C3EA39] cursor-pointer"
-                                title="Cắt lại ảnh bìa này (16:10)"
-                              >
-                                <Crop className="w-3.5 h-3.5" />
-                                <span className="hidden sm:inline">Cắt lại</span>
-                              </button>
-                            </>
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-white/25 text-[10px] font-mono text-center p-1">
-                              Trống
-                            </div>
-                          )}
-                        </div>
+              {localProjects.length === 0 ? (
+                <div
+                  onClick={handleOpenCreate}
+                  className="p-8 sm:p-16 rounded-3xl border-2 border-dashed border-white/15 hover:border-[#C3EA39]/50 bg-[#121216]/50 hover:bg-[#121216] transition-all flex flex-col items-center justify-center text-center cursor-pointer group"
+                >
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#C3EA39]/10 text-[#C3EA39] flex items-center justify-center mb-3.5 group-hover:scale-110 transition-transform">
+                    <Plus className="w-6 h-6 sm:w-7 sm:h-7" />
+                  </div>
+                  <p className="font-display font-bold text-white text-base sm:text-lg">Chưa có dự án nào</p>
+                  <p className="text-xs sm:text-sm text-white/50 mt-1 font-mono max-w-md">
+                    Bấm vào đây để tạo và tải ảnh dự án đầu tiên lên website
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-3 sm:gap-3.5">
+                  {localProjects.map((proj, idx) => {
+                    const isGif = proj.coverImage && (proj.coverImage.startsWith('data:image/gif') || proj.coverImage.toLowerCase().endsWith('.gif'));
+                    const galleryCount = Array.isArray(proj.gallery) ? proj.gallery.length : 0;
 
-                        {/* Title & Metadata */}
-                        <div className="min-w-0 flex-1 space-y-1">
-                          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                            <h3 className="text-sm sm:text-base font-display font-bold text-white truncate max-w-full">
-                              {proj.title}
-                            </h3>
-                            {proj.year && (
-                              <span className="text-[10px] font-mono text-[#C3EA39] px-2 py-0.5 rounded-full bg-[#C3EA39]/10 border border-[#C3EA39]/30">
-                                {proj.year}
-                              </span>
-                            )}
-                            {galleryCount > 0 && (
-                              <span className="text-[10px] font-mono text-white/50 px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
-                                {galleryCount} ảnh
-                              </span>
+                    return (
+                      <div
+                        key={proj.id || idx}
+                        className="p-3.5 sm:p-5 rounded-2xl bg-[#121216] border border-white/10 hover:border-white/20 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-3.5 sm:gap-4 group shadow-lg"
+                      >
+                        {/* Left: Thumbnail, Number & Info */}
+                        <div className="flex items-start sm:items-center gap-3 sm:gap-4 flex-1 min-w-0 w-full">
+                          <span className="text-xs font-mono font-bold text-[#C3EA39] w-6 sm:w-7 text-center shrink-0 pt-1 sm:pt-0">
+                            #{idx + 1 < 10 ? `0${idx + 1}` : idx + 1}
+                          </span>
+                          
+                          {/* Thumbnail with overlay crop button */}
+                          <div className="relative w-20 sm:w-32 aspect-[16/10] rounded-xl overflow-hidden bg-black border border-white/10 shrink-0 group/thumb">
+                            {proj.coverImage ? (
+                              <>
+                                <img
+                                  src={proj.coverImage}
+                                  alt={proj.title}
+                                  className="w-full h-full object-cover group-hover/thumb:scale-105 transition-transform duration-300"
+                                />
+                                {isGif && (
+                                  <span className="absolute top-1 left-1 px-1 py-0.2 rounded bg-black/80 text-[#C3EA39] text-[8px] sm:text-[9px] font-mono font-bold border border-[#C3EA39]/40">
+                                    GIF
+                                  </span>
+                                )}
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setCropModalConfig({
+                                      isOpen: true,
+                                      imageSrc: proj.coverImage,
+                                      mode: 'project',
+                                      editingIndex: idx,
+                                      title: proj.title,
+                                      subtitle: proj.subtitle,
+                                    });
+                                  }}
+                                  className="absolute inset-0 bg-black/60 opacity-0 sm:group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center gap-1 text-[11px] font-mono font-bold text-[#C3EA39] cursor-pointer"
+                                  title="Cắt lại ảnh bìa này (16:10)"
+                                >
+                                  <Crop className="w-3.5 h-3.5" />
+                                  <span className="hidden sm:inline">Cắt lại</span>
+                                </button>
+                              </>
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-white/25 text-[10px] font-mono text-center p-1">
+                                Trống
+                              </div>
                             )}
                           </div>
 
-                          <p className="text-xs text-white/60 font-light truncate max-w-xl">
-                            {proj.subtitle || 'Chưa có mô tả ngắn'}
-                          </p>
+                          {/* Title & Metadata */}
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                              <h3 className="text-sm sm:text-base font-display font-bold text-white truncate max-w-full">
+                                {proj.title}
+                              </h3>
+                              {proj.year && (
+                                <span className="text-[10px] font-mono text-[#C3EA39] px-2 py-0.5 rounded-full bg-[#C3EA39]/10 border border-[#C3EA39]/30">
+                                  {proj.year}
+                                </span>
+                              )}
+                              {galleryCount > 0 && (
+                                <span className="text-[10px] font-mono text-white/50 px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
+                                  {galleryCount} ảnh
+                                </span>
+                              )}
+                            </div>
+
+                            <p className="text-xs text-white/60 font-light truncate max-w-xl">
+                              {proj.subtitle || 'Chưa có mô tả ngắn'}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Right: Action Buttons */}
+                        <div className="flex items-center justify-between sm:justify-end gap-1.5 w-full md:w-auto pt-2.5 md:pt-0 border-t md:border-t-0 border-white/10 shrink-0">
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => handleOpenEdit(proj)}
+                              className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-[#C3EA39] text-white/80 hover:text-black text-xs font-mono font-bold flex items-center gap-1.5 border border-white/10 transition-all cursor-pointer shadow-sm active:scale-95"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                              <span>Sửa</span>
+                            </button>
+
+                            <button
+                              onClick={() => moveLocalProject(idx, 'up')}
+                              disabled={idx === 0}
+                              className="p-1.5 rounded-xl bg-white/5 hover:bg-white/15 disabled:opacity-20 text-white/70 hover:text-white transition-colors cursor-pointer border border-white/10"
+                              title="Di chuyển lên trước"
+                            >
+                              <ArrowUp className="w-3.5 h-3.5" />
+                            </button>
+
+                            <button
+                              onClick={() => moveLocalProject(idx, 'down')}
+                              disabled={idx === localProjects.length - 1}
+                              className="p-1.5 rounded-xl bg-white/5 hover:bg-white/15 disabled:opacity-20 text-white/70 hover:text-white transition-colors cursor-pointer border border-white/10"
+                              title="Di chuyển ra sau"
+                            >
+                              <ArrowDown className="w-3.5 h-3.5" />
+                            </button>
+
+                            <button
+                              onClick={() => handleDeleteProject(proj)}
+                              className="p-1.5 rounded-xl bg-white/5 hover:bg-red-500 text-white/70 hover:text-white transition-colors cursor-pointer border border-white/10"
+                              title="Xoá dự án"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
                       </div>
+                    );
+                  })}
+                </div>
+              )}
 
-                      {/* Right: Action Buttons */}
-                      <div className="flex items-center justify-between sm:justify-end gap-1.5 w-full md:w-auto pt-2.5 md:pt-0 border-t md:border-t-0 border-white/10 shrink-0">
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            onClick={() => handleOpenEdit(proj)}
-                            className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-[#C3EA39] text-white/80 hover:text-black text-xs font-mono font-bold flex items-center gap-1.5 border border-white/10 transition-all cursor-pointer shadow-sm active:scale-95"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                            <span>Sửa</span>
-                          </button>
+              {/* Sticky Bottom Save Bar for Projects */}
+              <StickySaveBar
+                isSaved={savedAlerts.projects}
+                onSave={handleSaveProjectsTab}
+                isSyncing={isCloudSyncing}
+                label="Lưu Danh Sách Dự Án"
+                hint="Nhớ bấm lưu để cập nhật thứ tự và danh sách dự án"
+              />
+            </div>
+          )}
 
-                          <button
-                            onClick={() => moveLocalProject(idx, 'up')}
-                            disabled={idx === 0}
-                            className="p-1.5 rounded-xl bg-white/5 hover:bg-white/15 disabled:opacity-20 text-white/70 hover:text-white transition-colors cursor-pointer border border-white/10"
-                            title="Di chuyển lên trước"
-                          >
-                            <ArrowUp className="w-3.5 h-3.5" />
-                          </button>
-
-                          <button
-                            onClick={() => moveLocalProject(idx, 'down')}
-                            disabled={idx === localProjects.length - 1}
-                            className="p-1.5 rounded-xl bg-white/5 hover:bg-white/15 disabled:opacity-20 text-white/70 hover:text-white transition-colors cursor-pointer border border-white/10"
-                            title="Di chuyển ra sau"
-                          >
-                            <ArrowDown className="w-3.5 h-3.5" />
-                          </button>
-
-                          <button
-                            onClick={() => handleDeleteProject(proj)}
-                            className="p-1.5 rounded-xl bg-white/5 hover:bg-red-500 text-white/70 hover:text-white transition-colors cursor-pointer border border-white/10"
-                            title="Xoá dự án"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
+          {/* Tab 2: Trang Chủ & Banner (Tích hợp: Slide Banner + Tùm Lum Tà La + Chữ Chạy + Hiệu Ứng) */}
+          {activeTab === 'home' && (
+            <div className="space-y-6 sm:space-y-8">
+              
+              {/* 1. SLIDE BANNER (Juxtapose & Image) */}
+              <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#121216] border border-white/10 space-y-4 sm:space-y-5">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-[#C3EA39]/15 text-[#C3EA39] flex items-center justify-center shrink-0">
+                      <SlidersHorizontal className="w-4 h-4" />
                     </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Sticky Bottom Save Bar for Projects */}
-            <StickySaveBar
-              isSaved={savedAlerts.projects}
-              onSave={handleSaveProjectsTab}
-              isSyncing={isCloudSyncing}
-              label="Lưu Danh Sách Dự Án"
-              hint="Nhớ bấm lưu để cập nhật thứ tự và danh sách dự án"
-            />
-          </div>
-        )}
-
-        {/* Tab 2: Trang Chủ & Banner (Tích hợp: Slide Banner + Tùm Lum Tà La + Chữ Chạy + Hiệu Ứng) */}
-        {activeTab === 'home' && (
-          <div className="space-y-6 sm:space-y-8">
-            
-            {/* 1. SLIDE BANNER (21:9 & Juxtapose) */}
-            <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#121216] border border-white/10 space-y-4 sm:space-y-5">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-[#C3EA39]/15 text-[#C3EA39] flex items-center justify-center shrink-0">
-                    <SlidersHorizontal className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm sm:text-base font-display font-bold text-white">
-                      1. Slide Banner Trang Chủ (21:9 & Juxtapose)
-                    </h3>
-                    <p className="text-[11px] font-mono text-white/50">
-                      Banner góc rộng đầu trang chủ & thanh trượt Before/After
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full sm:w-auto">
-                  <button
-                    onClick={() => coverBannerFileInputRef.current?.click()}
-                    className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer min-h-[38px]"
-                  >
-                    <Upload className="w-3.5 h-3.5 text-[#C3EA39]" />
-                    <span>+ Tải Ảnh (21:9)</span>
-                  </button>
-
-                  <button
-                    onClick={handleOpenAddEmbedBanner}
-                    className="px-3.5 py-2 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black text-xs font-display font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-[1.02] cursor-pointer min-h-[38px]"
-                  >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>+ Juxtapose</span>
-                  </button>
-
-                  <button
-                    onClick={handleAddCoverBannerUrl}
-                    className="col-span-2 sm:col-span-1 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 text-xs font-mono transition-colors cursor-pointer flex items-center justify-center gap-1 min-h-[38px]"
-                    title="Nhập trực tiếp URL ảnh"
-                  >
-                    <span>🔗 URL Ảnh</span>
-                  </button>
-                </div>
-              </div>
-
-              {localCoverBanners.length === 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div
-                    onClick={() => coverBannerFileInputRef.current?.click()}
-                    className="p-8 sm:p-10 rounded-2xl border-2 border-dashed border-white/15 hover:border-[#C3EA39]/50 bg-black/30 hover:bg-black/50 transition-all flex flex-col items-center justify-center text-center cursor-pointer group"
-                  >
-                    <Upload className="w-8 h-8 text-[#C3EA39] mb-2 group-hover:scale-110 transition-transform" />
-                    <p className="font-display font-bold text-white text-sm">Tải Ảnh Slide Banner (21:9)</p>
-                    <p className="text-xs text-white/40 mt-1 font-mono">Tải ảnh cover góc nhìn rộng 21:9</p>
+                    <div>
+                      <h3 className="text-sm sm:text-base font-display font-bold text-white">
+                        1. Slide Banner Trang Chủ & Juxtapose
+                      </h3>
+                      <p className="text-[11px] font-mono text-white/50">
+                        Banner góc rộng đầu trang chủ & thanh trượt Before/After
+                      </p>
+                    </div>
                   </div>
 
-                  <div
-                    onClick={handleOpenAddEmbedBanner}
-                    className="p-8 sm:p-10 rounded-2xl border-2 border-dashed border-[#C3EA39]/30 hover:border-[#C3EA39] bg-[#C3EA39]/5 hover:bg-[#C3EA39]/10 transition-all flex flex-col items-center justify-center text-center cursor-pointer group"
-                  >
-                    <SlidersHorizontal className="w-8 h-8 text-[#C3EA39] mb-2 group-hover:scale-110 transition-transform" />
-                    <p className="font-display font-bold text-white text-sm">Thêm Juxtapose Before / After</p>
-                    <p className="text-xs text-white/40 mt-1 font-mono">Slider so sánh Before & After</p>
+                  <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full sm:w-auto">
+                    <button
+                      onClick={() => coverBannerFileInputRef.current?.click()}
+                      className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer min-h-[38px]"
+                    >
+                      <Upload className="w-3.5 h-3.5 text-[#C3EA39]" />
+                      <span>Tải Ảnh</span>
+                    </button>
+
+                    <button
+                      onClick={handleOpenAddEmbedBanner}
+                      className="px-3.5 py-2 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black text-xs font-display font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-[1.02] cursor-pointer min-h-[38px]"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Juxtapose</span>
+                    </button>
+
+                    <button
+                      onClick={handleAddCoverBannerUrl}
+                      className="col-span-2 sm:col-span-1 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 text-xs font-mono transition-colors cursor-pointer flex items-center justify-center gap-1 min-h-[38px]"
+                      title="Nhập trực tiếp URL ảnh"
+                    >
+                      <span>🔗 URL Ảnh</span>
+                    </button>
                   </div>
                 </div>
-              ) : (
+
+                {localCoverBanners.length === 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div
+                      onClick={() => coverBannerFileInputRef.current?.click()}
+                      className="p-8 sm:p-10 rounded-2xl border-2 border-dashed border-white/15 hover:border-[#C3EA39]/50 bg-black/30 hover:bg-black/50 transition-all flex flex-col items-center justify-center text-center cursor-pointer group"
+                    >
+                      <Upload className="w-8 h-8 text-[#C3EA39] mb-2 group-hover:scale-110 transition-transform" />
+                      <p className="font-display font-bold text-white text-sm">Tải Ảnh Slide Banner</p>
+                      <p className="text-xs text-white/40 mt-1 font-mono">Tải ảnh cover góc nhìn rộng</p>
+                    </div>
+
+                    <div
+                      onClick={handleOpenAddEmbedBanner}
+                      className="p-8 sm:p-10 rounded-2xl border-2 border-dashed border-[#C3EA39]/30 hover:border-[#C3EA39] bg-[#C3EA39]/5 hover:bg-[#C3EA39]/10 transition-all flex flex-col items-center justify-center text-center cursor-pointer group"
+                    >
+                      <SlidersHorizontal className="w-8 h-8 text-[#C3EA39] mb-2 group-hover:scale-110 transition-transform" />
+                      <p className="font-display font-bold text-white text-sm">Thêm Juxtapose Before / After</p>
+                      <p className="text-xs text-white/40 mt-1 font-mono">Slider so sánh Before & After</p>
+                    </div>
+                  </div>
+                ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   {localCoverBanners.map((banner, idx) => {
                     const isEmbed = banner.type === 'embed' || Boolean(banner.embedCode || banner.embedUrl);
@@ -1453,7 +1453,7 @@ export default function CMSPage({ onBackToPortfolio }) {
                     className="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black text-xs font-display font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-[1.02] cursor-pointer min-h-[38px]"
                   >
                     <Upload className="w-3.5 h-3.5" />
-                    <span>+ Tải Ảnh (1:1)</span>
+                    <span>Tải Ảnh</span>
                   </button>
 
                   <button
