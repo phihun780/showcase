@@ -72,11 +72,11 @@ export default function AboutSection() {
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           className="mb-6 sm:mb-8"
         >
-          <div className="flex items-baseline gap-3 sm:gap-5">
-            <span className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-mono font-black text-[#C3EA39]">
+          <div className="flex items-baseline gap-3 sm:gap-4">
+            <span className="text-3xl sm:text-4xl md:text-5xl font-mono font-extrabold text-[#C3EA39]">
               {profile?.section03Number || '03'}
             </span>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white tracking-tight">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight">
               {profile?.section03Title || 'Về tui'}
             </h2>
           </div>
