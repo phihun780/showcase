@@ -140,81 +140,84 @@ function PortfolioApp() {
     if (typeof document === 'undefined') return;
 
     // 1. Dynamic Browser Tab Title & Social Title
-    if (profile?.tabTitle && profile.tabTitle.trim()) {
-      document.title = profile.tabTitle.trim();
-      
-      const ogTitle = document.querySelector("meta[property='og:title']");
-      if (ogTitle) ogTitle.content = profile.tabTitle.trim();
+    const finalTitle = (profile?.tabTitle && profile.tabTitle.trim())
+      || (profile?.name ? `${profile.name} — ${profile.title || 'Graphic Designer'} | Portfolio Showcase` : 'Phi Hùng — Graphic Designer | Portfolio Showcase');
+    
+    document.title = finalTitle;
+    
+    const ogTitle = document.querySelector("meta[property='og:title']");
+    if (ogTitle) ogTitle.content = finalTitle;
 
-      const twTitle = document.querySelector("meta[name='twitter:title']");
-      if (twTitle) twTitle.content = profile.tabTitle.trim();
-    } else if (profile?.name) {
-      const defaultTitle = `${profile.name} — ${profile.title || 'Graphic Designer'} | Portfolio Showcase`;
-      document.title = defaultTitle;
-    }
+    const twTitle = document.querySelector("meta[name='twitter:title']");
+    if (twTitle) twTitle.content = finalTitle;
 
     // 2. Dynamic Description (Meta Description / OpenGraph / Twitter)
-    if (profile?.metaDescription && profile.metaDescription.trim()) {
-      const descVal = profile.metaDescription.trim();
-      
-      let metaDesc = document.querySelector("meta[name='description']");
-      if (!metaDesc) {
-        metaDesc = document.createElement('meta');
-        metaDesc.setAttribute('name', 'description');
-        document.head.appendChild(metaDesc);
-      }
-      metaDesc.content = descVal;
-
-      let ogDesc = document.querySelector("meta[property='og:description']");
-      if (!ogDesc) {
-        ogDesc = document.createElement('meta');
-        ogDesc.setAttribute('property', 'og:description');
-        document.head.appendChild(ogDesc);
-      }
-      ogDesc.content = descVal;
-
-      let twDesc = document.querySelector("meta[name='twitter:description']");
-      if (!twDesc) {
-        twDesc = document.createElement('meta');
-        twDesc.setAttribute('name', 'twitter:description');
-        document.head.appendChild(twDesc);
-      }
-      twDesc.content = descVal;
+    const descVal = (profile?.metaDescription && profile.metaDescription.trim())
+      || 'Portfolio thiết kế đồ họa, nhận diện thương hiệu và ấn phẩm sáng tạo của Phi Hùng.';
+    
+    let metaDesc = document.querySelector("meta[name='description']");
+    if (!metaDesc) {
+      metaDesc = document.createElement('meta');
+      metaDesc.setAttribute('name', 'description');
+      document.head.appendChild(metaDesc);
     }
+    metaDesc.content = descVal;
 
-    // 3. Dynamic Favicon
-    if (profile?.favicon) {
-      let link = document.querySelector("link[rel~='icon']");
-      if (!link) {
-        link = document.createElement('link');
-        link.rel = 'icon';
-        document.head.appendChild(link);
-      }
-      link.href = profile.favicon;
+    let ogDesc = document.querySelector("meta[property='og:description']");
+    if (!ogDesc) {
+      ogDesc = document.createElement('meta');
+      ogDesc.setAttribute('property', 'og:description');
+      document.head.appendChild(ogDesc);
     }
+    ogDesc.content = descVal;
 
-    // 4. Dynamic OpenGraph Image
-    //    Lưu ý: phần này chỉ đổi thẻ trên trình duyệt đang mở. Facebook / Zalo
-    //    KHÔNG chạy JavaScript khi đọc link, nên ảnh preview khi chia sẻ luôn lấy
-    //    từ thẻ og:image tĩnh trong index.html. Muốn đổi ảnh preview thật thì thay
-    //    file public/og-image.png (giữ nguyên tên, 1200×630).
-    if (profile?.ogImage) {
-      let ogImg = document.querySelector("meta[property='og:image']");
-      if (!ogImg) {
-        ogImg = document.createElement('meta');
-        ogImg.setAttribute('property', 'og:image');
-        document.head.appendChild(ogImg);
-      }
-      ogImg.content = profile.ogImage;
-
-      let twImg = document.querySelector("meta[name='twitter:image']");
-      if (!twImg) {
-        twImg = document.createElement('meta');
-        twImg.setAttribute('name', 'twitter:image');
-        document.head.appendChild(twImg);
-      }
-      twImg.content = profile.ogImage;
+    let twDesc = document.querySelector("meta[name='twitter:description']");
+    if (!twDesc) {
+      twDesc = document.createElement('meta');
+      twDesc.setAttribute('name', 'twitter:description');
+      document.head.appendChild(twDesc);
     }
+    twDesc.content = descVal;
+
+    // 3. Dynamic Favicon & Apple Touch Icon
+    const favUrl = (profile?.favicon && profile.favicon.trim()) || '/favicon.png';
+    let iconLink = document.querySelector("link[rel~='icon']");
+    if (!iconLink) {
+      iconLink = document.createElement('link');
+      iconLink.rel = 'icon';
+      document.head.appendChild(iconLink);
+    }
+    iconLink.type = favUrl.endsWith('.svg') ? 'image/svg+xml' : 'image/png';
+    iconLink.href = favUrl;
+
+    let appleLink = document.querySelector("link[rel='apple-touch-icon']");
+    if (!appleLink) {
+      appleLink = document.createElement('link');
+      appleLink.rel = 'apple-touch-icon';
+      document.head.appendChild(appleLink);
+    }
+    appleLink.href = favUrl;
+
+    // 4. Dynamic OpenGraph Image & Twitter Image
+    const ogImgUrl = (profile?.ogImage && profile.ogImage.trim()) || 'https://phihun.pages.dev/og-image.png';
+    let ogImg = document.querySelector("meta[property='og:image']");
+    if (!ogImg) {
+      ogImg = document.createElement('meta');
+      ogImg.setAttribute('property', 'og:image');
+      document.head.appendChild(ogImg);
+    }
+    ogImg.content = ogImgUrl;
+
+    let ogSecImg = document.querySelector("meta[property='og:image:secure_url']");
+    if (ogSecImg) ogSecImg.content = ogImgUrl;
+
+    let twImg = document.querySelector("meta[name='twitter:image']");
+    if (!twImg) {
+      twImg = document.createElement('meta');
+      twImg.setAttribute('name', 'twitter:image');
+      document.head.appendChild(twImg);
+    }
+    twImg.content = ogImgUrl;
   }, [profile?.tabTitle, profile?.metaDescription, profile?.name, profile?.title, profile?.favicon, profile?.ogImage]);
 
   // Route Synchronization & Scroll Reset

@@ -17,8 +17,8 @@ export default function ProfileEditor({ profile, onSave }) {
     metaDescription: profile.metaDescription || 'Portfolio thiết kế đồ họa, nhận diện thương hiệu và ấn phẩm sáng tạo của Phi Hùng.',
     experienceTitle: profile.experienceTitle || 'Quá Khứ Của Tui',
     socialsTitle: profile.socialsTitle || 'Những Nơi Khác',
-    favicon: profile.favicon || '',
-    ogImage: profile.ogImage || '',
+    favicon: profile.favicon || 'https://pub-0ad262edfb6a4345a3bd61b2110c549c.r2.dev/profile/favicon.png',
+    ogImage: profile.ogImage || 'https://pub-0ad262edfb6a4345a3bd61b2110c549c.r2.dev/profile/og-image.png',
 
     // Header Customization
     headerTitle1: profile.headerTitle1 || 'PORTFOLIO // SHOWCASE',

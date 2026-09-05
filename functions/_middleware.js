@@ -44,9 +44,9 @@ function buildSeo(profile, origin) {
     (profile.tabTitle || '').trim() ||
     (name ? `${name} — ${role} | Portfolio Showcase` : null);
 
-  const description = (profile.metaDescription || '').trim() || null;
+  const description = (profile.metaDescription || '').trim() || 'Portfolio thiết kế đồ họa, nhận diện thương hiệu và ấn phẩm sáng tạo của Phi Hùng.';
   const image = usableImage(profile.ogImage) || `${origin}/og-image.png`;
-  const favicon = usableImage(profile.favicon);
+  const favicon = usableImage(profile.favicon) || `${origin}/favicon.png`;
 
   return { title, description, image, imageType: imageTypeOf(image), favicon, origin };
 }
