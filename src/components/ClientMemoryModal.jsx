@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ExternalLink, ChevronLeft, ChevronRight, Building2, Calendar, Tag, MessageSquareQuote, Layers } from 'lucide-react';
+import { X, ExternalLink, ChevronLeft, ChevronRight, Building2, Calendar, Tag, MessageSquareQuote, Layers, Quote } from 'lucide-react';
 
 export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, onClose }) {
   const [activeImageIndex, setActiveImageIndex] = useState(initialIndex);
@@ -60,10 +60,10 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
           <X className="w-4 h-4" />
         </button>
 
-        {/* LEFT: Cinema Image Stage (Large view + Next/Prev + Bottom thumbnails) */}
+        {/* LEFT: Cinema Image Stage */}
         <div className="lg:w-8/12 bg-black flex flex-col justify-between relative overflow-hidden min-h-[340px] sm:min-h-[480px] lg:min-h-[600px]">
           
-          {/* Main Visual Photo Container */}
+          {/* Main Visual Photo */}
           <div className="flex-1 relative flex items-center justify-center overflow-hidden p-2 sm:p-5">
             <img
               key={currentImage}
@@ -96,7 +96,7 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
               </>
             )}
 
-            {/* Photo Counter Badge */}
+            {/* Counter Badge */}
             {images.length > 1 && (
               <div className="absolute bottom-3 right-4 z-20 px-3 py-1 rounded-full bg-black/80 backdrop-blur-md text-white/90 font-mono text-xs border border-white/15 shadow-lg">
                 {activeImageIndex + 1} / {images.length}
@@ -104,7 +104,7 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
             )}
           </div>
 
-          {/* Bottom Thumbnails Dock */}
+          {/* Bottom Thumbnails Strip */}
           {images.length > 1 && (
             <div className="p-3 bg-[#0a0a0d] border-t border-white/10 flex items-center justify-center gap-2.5 overflow-x-auto no-scrollbar">
               {images.map((img, idx) => (
@@ -122,12 +122,12 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
           )}
         </div>
 
-        {/* RIGHT: Client Info, Story, Deliverables info & Actions */}
+        {/* RIGHT: Partner Details, Souvenir Note & Actions */}
         <div className="lg:w-4/12 p-6 sm:p-8 flex flex-col justify-between overflow-y-auto custom-scrollbar space-y-6 bg-[#121216]">
           
           <div className="space-y-5">
             
-            {/* Header: Logo + Client Name + Year */}
+            {/* Header: Logo + Partner Name */}
             <div className="flex items-start gap-3.5 pb-4 border-b border-white/10 pr-6">
               {client.logo ? (
                 <img 
@@ -166,14 +166,14 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
             {/* Deliverables Count Note */}
             <div className="flex items-center gap-2 p-3 rounded-xl bg-white/[0.03] border border-white/10 text-xs font-mono text-white/70">
               <Layers className="w-4 h-4 text-[#C3EA39]" />
-              <span>Tổng số: <strong className="text-white">{images.length} ấn phẩm</strong> trong bộ sưu tập</span>
+              <span>Trưng bày <strong className="text-white">{images.length} ấn phẩm</strong> bàn giao</span>
             </div>
 
             {/* Souvenir Note */}
             {client.note && (
               <div className="space-y-2">
                 <span className="text-xs font-mono text-white/40 uppercase tracking-wider flex items-center gap-1.5">
-                  <MessageSquareQuote className="w-3.5 h-3.5 text-[#C3EA39]" />
+                  <Quote className="w-3.5 h-3.5 text-[#C3EA39]" />
                   <span>Kỷ niệm & Chia sẻ</span>
                 </span>
                 <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 text-white/85 text-xs sm:text-sm leading-relaxed font-light whitespace-pre-line">
@@ -193,7 +193,7 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
                 rel="noopener noreferrer"
                 className="px-4 py-2.5 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black font-display font-bold text-xs sm:text-sm tracking-wide flex items-center gap-2 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-105 cursor-pointer"
               >
-                <span>Ghé thăm trang của khách</span>
+                <span>Ghé thăm trang của bạn</span>
                 <ExternalLink className="w-3.5 h-3.5" />
               </a>
             ) : (

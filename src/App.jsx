@@ -5,7 +5,6 @@ import Hero from './components/Hero';
 import CoverBannerSection from './components/CoverBannerSection';
 import RandomWorkSection from './components/RandomWorkSection';
 import WorkSection from './components/WorkSection';
-import ClientMemoriesSection from './components/ClientMemoriesSection';
 import AboutSection from './components/AboutSection';
 import Footer from './components/Footer';
 import CursorSpotlight from './components/CursorSpotlight';
@@ -296,7 +295,6 @@ function PortfolioApp() {
         <CoverBannerSection />
         <RandomWorkSection />
         <WorkSection />
-        <ClientMemoriesSection />
         <AboutSection />
       </main>
 

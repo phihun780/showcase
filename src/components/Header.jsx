@@ -44,7 +44,6 @@ export default function Header({ activeSection, setActiveSection, onOpenCMS }) {
 
   const navItems = [
     { label: profile?.headerNavWork || 'Dự án của tui', id: 'work', count: `${projects.length}` },
-    { label: profile?.headerNavClients || 'Khách hàng', id: 'clients', count: `${(clients || []).length}` },
     { label: profile?.headerNavAbout || 'Về tui', id: 'about' },
   ];
 

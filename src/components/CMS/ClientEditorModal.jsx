@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, Upload, Check, Loader2, Sparkles, Building2, Image as ImageIcon, Link as LinkIcon, Calendar, Tag, MessageSquareQuote, Trash2, ArrowLeft, ArrowRight, Layers, Plus } from 'lucide-react';
+import { X, Upload, Check, Loader2, Sparkles, Building2, Image as ImageIcon, Link as LinkIcon, Calendar, Tag, MessageSquareQuote, Trash2, ArrowLeft, ArrowRight, Layers, Plus, HeartHandshake } from 'lucide-react';
 import { optimizeAndUploadToR2 } from '../../utils/imageOptimizer';
 
 export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
@@ -103,7 +103,6 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
         setFormData(prev => {
           const currentGallery = prev.gallery || [];
           const combined = [...currentGallery, ...newUrls];
-          // If no coverImage yet, set the first uploaded one as coverImage
           const newCover = prev.coverImage || newUrls[0];
           return {
             ...prev,
@@ -183,7 +182,7 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.clientName.trim()) {
-      setUploadError('Vui lòng nhập tên khách hàng / thương hiệu');
+      setUploadError('Vui lòng nhập tên bạn đồng hành / thương hiệu');
       return;
     }
     
@@ -194,7 +193,7 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
     ].filter(Boolean)));
 
     if (allImages.length === 0) {
-      setUploadError('Vui lòng tải lên ít nhất 1 ảnh sản phẩm đã bàn giao cho khách hàng');
+      setUploadError('Vui lòng tải lên ít nhất 1 ảnh ấn phẩm đã làm cho bạn đồng hành');
       return;
     }
 
@@ -229,10 +228,10 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
             </div>
             <div>
               <h3 className="font-display font-bold text-base sm:text-lg text-white">
-                {client?.id ? 'Chỉnh Sửa Khách Hàng' : 'Thêm Khách Hàng & Kỷ Niệm Mới'}
+                {client?.id ? 'Chỉnh Sửa Bạn Đồng Hành' : 'Thêm Bạn Đồng Hành Mới'}
               </h3>
               <p className="text-[11px] font-mono text-white/50">
-                Lưu giữ đầy đủ các sản phẩm đã bàn giao cho đối tác
+                Lưu giữ trọn bộ các ấn phẩm và kỷ niệm đã cùng nhau sáng tạo
               </p>
             </div>
           </div>
@@ -254,12 +253,12 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
             </div>
           )}
 
-          {/* Row 1: Tên Khách & Năm */}
+          {/* Row 1: Tên Bạn Đồng Hành & Năm */}
           <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
             <div className="sm:col-span-8 space-y-1.5">
               <label className="text-xs font-mono text-white/70 flex items-center gap-1.5">
                 <Building2 className="w-3.5 h-3.5 text-[#C3EA39]" />
-                <span>Tên Khách Hàng / Thương Hiệu <span className="text-[#C3EA39]">*</span></span>
+                <span>Tên Bạn Đồng Hành / Thương Hiệu <span className="text-[#C3EA39]">*</span></span>
               </label>
               <input
                 type="text"
@@ -361,16 +360,16 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
             </div>
           </div>
 
-          {/* Row 4: MULTI-DELIVERABLES SHOWCASE GALLERY (BỘ SƯU TẬP TẤT CẢ SẢN PHẨM BÀN GIAO) */}
+          {/* Row 4: MULTI-DELIVERABLES SHOWCASE GALLERY */}
           <div className="space-y-3.5 p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/10">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <label className="text-xs font-mono text-white/90 font-bold flex items-center gap-1.5">
                   <Layers className="w-4 h-4 text-[#C3EA39]" />
-                  <span>Bộ Sưu Tập Sản Phẩm Đã Bàn Giao ({galleryList.length} ảnh) <span className="text-[#C3EA39]">*</span></span>
+                  <span>Bộ Sưu Tập Ấn Phẩm Bàn Giao ({galleryList.length} ảnh) <span className="text-[#C3EA39]">*</span></span>
                 </label>
                 <p className="text-[11px] font-mono text-white/40">
-                  Tải lên nhiều ảnh (Logo mockup, bao bì, poster, ấn phẩm...). Ảnh đầu tiên hoặc có viền vàng là ảnh chính.
+                  Tải lên nhiều ảnh sản phẩm. Ảnh có viền vàng là ảnh chính hiển thị đầu tiên trên sân khấu.
                 </p>
               </div>
 
@@ -453,7 +452,7 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
                         </div>
                       )}
 
-                      {/* Quick Action Overlay on hover */}
+                      {/* Quick Action Overlay */}
                       <div className="p-1.5 bg-[#141419] border-t border-white/10 flex items-center justify-between gap-1 text-[11px] font-mono">
                         <div className="flex items-center gap-0.5">
                           <button
@@ -515,17 +514,17 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
               rows={3}
               value={formData.note}
               onChange={handleChange}
-              placeholder="Viết đôi dòng kỷ niệm, cảm nhận hoặc bối cảnh dự án khi hợp tác cùng khách hàng này..."
+              placeholder="Viết đôi dòng kỷ niệm, cảm nhận hoặc bối cảnh dự án khi hợp tác cùng bạn đồng hành này..."
               className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 text-xs sm:text-sm font-sans focus:border-[#C3EA39] focus:outline-none transition-colors resize-none"
             />
           </div>
 
-          {/* Row 6: Link trang của khách & Featured checkbox */}
+          {/* Row 6: Link trang của bạn & Featured checkbox */}
           <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 items-center">
             <div className="sm:col-span-8 space-y-1.5">
               <label className="text-xs font-mono text-white/70 flex items-center gap-1.5">
                 <LinkIcon className="w-3.5 h-3.5 text-[#C3EA39]" />
-                <span>Link Trang Của Khách (Website / Fanpage)</span>
+                <span>Link Trang Của Bạn (Website / Fanpage)</span>
               </label>
               <input
                 type="text"
@@ -548,7 +547,7 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
                 />
                 <span className="text-xs font-mono font-bold text-white flex items-center gap-1">
                   <Sparkles className="w-3.5 h-3.5 text-[#C3EA39]" />
-                  <span>Khách Hàng Nổi Bật</span>
+                  <span>Bạn Đồng Hành Nổi Bật</span>
                 </span>
               </label>
             </div>
@@ -573,7 +572,7 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
             className="px-6 py-2.5 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black font-display font-bold text-xs sm:text-sm uppercase tracking-wider flex items-center gap-2 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-105 cursor-pointer disabled:opacity-50"
           >
             <Check className="w-4 h-4" />
-            <span>{client?.id ? 'Lưu Khách Hàng' : 'Thêm Vào Danh Sách'}</span>
+            <span>{client?.id ? 'Lưu Thay Đổi' : 'Thêm Vào Danh Sách'}</span>
           </button>
         </div>
 
