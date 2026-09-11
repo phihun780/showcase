@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, Upload, Check, Loader2, Sparkles, Building2, Image as ImageIcon, Link as LinkIcon, Calendar, Tag, MessageSquareQuote } from 'lucide-react';
+import { X, Upload, Check, Loader2, Sparkles, Building2, Image as ImageIcon, Link as LinkIcon, Calendar, Tag, MessageSquareQuote, Trash2, ArrowLeft, ArrowRight, Layers, Plus } from 'lucide-react';
 import { optimizeAndUploadToR2 } from '../../utils/imageOptimizer';
 
 export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
@@ -10,7 +10,7 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
     year: client?.year || `${new Date().getFullYear()}`,
     logo: client?.logo || '',
     coverImage: client?.coverImage || '',
-    gallery: client?.gallery || [],
+    gallery: Array.isArray(client?.gallery) ? client.gallery : [],
     note: client?.note || '',
     link: client?.link || '',
     featured: Boolean(client?.featured),
@@ -18,10 +18,13 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
 
   const [isUploadingCover, setIsUploadingCover] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [isUploadingGallery, setIsUploadingGallery] = useState(false);
   const [uploadError, setUploadError] = useState('');
+  const [newGalleryUrl, setNewGalleryUrl] = useState('');
 
   const coverInputRef = useRef(null);
   const logoInputRef = useRef(null);
+  const galleryInputRef = useRef(null);
 
   if (!isOpen) return null;
 
@@ -33,6 +36,7 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
     }));
   };
 
+  // Upload Cover Photo
   const handleUploadCover = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -42,7 +46,12 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
     try {
       const res = await optimizeAndUploadToR2(file, 'clients');
       if (res && res.url) {
-        setFormData((prev) => ({ ...prev, coverImage: res.url }));
+        setFormData((prev) => {
+          const newCover = res.url;
+          const currentGallery = prev.gallery || [];
+          const updatedGallery = currentGallery.includes(newCover) ? currentGallery : [newCover, ...currentGallery];
+          return { ...prev, coverImage: newCover, gallery: updatedGallery };
+        });
       } else {
         throw new Error(res?.error || 'Tải ảnh thất bại');
       }
@@ -55,6 +64,7 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
     }
   };
 
+  // Upload Brand Logo
   const handleUploadLogo = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -77,20 +87,131 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
     }
   };
 
+  // Upload Multiple Deliverables to Gallery
+  const handleUploadGalleryFiles = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    setUploadError('');
+    setIsUploadingGallery(true);
+
+    try {
+      const uploadPromises = files.map(file => optimizeAndUploadToR2(file, 'clients/gallery'));
+      const results = await Promise.all(uploadPromises);
+      const newUrls = results.filter(r => r && r.url).map(r => r.url);
+
+      if (newUrls.length > 0) {
+        setFormData(prev => {
+          const currentGallery = prev.gallery || [];
+          const combined = [...currentGallery, ...newUrls];
+          // If no coverImage yet, set the first uploaded one as coverImage
+          const newCover = prev.coverImage || newUrls[0];
+          return {
+            ...prev,
+            coverImage: newCover,
+            gallery: combined,
+          };
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      setUploadError('Tải ảnh sản phẩm thất bại: ' + err.message);
+    } finally {
+      setIsUploadingGallery(false);
+      if (galleryInputRef.current) galleryInputRef.current.value = '';
+    }
+  };
+
+  // Add single image URL to gallery
+  const handleAddGalleryUrl = (e) => {
+    e.preventDefault();
+    if (!newGalleryUrl.trim()) return;
+    const url = newGalleryUrl.trim();
+    setFormData(prev => {
+      const currentGallery = prev.gallery || [];
+      const updated = [...currentGallery, url];
+      return {
+        ...prev,
+        coverImage: prev.coverImage || url,
+        gallery: updated,
+      };
+    });
+    setNewGalleryUrl('');
+  };
+
+  // Remove photo from gallery
+  const handleRemoveGalleryItem = (index) => {
+    setFormData(prev => {
+      const currentGallery = prev.gallery || [];
+      const removedItem = currentGallery[index];
+      const updated = currentGallery.filter((_, i) => i !== index);
+      let newCover = prev.coverImage;
+      if (prev.coverImage === removedItem) {
+        newCover = updated[0] || '';
+      }
+      return {
+        ...prev,
+        coverImage: newCover,
+        gallery: updated,
+      };
+    });
+  };
+
+  // Move photo in gallery (reorder)
+  const handleMoveGalleryItem = (index, direction) => {
+    setFormData(prev => {
+      const current = [...(prev.gallery || [])];
+      const targetIdx = direction === 'left' ? index - 1 : index + 1;
+      if (targetIdx < 0 || targetIdx >= current.length) return prev;
+      const temp = current[index];
+      current[index] = current[targetIdx];
+      current[targetIdx] = temp;
+      return {
+        ...prev,
+        gallery: current,
+      };
+    });
+  };
+
+  // Set specific photo as Main Cover
+  const handleSetAsCover = (imgUrl) => {
+    setFormData(prev => ({
+      ...prev,
+      coverImage: imgUrl,
+    }));
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.clientName.trim()) {
       setUploadError('Vui lòng nhập tên khách hàng / thương hiệu');
       return;
     }
-    if (!formData.coverImage.trim()) {
-      setUploadError('Vui lòng tải lên hoặc dán link ảnh sản phẩm bàn giao chính');
+    
+    // Ensure coverImage or at least 1 image exists
+    const allImages = Array.from(new Set([
+      formData.coverImage,
+      ...(Array.isArray(formData.gallery) ? formData.gallery : [])
+    ].filter(Boolean)));
+
+    if (allImages.length === 0) {
+      setUploadError('Vui lòng tải lên ít nhất 1 ảnh sản phẩm đã bàn giao cho khách hàng');
       return;
     }
 
-    onSave(formData);
+    const finalPayload = {
+      ...formData,
+      coverImage: formData.coverImage || allImages[0],
+      gallery: allImages,
+    };
+
+    onSave(finalPayload);
     onClose();
   };
+
+  const galleryList = Array.from(new Set([
+    formData.coverImage,
+    ...(Array.isArray(formData.gallery) ? formData.gallery : [])
+  ].filter(Boolean)));
 
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md animate-fadeIn select-none">
@@ -98,20 +219,20 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
 
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="relative z-10 w-full max-w-2xl max-h-[92vh] flex flex-col bg-[#121216] border border-white/15 rounded-3xl overflow-hidden shadow-2xl animate-scaleUp my-auto"
+        className="relative z-10 w-full max-w-3xl max-h-[92vh] flex flex-col bg-[#121216] border border-white/15 rounded-3xl overflow-hidden shadow-2xl animate-scaleUp my-auto"
       >
         {/* Header */}
         <div className="p-4 sm:p-6 border-b border-white/10 flex items-center justify-between bg-[#15151b]">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-[#C3EA39]/15 border border-[#C3EA39]/30 flex items-center justify-center text-[#C3EA39] font-mono">
+            <div className="w-8 h-8 rounded-xl bg-[#C3EA39]/15 border border-[#C3EA39]/30 flex items-center justify-center text-[#C3EA39] font-mono font-bold">
               ✦
             </div>
             <div>
               <h3 className="font-display font-bold text-base sm:text-lg text-white">
-                {client?.id ? 'Chỉnh Sửa Khách Hàng' : 'Thêm Khách Hàng Mới'}
+                {client?.id ? 'Chỉnh Sửa Khách Hàng' : 'Thêm Khách Hàng & Kỷ Niệm Mới'}
               </h3>
               <p className="text-[11px] font-mono text-white/50">
-                Lưu giữ kỷ niệm và sản phẩm đã làm cho đối tác
+                Lưu giữ đầy đủ các sản phẩm đã bàn giao cho đối tác
               </p>
             </div>
           </div>
@@ -125,7 +246,7 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 space-y-6">
           
           {uploadError && (
             <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs font-mono">
@@ -178,72 +299,12 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
               name="service"
               value={formData.service}
               onChange={handleChange}
-              placeholder="Ví dụ: Brand Identity & Packaging, Poster & Key Visual..."
+              placeholder="Ví dụ: Brand Identity & Packaging, Poster & Key Visual 3D..."
               className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 text-xs sm:text-sm font-sans focus:border-[#C3EA39] focus:outline-none transition-colors"
             />
           </div>
 
-          {/* Row 3: Ảnh Bàn Giao Chính (Bắt buộc) */}
-          <div className="space-y-2 p-4 rounded-2xl bg-white/[0.02] border border-white/10">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-mono text-white/90 font-bold flex items-center gap-1.5">
-                <ImageIcon className="w-3.5 h-3.5 text-[#C3EA39]" />
-                <span>Ảnh Sản Phẩm Bàn Giao Chính <span className="text-[#C3EA39]">*</span></span>
-              </label>
-              <span className="text-[10px] font-mono text-white/40">Tự động nén WebP siêu nhẹ</span>
-            </div>
-
-            {/* Preview & Upload Area */}
-            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
-              <div className="sm:col-span-4 aspect-[16/10] rounded-xl overflow-hidden bg-black border border-white/15 flex items-center justify-center relative">
-                {formData.coverImage ? (
-                  <img src={formData.coverImage} alt="Cover Preview" className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-[11px] font-mono text-white/30 text-center p-2">Chưa có ảnh</span>
-                )}
-              </div>
-
-              <div className="sm:col-span-8 space-y-2">
-                <input
-                  type="file"
-                  ref={coverInputRef}
-                  onChange={handleUploadCover}
-                  accept="image/*"
-                  className="hidden"
-                />
-                
-                <button
-                  type="button"
-                  onClick={() => coverInputRef.current?.click()}
-                  disabled={isUploadingCover}
-                  className="w-full py-2.5 px-4 rounded-xl bg-[#C3EA39]/15 hover:bg-[#C3EA39] text-[#C3EA39] hover:text-black border border-[#C3EA39]/30 font-mono text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-95"
-                >
-                  {isUploadingCover ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Đang tải và nén ảnh...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-4 h-4" />
-                      <span>Tải ảnh từ máy tính</span>
-                    </>
-                  )}
-                </button>
-
-                <input
-                  type="text"
-                  name="coverImage"
-                  value={formData.coverImage}
-                  onChange={handleChange}
-                  placeholder="Hoặc dán URL ảnh trực tiếp..."
-                  className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 text-xs font-mono focus:border-[#C3EA39] focus:outline-none transition-colors"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Row 4: Logo Khách Hàng (Tùy chọn) */}
+          {/* Row 3: Logo Thương Hiệu */}
           <div className="space-y-2 p-4 rounded-2xl bg-white/[0.02] border border-white/10">
             <div className="flex items-center justify-between">
               <label className="text-xs font-mono text-white/90 flex items-center gap-1.5">
@@ -282,7 +343,7 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
                   type="button"
                   onClick={() => logoInputRef.current?.click()}
                   disabled={isUploadingLogo}
-                  className="py-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 font-mono text-xs text-white/80 hover:text-white flex items-center gap-1.5 transition-all cursor-pointer"
+                  className="py-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 font-mono text-xs text-white/80 hover:text-white flex items-center gap-1.5 transition-all cursor-pointer shrink-0"
                 >
                   {isUploadingLogo ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
                   <span>Tải Logo</span>
@@ -298,6 +359,149 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
                 />
               </div>
             </div>
+          </div>
+
+          {/* Row 4: MULTI-DELIVERABLES SHOWCASE GALLERY (BỘ SƯU TẬP TẤT CẢ SẢN PHẨM BÀN GIAO) */}
+          <div className="space-y-3.5 p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/10">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <label className="text-xs font-mono text-white/90 font-bold flex items-center gap-1.5">
+                  <Layers className="w-4 h-4 text-[#C3EA39]" />
+                  <span>Bộ Sưu Tập Sản Phẩm Đã Bàn Giao ({galleryList.length} ảnh) <span className="text-[#C3EA39]">*</span></span>
+                </label>
+                <p className="text-[11px] font-mono text-white/40">
+                  Tải lên nhiều ảnh (Logo mockup, bao bì, poster, ấn phẩm...). Ảnh đầu tiên hoặc có viền vàng là ảnh chính.
+                </p>
+              </div>
+
+              {/* Upload Multiple Button */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="file"
+                  ref={galleryInputRef}
+                  onChange={handleUploadGalleryFiles}
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                />
+                
+                <button
+                  type="button"
+                  onClick={() => galleryInputRef.current?.click()}
+                  disabled={isUploadingGallery}
+                  className="px-3.5 py-2 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black font-mono text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 shadow-md shadow-[#C3EA39]/15"
+                >
+                  {isUploadingGallery ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Đang tải lên...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Tải Nhiều Ảnh</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Quick URL Add */}
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={newGalleryUrl}
+                onChange={(e) => setNewGalleryUrl(e.target.value)}
+                placeholder="Hoặc dán URL ảnh sản phẩm..."
+                className="flex-1 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 text-xs font-mono focus:border-[#C3EA39] focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={handleAddGalleryUrl}
+                className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-mono flex items-center gap-1 transition-colors cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Thêm</span>
+              </button>
+            </div>
+
+            {/* Uploaded Gallery Grid */}
+            {galleryList.length === 0 ? (
+              <div className="p-8 rounded-xl border-2 border-dashed border-white/10 text-center text-white/30 font-mono text-xs">
+                Chưa có ảnh sản phẩm nào. Hãy bấm "Tải Nhiều Ảnh" để thêm các mockup / thiết kế đã bàn giao.
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {galleryList.map((img, idx) => {
+                  const isMain = img === formData.coverImage || (idx === 0 && !formData.coverImage);
+
+                  return (
+                    <div
+                      key={idx}
+                      className={`relative rounded-xl overflow-hidden bg-black border-2 group flex flex-col ${
+                        isMain ? 'border-[#C3EA39] shadow-md shadow-[#C3EA39]/20' : 'border-white/15'
+                      }`}
+                    >
+                      <div className="aspect-[16/10] w-full overflow-hidden bg-black">
+                        <img src={img} alt="" className="w-full h-full object-cover" />
+                      </div>
+
+                      {/* Main Badge */}
+                      {isMain && (
+                        <div className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-md bg-[#C3EA39] text-black font-mono font-bold text-[9px]">
+                          Ảnh chính
+                        </div>
+                      )}
+
+                      {/* Quick Action Overlay on hover */}
+                      <div className="p-1.5 bg-[#141419] border-t border-white/10 flex items-center justify-between gap-1 text-[11px] font-mono">
+                        <div className="flex items-center gap-0.5">
+                          <button
+                            type="button"
+                            onClick={() => handleMoveGalleryItem(idx, 'left')}
+                            disabled={idx === 0}
+                            className="p-1 rounded bg-white/5 hover:bg-white/20 text-white/70 disabled:opacity-20 cursor-pointer"
+                            title="Sang trái"
+                          >
+                            <ArrowLeft className="w-3 h-3" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleMoveGalleryItem(idx, 'right')}
+                            disabled={idx === galleryList.length - 1}
+                            className="p-1 rounded bg-white/5 hover:bg-white/20 text-white/70 disabled:opacity-20 cursor-pointer"
+                            title="Sang phải"
+                          >
+                            <ArrowRight className="w-3 h-3" />
+                          </button>
+                        </div>
+
+                        {!isMain && (
+                          <button
+                            type="button"
+                            onClick={() => handleSetAsCover(img)}
+                            className="text-[9px] text-[#C3EA39] hover:underline cursor-pointer"
+                            title="Chọn làm ảnh chính"
+                          >
+                            Đặt làm chính
+                          </button>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveGalleryItem(idx)}
+                          className="p-1 rounded bg-red-500/10 hover:bg-red-500 text-red-300 hover:text-white transition-colors cursor-pointer"
+                          title="Xóa ảnh này"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
           </div>
 
           {/* Row 5: Ghi chú kỷ niệm & Link */}
@@ -344,7 +548,7 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
                 />
                 <span className="text-xs font-mono font-bold text-white flex items-center gap-1">
                   <Sparkles className="w-3.5 h-3.5 text-[#C3EA39]" />
-                  <span>Thẻ Nổi Bật (Lớn)</span>
+                  <span>Khách Hàng Nổi Bật</span>
                 </span>
               </label>
             </div>
@@ -365,7 +569,7 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={isUploadingCover || isUploadingLogo}
+            disabled={isUploadingCover || isUploadingLogo || isUploadingGallery}
             className="px-6 py-2.5 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black font-display font-bold text-xs sm:text-sm uppercase tracking-wider flex items-center gap-2 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-105 cursor-pointer disabled:opacity-50"
           >
             <Check className="w-4 h-4" />
