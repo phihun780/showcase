@@ -1,0 +1,53 @@
+﻿export const defaultClients = [
+  {
+    id: 'client-1',
+    clientName: 'The Vintage Co.',
+    service: 'Brand Identity & Packaging',
+    year: '2025',
+    logo: '',
+    coverImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80'
+    ],
+    note: 'Thiết kế bộ nhận diện thương hiệu cổ điển kết hợp bao bì sản phẩm thủ công cao cấp.',
+    link: '',
+    featured: true,
+  },
+  {
+    id: 'client-2',
+    clientName: 'Aura Soundworks',
+    service: 'Key Visual & 3D Artwork',
+    year: '2025',
+    logo: '',
+    coverImage: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=1000&q=80',
+    gallery: [],
+    note: 'Bộ ảnh bìa album âm nhạc điện tử và visual trình diễn sân khấu.',
+    link: '',
+    featured: false,
+  },
+  {
+    id: 'client-3',
+    clientName: 'Tiệm Cà Phê Mùa Hè',
+    service: 'Menu & Social Media Kit',
+    year: '2024',
+    logo: '',
+    coverImage: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1000&q=80',
+    gallery: [],
+    note: 'Ấn phẩm truyền thông khai trương và hệ thống menu theo phong cách tối giản, ấm cúng.',
+    link: '',
+    featured: false,
+  },
+  {
+    id: 'client-4',
+    clientName: 'Nara Artisan Bakery',
+    service: 'Packaging & Illustration',
+    year: '2024',
+    logo: '',
+    coverImage: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=1200&q=80',
+    gallery: [],
+    note: 'Vẽ minh họa thủ công cho hộp bánh trung thu và túi quà tặng lễ hội.',
+    link: '',
+    featured: true,
+  }
+];

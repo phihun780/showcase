@@ -5,6 +5,7 @@ import ProfileEditor from './ProfileEditor';
 import ImageCropModal from './ImageCropModal';
 import JuxtaposeEmbedModal from './JuxtaposeEmbedModal';
 import MediaItemEditorModal from './MediaItemEditorModal';
+import ClientEditorModal from './ClientEditorModal';
 import BeforeAfterSlider from '../BeforeAfterSlider';
 import CMSAuthGate from './CMSAuthGate';
 import SeasonalAtmosphere from '../SeasonalAtmosphere';
@@ -37,7 +38,11 @@ import {
   X,
   SlidersHorizontal,
   Check,
-  Loader2
+  Loader2,
+  HeartHandshake,
+  Building2,
+  Calendar,
+  Tag
 } from 'lucide-react';
 
 const AUTH_STORAGE_KEY = 'phihung_cms_authenticated';
@@ -186,6 +191,7 @@ export default function CMSPage({ onBackToPortfolio }) {
     profile,
     coverBanners,
     randomWorks,
+    clients,
     marqueeItems,
     seasonalEffect,
     addProject,
@@ -203,6 +209,11 @@ export default function CMSPage({ onBackToPortfolio }) {
     deleteRandomWork,
     moveRandomWork,
     updateRandomWorksList,
+    addClient,
+    updateClient,
+    deleteClient,
+    moveClient,
+    updateClientsList,
     addMarqueeItem,
     deleteMarqueeItem,
     updateMarqueeItem,
@@ -218,6 +229,8 @@ export default function CMSPage({ onBackToPortfolio }) {
   const [activeTab, setActiveTab] = useState('projects');
   const [editingProject, setEditingProject] = useState(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [editingClient, setEditingClient] = useState(null);
+  const [isClientModalOpen, setIsClientModalOpen] = useState(false);
   const [newMarqueeText, setNewMarqueeText] = useState('');
   const [cropModalConfig, setCropModalConfig] = useState(null);
   const [previewingImage, setPreviewingImage] = useState(null);
@@ -235,12 +248,14 @@ export default function CMSPage({ onBackToPortfolio }) {
   const [localProjects, setLocalProjects] = useState(projects);
   const [localCoverBanners, setLocalCoverBanners] = useState(coverBanners);
   const [localRandomWorks, setLocalRandomWorks] = useState(randomWorks);
+  const [localClients, setLocalClients] = useState(clients);
   const [localMarqueeItems, setLocalMarqueeItems] = useState(marqueeItems);
   const [localSeasonalEffect, setLocalSeasonalEffect] = useState(seasonalEffect);
 
   // Success Feedback Alert State for each tab
   const [savedAlerts, setSavedAlerts] = useState({
     projects: false,
+    clients: false,
     home: false,
   });
 
@@ -255,8 +270,67 @@ export default function CMSPage({ onBackToPortfolio }) {
   useEffect(() => { setLocalProjects(projects); }, [projects]);
   useEffect(() => { setLocalCoverBanners(coverBanners); }, [coverBanners]);
   useEffect(() => { setLocalRandomWorks(randomWorks); }, [randomWorks]);
+  useEffect(() => { setLocalClients(clients); }, [clients]);
   useEffect(() => { setLocalMarqueeItems(marqueeItems); }, [marqueeItems]);
   useEffect(() => { setLocalSeasonalEffect(seasonalEffect); }, [seasonalEffect]);
+
+  // Client CRUD Handlers
+  const handleOpenAddClient = () => {
+    setEditingClient(null);
+    setIsClientModalOpen(true);
+  };
+
+  const handleOpenEditClient = (client) => {
+    setEditingClient(client);
+    setIsClientModalOpen(true);
+  };
+
+  const handleSaveClientFromModal = (clientData) => {
+    if (editingClient) {
+      setLocalClients(prev => prev.map(c => c.id === editingClient.id ? { ...c, ...clientData } : c));
+    } else {
+      const newId = `client-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+      setLocalClients(prev => [{ ...clientData, id: newId }, ...prev]);
+    }
+  };
+
+  const handleDeleteClientItem = (id) => {
+    if (window.confirm("Bạn có chắc muốn xóa khách hàng này không?")) {
+      setLocalClients(prev => prev.filter(c => c.id !== id));
+    }
+  };
+
+  const handleMoveClientItem = (index, direction) => {
+    setLocalClients(prev => {
+      const newArr = [...prev];
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= newArr.length) return prev;
+      const temp = newArr[index];
+      newArr[index] = newArr[targetIndex];
+      newArr[targetIndex] = temp;
+      return newArr;
+    });
+  };
+
+  const handleSaveClientsTab = async () => {
+    updateClientsList(localClients);
+    const res = await saveToCloud({
+      updatedAt: new Date().toISOString(),
+      profile,
+      projects: localProjects,
+      coverBanners: localCoverBanners,
+      randomWorks: localRandomWorks,
+      clients: localClients,
+      marqueeItems: localMarqueeItems,
+      seasonalEffect: localSeasonalEffect,
+    });
+    if (res && res.success) {
+      triggerSaveAlert('clients');
+      alert("Đã lưu danh sách khách hàng & kỷ niệm lên Cloudflare R2 thành công! ✓");
+    } else {
+      alert("Lỗi lưu lên Cloud: " + (res?.error || 'Vui lòng thử lại'));
+    }
+  };
 
   // Tab Save Handlers (Persist to Store & Sync to Cloudflare R2)
   const handleSaveProjectsTab = async () => {
@@ -267,6 +341,7 @@ export default function CMSPage({ onBackToPortfolio }) {
       projects: localProjects,
       coverBanners: localCoverBanners,
       randomWorks: localRandomWorks,
+      clients: localClients,
       marqueeItems: localMarqueeItems,
       seasonalEffect: localSeasonalEffect,
     });
@@ -289,6 +364,7 @@ export default function CMSPage({ onBackToPortfolio }) {
       projects: localProjects,
       coverBanners: localCoverBanners,
       randomWorks: localRandomWorks,
+      clients: localClients,
       marqueeItems: localMarqueeItems,
       seasonalEffect: localSeasonalEffect,
     });
@@ -304,6 +380,7 @@ export default function CMSPage({ onBackToPortfolio }) {
     updateProjectsList(localProjects);
     updateCoverBannersList(localCoverBanners);
     updateRandomWorksList(localRandomWorks);
+    updateClientsList(localClients);
     updateMarqueeItems(localMarqueeItems);
     updateSeasonalEffect(localSeasonalEffect);
 
@@ -313,6 +390,7 @@ export default function CMSPage({ onBackToPortfolio }) {
       projects: localProjects,
       coverBanners: localCoverBanners,
       randomWorks: localRandomWorks,
+      clients: localClients,
       marqueeItems: localMarqueeItems,
       seasonalEffect: localSeasonalEffect,
     };
@@ -1033,13 +1111,13 @@ export default function CMSPage({ onBackToPortfolio }) {
       {/* Main Container */}
       <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-7 space-y-4 sm:space-y-6">
         
-        {/* Sleek Tab Navigation Bar (3 Clean Tabs) */}
+        {/* Sleek Tab Navigation Bar (4 Clean Tabs) */}
         <div className="w-full pb-2 sm:pb-4 border-b border-white/10">
-          <div className="grid grid-cols-3 gap-1.5 p-1.5 rounded-2xl bg-[#121216] border border-white/10 shadow-lg w-full">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1.5 rounded-2xl bg-[#121216] border border-white/10 shadow-lg w-full">
             
             <button
               onClick={() => setActiveTab('projects')}
-              className={`py-2 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-display font-bold flex items-center justify-center gap-1.5 sm:gap-2 transition-all cursor-pointer select-none active:scale-95 ${
+              className={`py-2 px-2 sm:px-3 rounded-xl text-xs sm:text-sm font-display font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer select-none active:scale-95 ${
                 activeTab === 'projects'
                   ? 'bg-[#C3EA39] text-black shadow-md shadow-[#C3EA39]/15'
                   : 'text-white/60 hover:text-white hover:bg-white/5'
@@ -1055,8 +1133,25 @@ export default function CMSPage({ onBackToPortfolio }) {
             </button>
 
             <button
+              onClick={() => setActiveTab('clients')}
+              className={`py-2 px-2 sm:px-3 rounded-xl text-xs sm:text-sm font-display font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer select-none active:scale-95 ${
+                activeTab === 'clients'
+                  ? 'bg-[#C3EA39] text-black shadow-md shadow-[#C3EA39]/15'
+                  : 'text-white/60 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <HeartHandshake className="w-4 h-4 shrink-0" />
+              <span>Khách Hàng</span>
+              <span className={`text-[10px] sm:text-[11px] font-mono px-1.5 py-0.2 rounded-md ${
+                activeTab === 'clients' ? 'bg-black/20 text-black font-bold' : 'bg-white/10 text-white/50'
+              }`}>
+                {localClients.length < 10 ? `0${localClients.length}` : localClients.length}
+              </span>
+            </button>
+
+            <button
               onClick={() => setActiveTab('home')}
-              className={`py-2 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-display font-bold flex items-center justify-center gap-1.5 sm:gap-2 transition-all cursor-pointer select-none active:scale-95 ${
+              className={`py-2 px-2 sm:px-3 rounded-xl text-xs sm:text-sm font-display font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer select-none active:scale-95 ${
                 activeTab === 'home'
                   ? 'bg-[#C3EA39] text-black shadow-md shadow-[#C3EA39]/15'
                   : 'text-white/60 hover:text-white hover:bg-white/5'
@@ -1071,7 +1166,7 @@ export default function CMSPage({ onBackToPortfolio }) {
 
             <button
               onClick={() => setActiveTab('profile')}
-              className={`py-2 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-display font-bold flex items-center justify-center gap-1.5 sm:gap-2 transition-all cursor-pointer select-none active:scale-95 ${
+              className={`py-2 px-2 sm:px-3 rounded-xl text-xs sm:text-sm font-display font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer select-none active:scale-95 ${
                 activeTab === 'profile'
                   ? 'bg-[#C3EA39] text-black shadow-md shadow-[#C3EA39]/15'
                   : 'text-white/60 hover:text-white hover:bg-white/5'
@@ -1140,174 +1235,369 @@ export default function CMSPage({ onBackToPortfolio }) {
                 </div>
               </div>
 
-                <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
-                  <button
-                    onClick={() => projectFileInputRef.current?.click()}
-                    className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer min-h-[38px]"
-                    title="Tải ảnh bìa trực tiếp từ máy tính"
-                  >
-                    <Upload className="w-3.5 h-3.5 text-[#C3EA39]" />
-                    <span>Tải Ảnh Bìa</span>
-                  </button>
-
-                  <button
-                    onClick={handleOpenCreate}
-                    className="px-4 py-2 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black text-xs font-display font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-[1.02] cursor-pointer min-h-[38px]"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Thêm Dự Án</span>
-                  </button>
-                </div>
-              </div>
-
-              {localProjects.length === 0 ? (
-                <div
-                  onClick={handleOpenCreate}
-                  className="p-8 sm:p-16 rounded-3xl border-2 border-dashed border-white/15 hover:border-[#C3EA39]/50 bg-[#121216]/50 hover:bg-[#121216] transition-all flex flex-col items-center justify-center text-center cursor-pointer group"
+              <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
+                <button
+                  onClick={() => projectFileInputRef.current?.click()}
+                  className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer min-h-[38px]"
+                  title="Tải ảnh bìa trực tiếp từ máy tính"
                 >
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#C3EA39]/10 text-[#C3EA39] flex items-center justify-center mb-3.5 group-hover:scale-110 transition-transform">
-                    <Plus className="w-6 h-6 sm:w-7 sm:h-7" />
-                  </div>
-                  <p className="font-display font-bold text-white text-base sm:text-lg">Chưa có dự án nào</p>
-                  <p className="text-xs sm:text-sm text-white/50 mt-1 font-mono max-w-md">
-                    Bấm vào đây để tạo và tải ảnh dự án đầu tiên lên website
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 gap-3 sm:gap-3.5">
-                  {localProjects.map((proj, idx) => {
-                    const isGif = proj.coverImage && (proj.coverImage.startsWith('data:image/gif') || proj.coverImage.toLowerCase().endsWith('.gif'));
-                    const galleryCount = Array.isArray(proj.gallery) ? proj.gallery.length : 0;
+                  <Upload className="w-3.5 h-3.5 text-[#C3EA39]" />
+                  <span>Tải Ảnh Bìa</span>
+                </button>
 
-                    return (
-                      <div
-                        key={proj.id || idx}
-                        className="p-3.5 sm:p-5 rounded-2xl bg-[#121216] border border-white/10 hover:border-white/20 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-3.5 sm:gap-4 group shadow-lg"
-                      >
-                        {/* Left: Thumbnail, Number & Info */}
-                        <div className="flex items-start sm:items-center gap-3 sm:gap-4 flex-1 min-w-0 w-full">
-                          <span className="text-xs font-mono font-bold text-[#C3EA39] w-6 sm:w-7 text-center shrink-0 pt-1 sm:pt-0">
-                            #{idx + 1 < 10 ? `0${idx + 1}` : idx + 1}
-                          </span>
-                          
-                          {/* Thumbnail with overlay crop button */}
-                          <div className="relative w-20 sm:w-32 aspect-[16/10] rounded-xl overflow-hidden bg-black border border-white/10 shrink-0 group/thumb">
-                            {proj.coverImage ? (
-                              <>
-                                <img
-                                  src={proj.coverImage}
-                                  alt={proj.title}
-                                  className="w-full h-full object-cover group-hover/thumb:scale-105 transition-transform duration-300"
-                                />
-                                {isGif && (
-                                  <span className="absolute top-1 left-1 px-1 py-0.2 rounded bg-black/80 text-[#C3EA39] text-[8px] sm:text-[9px] font-mono font-bold border border-[#C3EA39]/40">
-                                    GIF
-                                  </span>
-                                )}
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setCropModalConfig({
-                                      isOpen: true,
-                                      imageSrc: proj.coverImage,
-                                      mode: 'project',
-                                      editingIndex: idx,
-                                      title: proj.title,
-                                      subtitle: proj.subtitle,
-                                    });
-                                  }}
-                                  className="absolute inset-0 bg-black/60 opacity-0 sm:group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center gap-1 text-[11px] font-mono font-bold text-[#C3EA39] cursor-pointer"
-                                  title="Cắt lại ảnh bìa này (16:10)"
-                                >
-                                  <Crop className="w-3.5 h-3.5" />
-                                  <span className="hidden sm:inline">Cắt lại</span>
-                                </button>
-                              </>
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-white/25 text-[10px] font-mono text-center p-1">
-                                Trống
-                              </div>
+                <button
+                  onClick={handleOpenCreate}
+                  className="px-4 py-2 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black font-display font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-[1.02] cursor-pointer min-h-[38px] active:scale-95"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Thêm Dự Án</span>
+                </button>
+              </div>
+            </div>
+
+            {localProjects.length === 0 ? (
+              <div
+                onClick={handleOpenCreate}
+                className="p-8 sm:p-16 rounded-3xl border-2 border-dashed border-white/15 hover:border-[#C3EA39]/50 bg-[#121216]/50 hover:bg-[#121216] transition-all flex flex-col items-center justify-center text-center cursor-pointer group"
+              >
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#C3EA39]/10 text-[#C3EA39] flex items-center justify-center mb-3.5 group-hover:scale-110 transition-transform">
+                  <Plus className="w-6 h-6 sm:w-7 sm:h-7" />
+                </div>
+                <p className="font-display font-bold text-white text-base sm:text-lg">Chưa có dự án nào</p>
+                <p className="text-xs sm:text-sm text-white/50 mt-1 font-mono max-w-md">
+                  Bấm vào đây để tạo và tải ảnh dự án đầu tiên lên website
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-3 sm:gap-3.5">
+                {localProjects.map((proj, idx) => {
+                  const isGif = proj.coverImage && (proj.coverImage.startsWith('data:image/gif') || proj.coverImage.toLowerCase().endsWith('.gif'));
+                  const galleryCount = Array.isArray(proj.gallery) ? proj.gallery.length : 0;
+
+                  return (
+                    <div
+                      key={proj.id || idx}
+                      className="p-3.5 sm:p-5 rounded-2xl bg-[#121216] border border-white/10 hover:border-white/20 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-3.5 sm:gap-4 group shadow-lg"
+                    >
+                      {/* Left: Thumbnail, Number & Info */}
+                      <div className="flex items-start sm:items-center gap-3 sm:gap-4 flex-1 min-w-0 w-full">
+                        <span className="text-xs font-mono font-bold text-[#C3EA39] w-6 sm:w-7 text-center shrink-0 pt-1 sm:pt-0">
+                          #{idx + 1 < 10 ? `0${idx + 1}` : idx + 1}
+                        </span>
+                        
+                        {/* Thumbnail with overlay crop button */}
+                        <div className="relative w-20 sm:w-32 aspect-[16/10] rounded-xl overflow-hidden bg-black border border-white/10 shrink-0 group/thumb">
+                          {proj.coverImage ? (
+                            <>
+                              <img
+                                src={proj.coverImage}
+                                alt={proj.title}
+                                className="w-full h-full object-cover group-hover/thumb:scale-105 transition-transform duration-300"
+                              />
+                              {isGif && (
+                                <span className="absolute top-1 left-1 px-1 py-0.2 rounded bg-black/80 text-[#C3EA39] text-[8px] sm:text-[9px] font-mono font-bold border border-[#C3EA39]/40">
+                                  GIF
+                                </span>
+                              )}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setCropModalConfig({
+                                    isOpen: true,
+                                    imageSrc: proj.coverImage,
+                                    mode: 'project',
+                                    editingIndex: idx,
+                                    title: proj.title,
+                                    subtitle: proj.subtitle,
+                                  });
+                                }}
+                                className="absolute inset-0 bg-black/60 opacity-0 sm:group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center gap-1 text-[11px] font-mono font-bold text-[#C3EA39] cursor-pointer"
+                                title="Cắt lại ảnh bìa này (16:10)"
+                              >
+                                <Crop className="w-3.5 h-3.5" />
+                                <span className="hidden sm:inline">Cắt lại</span>
+                              </button>
+                            </>
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-white/25 text-[10px] font-mono text-center p-1">
+                              Trống
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Title & Metadata */}
+                        <div className="min-w-0 flex-1 space-y-1">
+                          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                            <h3 className="text-sm sm:text-base font-display font-bold text-white truncate max-w-full">
+                              {proj.title}
+                            </h3>
+                            {proj.year && (
+                              <span className="text-[10px] font-mono text-[#C3EA39] px-2 py-0.5 rounded-full bg-[#C3EA39]/10 border border-[#C3EA39]/30">
+                                {proj.year}
+                              </span>
+                            )}
+                            {galleryCount > 0 && (
+                              <span className="text-[10px] font-mono text-white/50 px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
+                                {galleryCount} ảnh
+                              </span>
                             )}
                           </div>
 
-                          {/* Title & Metadata */}
-                          <div className="min-w-0 flex-1 space-y-1">
-                            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                              <h3 className="text-sm sm:text-base font-display font-bold text-white truncate max-w-full">
-                                {proj.title}
-                              </h3>
-                              {proj.year && (
-                                <span className="text-[10px] font-mono text-[#C3EA39] px-2 py-0.5 rounded-full bg-[#C3EA39]/10 border border-[#C3EA39]/30">
-                                  {proj.year}
-                                </span>
-                              )}
-                              {galleryCount > 0 && (
-                                <span className="text-[10px] font-mono text-white/50 px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
-                                  {galleryCount} ảnh
-                                </span>
-                              )}
-                            </div>
-
-                            <p className="text-xs text-white/60 font-light truncate max-w-xl">
-                              {proj.subtitle || 'Chưa có mô tả ngắn'}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Right: Action Buttons */}
-                        <div className="flex items-center justify-between sm:justify-end gap-1.5 w-full md:w-auto pt-2.5 md:pt-0 border-t md:border-t-0 border-white/10 shrink-0">
-                          <div className="flex items-center gap-1.5">
-                            <button
-                              onClick={() => handleOpenEdit(proj)}
-                              className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-[#C3EA39] text-white/80 hover:text-black text-xs font-mono font-bold flex items-center gap-1.5 border border-white/10 transition-all cursor-pointer shadow-sm active:scale-95"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                              <span>Sửa</span>
-                            </button>
-
-                            <button
-                              onClick={() => moveLocalProject(idx, 'up')}
-                              disabled={idx === 0}
-                              className="p-1.5 rounded-xl bg-white/5 hover:bg-white/15 disabled:opacity-20 text-white/70 hover:text-white transition-colors cursor-pointer border border-white/10"
-                              title="Di chuyển lên trước"
-                            >
-                              <ArrowUp className="w-3.5 h-3.5" />
-                            </button>
-
-                            <button
-                              onClick={() => moveLocalProject(idx, 'down')}
-                              disabled={idx === localProjects.length - 1}
-                              className="p-1.5 rounded-xl bg-white/5 hover:bg-white/15 disabled:opacity-20 text-white/70 hover:text-white transition-colors cursor-pointer border border-white/10"
-                              title="Di chuyển ra sau"
-                            >
-                              <ArrowDown className="w-3.5 h-3.5" />
-                            </button>
-
-                            <button
-                              onClick={() => handleDeleteProject(proj)}
-                              className="p-1.5 rounded-xl bg-white/5 hover:bg-red-500 text-white/70 hover:text-white transition-colors cursor-pointer border border-white/10"
-                              title="Xoá dự án"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
+                          <p className="text-xs text-white/60 font-light truncate max-w-xl">
+                            {proj.subtitle || 'Chưa có mô tả ngắn'}
+                          </p>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
 
-              {/* Sticky Bottom Save Bar for Projects */}
-              <StickySaveBar
-                isSaved={savedAlerts.projects}
-                onSave={handleSaveProjectsTab}
-                isSyncing={isCloudSyncing}
-                label="Lưu Danh Sách Dự Án"
-                hint="Nhớ bấm lưu để cập nhật thứ tự và danh sách dự án"
-              />
+                      {/* Right: Action Buttons */}
+                      <div className="flex items-center justify-between sm:justify-end gap-1.5 w-full md:w-auto pt-2.5 md:pt-0 border-t md:border-t-0 border-white/10 shrink-0">
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => handleOpenEdit(proj)}
+                            className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-[#C3EA39] text-white/80 hover:text-black text-xs font-mono font-bold flex items-center gap-1.5 border border-white/10 transition-all cursor-pointer shadow-sm active:scale-95"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                            <span>Sửa</span>
+                          </button>
+
+                          <button
+                            onClick={() => moveLocalProject(idx, 'up')}
+                            disabled={idx === 0}
+                            className="p-1.5 rounded-xl bg-white/5 hover:bg-white/15 disabled:opacity-20 text-white/70 hover:text-white transition-colors cursor-pointer border border-white/10"
+                            title="Di chuyển lên trước"
+                          >
+                            <ArrowUp className="w-3.5 h-3.5" />
+                          </button>
+
+                          <button
+                            onClick={() => moveLocalProject(idx, 'down')}
+                            disabled={idx === localProjects.length - 1}
+                            className="p-1.5 rounded-xl bg-white/5 hover:bg-white/15 disabled:opacity-20 text-white/70 hover:text-white transition-colors cursor-pointer border border-white/10"
+                            title="Di chuyển ra sau"
+                          >
+                            <ArrowDown className="w-3.5 h-3.5" />
+                          </button>
+
+                          <button
+                            onClick={() => handleDeleteProject(proj)}
+                            className="p-1.5 rounded-xl bg-white/5 hover:bg-red-500 text-white/70 hover:text-white transition-colors cursor-pointer border border-white/10"
+                            title="Xoá dự án"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Sticky Bottom Save Bar for Projects */}
+            <StickySaveBar
+              isSaved={savedAlerts.projects}
+              onSave={handleSaveProjectsTab}
+              isSyncing={isCloudSyncing}
+              label="Lưu Danh Sách Dự Án"
+              hint="Nhớ bấm lưu để cập nhật thứ tự và danh sách dự án"
+            />
+          </div>
+        )}
+
+        {/* Tab 2: Khách Hàng & Kỷ Niệm */}
+        {activeTab === 'clients' && (
+          <div className="space-y-4">
+            {/* Top Action Controls Bar */}
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-[#121216] border border-white/10 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-[#C3EA39]/15 text-[#C3EA39] flex items-center justify-center shrink-0">
+                  <HeartHandshake className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-display font-bold text-white">
+                    Quản Lý Khách Hàng & Kỷ Niệm
+                  </h3>
+                  <p className="text-[11px] font-mono text-white/50">
+                    Lưu giữ các thương hiệu, đối tác và tác phẩm đã bàn giao
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleOpenAddClient}
+                  className="px-4 py-2 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black font-display font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-[1.02] cursor-pointer min-h-[38px] active:scale-95"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Thêm Khách Hàng</span>
+                </button>
+              </div>
             </div>
-          )}
+
+            {/* Clients List or Empty State */}
+            {localClients.length === 0 ? (
+              <div
+                onClick={handleOpenAddClient}
+                className="p-10 sm:p-14 rounded-2xl border-2 border-dashed border-white/15 hover:border-[#C3EA39]/50 bg-black/30 hover:bg-black/50 transition-all flex flex-col items-center justify-center text-center cursor-pointer group"
+              >
+                <div className="w-12 h-12 rounded-2xl bg-[#C3EA39]/10 text-[#C3EA39] flex items-center justify-center font-mono font-bold text-lg mb-3 group-hover:scale-110 transition-transform">
+                  <HeartHandshake className="w-6 h-6" />
+                </div>
+                <p className="font-display font-bold text-white text-base">Chưa Có Khách Hàng Nào</p>
+                <p className="text-xs text-white/40 mt-1 font-mono max-w-sm">
+                  Nhấp vào đây để thêm khách hàng đầu tiên cùng tác phẩm kỷ niệm đã bàn giao.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {localClients.map((client, idx) => (
+                  <div
+                    key={client.id || idx}
+                    className="relative rounded-2xl overflow-hidden border border-white/10 bg-black/40 group flex flex-col hover:border-[#C3EA39]/40 transition-all shadow-xl"
+                  >
+                    {/* Image Preview Thumbnail */}
+                    <div className="relative aspect-[16/10] w-full overflow-hidden bg-black border-b border-white/5">
+                      {client.coverImage ? (
+                        <img
+                          src={client.coverImage}
+                          alt={client.clientName}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-white/5 text-white/20">
+                          <Building2 className="w-10 h-10" />
+                        </div>
+                      )}
+
+                      {/* Top Badges */}
+                      <div className="absolute top-2 left-2 flex items-center gap-1.5 z-20">
+                        <span className="px-2 py-0.5 rounded-lg bg-black/85 backdrop-blur-md text-[10px] font-mono font-bold text-[#C3EA39] border border-white/15 shadow-md">
+                          #{idx + 1 < 10 ? `0${idx + 1}` : idx + 1}
+                        </span>
+                        {client.featured && (
+                          <span className="px-2 py-0.5 rounded-lg bg-[#C3EA39] text-black text-[10px] font-mono font-bold shadow-md flex items-center gap-1">
+                            <Sparkles className="w-3 h-3" />
+                            <span>Nổi bật</span>
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Top Right Quick Actions */}
+                      <div className="absolute top-2 right-2 flex items-center gap-1 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => handleMoveClientItem(idx, 'up')}
+                          disabled={idx === 0}
+                          className="p-1.5 rounded-lg bg-black/80 hover:bg-white text-white hover:text-black border border-white/15 disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                          title="Lên trên"
+                        >
+                          <ArrowUp className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={() => handleMoveClientItem(idx, 'down')}
+                          disabled={idx === localClients.length - 1}
+                          className="p-1.5 rounded-lg bg-black/80 hover:bg-white text-white hover:text-black border border-white/15 disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                          title="Xuống dưới"
+                        >
+                          <ArrowDown className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Content Card Body */}
+                    <div className="p-3.5 sm:p-4 flex flex-col justify-between flex-1 gap-2.5 bg-[#121216]">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2">
+                          {client.logo ? (
+                            <img
+                              src={client.logo}
+                              alt={client.clientName}
+                              className="w-6 h-6 rounded-md object-cover bg-white/10 p-0.5 border border-white/15 shrink-0"
+                            />
+                          ) : (
+                            <div className="w-6 h-6 rounded-md bg-white/10 border border-white/10 flex items-center justify-center text-[#C3EA39] font-mono text-[10px] shrink-0 font-bold">
+                              ✦
+                            </div>
+                          )}
+
+                          <h4 className="font-display font-bold text-sm text-white truncate group-hover:text-[#C3EA39] transition-colors flex-1">
+                            {client.clientName}
+                          </h4>
+
+                          {client.year && (
+                            <span className="text-[10px] font-mono text-white/40 px-1.5 py-0.5 rounded bg-white/5 border border-white/10 shrink-0">
+                              {client.year}
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="text-[11px] font-mono text-[#C3EA39]/80 truncate">
+                          {client.service || 'Graphic Design'}
+                        </p>
+
+                        {client.note && (
+                          <p className="text-xs text-white/60 line-clamp-2 leading-relaxed font-light">
+                            {client.note}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Bottom Actions Bar */}
+                      <div className="pt-2.5 border-t border-white/10 flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5">
+                          {client.link && (
+                            <a
+                              href={client.link.startsWith('http') ? client.link : `https://${client.link}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-white/60 hover:text-white transition-colors"
+                              title="Xem trang của khách"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </a>
+                          )}
+                          <button
+                            onClick={() => setPreviewingImage(client.coverImage)}
+                            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-white/60 hover:text-white transition-colors cursor-pointer"
+                            title="Xem ảnh lớn"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => handleOpenEditClient(client)}
+                            className="px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-[#C3EA39] text-white hover:text-black transition-colors font-mono text-xs flex items-center gap-1 cursor-pointer border border-white/10"
+                          >
+                            <Edit2 className="w-3 h-3" />
+                            <span>Sửa</span>
+                          </button>
+                          <button
+                            onClick={() => handleDeleteClientItem(client.id)}
+                            className="p-1.5 rounded-xl bg-white/5 hover:bg-red-500 text-white/60 hover:text-white transition-colors cursor-pointer border border-white/10"
+                            title="Xóa khách hàng"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Sticky Bottom Save Bar for Clients */}
+            <StickySaveBar
+              isSaved={savedAlerts.clients}
+              onSave={handleSaveClientsTab}
+              isSyncing={isCloudSyncing}
+              label="Lưu Danh Sách Khách Hàng"
+              hint="Nhớ bấm lưu để đồng bộ danh sách khách hàng lên Cloud"
+            />
+          </div>
+        )}
 
           {/* Tab 2: Trang Chủ & Banner (Tích hợp: Slide Banner + Tùm Lum Tà La + Chữ Chạy + Hiệu Ứng) */}
           {activeTab === 'home' && (
@@ -1826,6 +2116,7 @@ export default function CMSPage({ onBackToPortfolio }) {
                 projects: localProjects,
                 coverBanners: localCoverBanners,
                 randomWorks: localRandomWorks,
+                clients: localClients,
                 marqueeItems: localMarqueeItems,
                 seasonalEffect: localSeasonalEffect,
               });
@@ -1841,6 +2132,14 @@ export default function CMSPage({ onBackToPortfolio }) {
         project={editingProject}
         onClose={() => setIsEditorOpen(false)}
         onSave={handleSaveProject}
+      />
+
+      {/* Client Memory Editor Modal */}
+      <ClientEditorModal
+        isOpen={isClientModalOpen}
+        client={editingClient}
+        onClose={() => setIsClientModalOpen(false)}
+        onSave={handleSaveClientFromModal}
       />
 
       {/* Juxtapose Before/After Embed Modal */}

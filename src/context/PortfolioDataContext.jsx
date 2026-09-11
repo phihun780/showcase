@@ -3,6 +3,7 @@ import { projects as defaultProjects } from '../data/projects';
 import { profile as defaultProfile } from '../data/profile';
 import { defaultRandomWorks } from '../data/randomWorks';
 import { defaultCoverBanners } from '../data/coverBanners';
+import { defaultClients } from '../data/clients';
 import { savePortfolioDataToR2, fetchPortfolioDataFromR2 } from '../utils/r2Storage';
 
 const PortfolioDataContext = createContext(null);
@@ -11,6 +12,7 @@ const STORAGE_PROJECTS_KEY = 'phihung_portfolio_projects';
 const STORAGE_PROFILE_KEY = 'phihung_portfolio_profile';
 const STORAGE_RANDOM_WORKS_KEY = 'phihung_portfolio_random_works';
 const STORAGE_COVER_BANNERS_KEY = 'phihung_portfolio_cover_banners';
+const STORAGE_CLIENTS_KEY = 'phihung_portfolio_clients';
 const STORAGE_SEASONAL_EFFECT_KEY = 'phihung_portfolio_seasonal_effect';
 const STORAGE_MARQUEE_KEY = 'phihung_portfolio_marquee';
 
@@ -90,6 +92,20 @@ export function PortfolioDataProvider({ children }) {
     return defaultRandomWorks;
   });
 
+  // Load clients from localStorage or default
+  const [clients, setClients] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_CLIENTS_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {
+      console.error("Failed to load clients from localStorage", e);
+    }
+    return defaultClients;
+  });
+
   // Load marquee text items
   const [marqueeItems, setMarqueeItems] = useState(() => {
     try {
@@ -144,6 +160,9 @@ export function PortfolioDataProvider({ children }) {
           if (Array.isArray(cloudData.randomWorks)) {
             setRandomWorks(cloudData.randomWorks);
           }
+          if (Array.isArray(cloudData.clients)) {
+            setClients(cloudData.clients);
+          }
           if (Array.isArray(cloudData.marqueeItems) && cloudData.marqueeItems.length > 0) {
             setMarqueeItems(cloudData.marqueeItems);
           }
@@ -182,6 +201,7 @@ export function PortfolioDataProvider({ children }) {
       projects,
       coverBanners,
       randomWorks,
+      clients,
       marqueeItems,
       seasonalEffect,
     };
@@ -203,6 +223,10 @@ export function PortfolioDataProvider({ children }) {
       if (Array.isArray(customPayload.randomWorks)) {
         setRandomWorks(customPayload.randomWorks);
         try { localStorage.setItem(STORAGE_RANDOM_WORKS_KEY, JSON.stringify(customPayload.randomWorks)); } catch (e) {}
+      }
+      if (Array.isArray(customPayload.clients)) {
+        setClients(customPayload.clients);
+        try { localStorage.setItem(STORAGE_CLIENTS_KEY, JSON.stringify(customPayload.clients)); } catch (e) {}
       }
       if (Array.isArray(customPayload.marqueeItems)) {
         setMarqueeItems(customPayload.marqueeItems);
@@ -244,9 +268,10 @@ export function PortfolioDataProvider({ children }) {
     safeSet(STORAGE_SEASONAL_EFFECT_KEY, seasonalEffect);
     safeSet(STORAGE_COVER_BANNERS_KEY, coverBanners);
     safeSet(STORAGE_RANDOM_WORKS_KEY, randomWorks);
+    safeSet(STORAGE_CLIENTS_KEY, clients);
     safeSet(STORAGE_PROJECTS_KEY, projects);
     safeSet(STORAGE_PROFILE_KEY, profile);
-  }, [marqueeItems, seasonalEffect, coverBanners, randomWorks, projects, profile]);
+  }, [marqueeItems, seasonalEffect, coverBanners, randomWorks, clients, projects, profile]);
 
   // 3. Auto-sync to Cloudflare R2 ONLY when user has made real edits in CMS
   useEffect(() => {
@@ -260,7 +285,7 @@ export function PortfolioDataProvider({ children }) {
     }, 1500);
 
     return () => clearTimeout(timer);
-  }, [projects, profile, coverBanners, randomWorks, marqueeItems, seasonalEffect]);
+  }, [projects, profile, coverBanners, randomWorks, clients, marqueeItems, seasonalEffect]);
 
   // Project CRUD Actions
   const addProject = (newProjectData) => {
@@ -415,6 +440,54 @@ export function PortfolioDataProvider({ children }) {
     setRandomWorks(newList);
   };
 
+  // Client Memories CRUD Actions (Kỷ Niệm & Khách Hàng)
+  const addClient = (clientData) => {
+    hasUserEditedRef.current = true;
+    const generatedId = `client-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    const newClient = {
+      id: clientData?.id || generatedId,
+      clientName: (clientData?.clientName && clientData.clientName.trim()) || 'Khách hàng mới',
+      service: (clientData?.service && clientData.service.trim()) || 'Graphic Design',
+      year: clientData?.year || `${new Date().getFullYear()}`,
+      logo: clientData?.logo || '',
+      coverImage: clientData?.coverImage || '',
+      gallery: Array.isArray(clientData?.gallery) ? clientData.gallery : [],
+      note: clientData?.note || '',
+      link: clientData?.link || '',
+      featured: Boolean(clientData?.featured),
+    };
+    setClients(prev => [newClient, ...prev]);
+    return newClient;
+  };
+
+  const updateClient = (id, updatedData) => {
+    hasUserEditedRef.current = true;
+    setClients(prev => prev.map(item => (item.id === id ? { ...item, ...updatedData } : item)));
+  };
+
+  const deleteClient = (idOrIdx) => {
+    hasUserEditedRef.current = true;
+    setClients(prev => prev.filter((item, idx) => item.id !== idOrIdx && idx !== idOrIdx));
+  };
+
+  const moveClient = (index, direction) => {
+    hasUserEditedRef.current = true;
+    setClients(prev => {
+      const newArr = [...prev];
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= newArr.length) return prev;
+      const temp = newArr[index];
+      newArr[index] = newArr[targetIndex];
+      newArr[targetIndex] = temp;
+      return newArr;
+    });
+  };
+
+  const updateClientsList = (newList) => {
+    hasUserEditedRef.current = true;
+    setClients(newList);
+  };
+
   // Marquee Actions
   const addMarqueeItem = (text) => {
     if (!text || !text.trim()) return;
@@ -450,12 +523,14 @@ export function PortfolioDataProvider({ children }) {
       localStorage.removeItem(STORAGE_PROFILE_KEY);
       localStorage.removeItem(STORAGE_COVER_BANNERS_KEY);
       localStorage.removeItem(STORAGE_RANDOM_WORKS_KEY);
+      localStorage.removeItem(STORAGE_CLIENTS_KEY);
       localStorage.removeItem(STORAGE_SEASONAL_EFFECT_KEY);
       localStorage.removeItem(STORAGE_MARQUEE_KEY);
       setProjects(defaultProjects);
       setProfile(defaultProfile);
       setCoverBanners(defaultCoverBanners);
       setRandomWorks(defaultRandomWorks);
+      setClients(defaultClients);
       setSeasonalEffect('none');
       setMarqueeItems(defaultMarqueeItems);
       return true;
@@ -471,6 +546,7 @@ export function PortfolioDataProvider({ children }) {
       projects,
       coverBanners,
       randomWorks,
+      clients,
       marqueeItems,
       seasonalEffect,
     };
@@ -503,6 +579,9 @@ export function PortfolioDataProvider({ children }) {
           if (parsed.randomWorks && Array.isArray(parsed.randomWorks)) {
             setRandomWorks(parsed.randomWorks);
           }
+          if (parsed.clients && Array.isArray(parsed.clients)) {
+            setClients(parsed.clients);
+          }
           if (parsed.marqueeItems && Array.isArray(parsed.marqueeItems)) {
             setMarqueeItems(parsed.marqueeItems);
           }
@@ -526,6 +605,7 @@ export function PortfolioDataProvider({ children }) {
         profile,
         coverBanners,
         randomWorks,
+        clients,
         marqueeItems,
         seasonalEffect,
         addProject,
@@ -544,6 +624,11 @@ export function PortfolioDataProvider({ children }) {
         deleteRandomWork,
         moveRandomWork,
         updateRandomWorksList,
+        addClient,
+        updateClient,
+        deleteClient,
+        moveClient,
+        updateClientsList,
         addMarqueeItem,
         deleteMarqueeItem,
         updateMarqueeItem,
