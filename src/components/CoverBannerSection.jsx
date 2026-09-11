@@ -186,8 +186,13 @@ export default function CoverBannerSection() {
                 Cố tình KHÔNG transition aspect-ratio: đó là thuộc tính layout, animate
                 nó bắt trình duyệt reflow mỗi khung hình ngay vùng hero, và nếu transition
                 bị ngắt giữa chừng thì khung kẹt luôn ở tỷ lệ cũ. */}
+            {/* ring thay cho border: ring là box-shadow nên KHÔNG chiếm chỗ trong
+                layout. Dùng border-2 thì viền ăn mất 4px mỗi chiều của content box,
+                khiến ô chứa ảnh lệch 2.13% so với aspect-ratio đặt trên border box
+                — đủ để hở một sợi ảnh nền phía dưới.
+                ios-rounded-clip: xem chú thích trong index.css. */}
             <div
-              className={`relative w-full rounded-2xl sm:rounded-3xl overflow-hidden bg-black border-2 border-white/10 shadow-2xl select-none group touch-pan-y ${
+              className={`relative w-full rounded-2xl sm:rounded-3xl overflow-hidden bg-black ring-2 ring-white/10 shadow-2xl select-none group touch-pan-y ios-rounded-clip ${
                 ratio ? '' : 'aspect-[16/9] sm:aspect-[21/9]'
               }`}
               style={ratio ? { aspectRatio: String(ratio) } : undefined}

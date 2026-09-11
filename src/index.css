@@ -241,3 +241,24 @@ img {
 
 
 
+
+/* iOS Safari: ép cắt đúng theo border-radius
+ *
+ * VẤN ĐỀ: Safari trên iOS không cắt phần tử con theo bo góc của cha khi con được
+ * đẩy lên GPU — ảnh object-fit, phần tử có clip-path, lớp có transform. Kết quả
+ * là nội dung tràn ra ngoài mép bo tròn: ở banner Before/After nó làm hở một sợi
+ * ảnh "Sau" (nền) dọc mép dưới, dù hai ảnh chồng khít nhau.
+ *
+ * CÁCH CHỮA: đặt một mặt nạ. Mặt nạ WebKit tính theo kênh alpha, mà cả white lẫn
+ * black đều đục hoàn toàn, nên hình ảnh không đổi chút nào — nhưng nó buộc Safari
+ * tạo lớp cắt riêng và tôn trọng border-radius.
+ *
+ * Giới hạn trong @supports (-webkit-touch-callout: none) — chỉ iOS Safari mới có
+ * thuộc tính này — để không đụng gì tới Chrome, Firefox hay Safari trên máy tính.
+ */
+@supports (-webkit-touch-callout: none) {
+  .ios-rounded-clip {
+    isolation: isolate;
+    -webkit-mask-image: -webkit-radial-gradient(white, black);
+  }
+}
