@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect, lazy, Suspense } from 'react';
 import { PortfolioDataProvider, usePortfolioData } from './context/PortfolioDataContext';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -9,8 +9,21 @@ import AboutSection from './components/AboutSection';
 import Footer from './components/Footer';
 import CursorSpotlight from './components/CursorSpotlight';
 import SeasonalAtmosphere from './components/SeasonalAtmosphere';
-import CMSPage from './components/CMS/CMSPage';
 import ErrorBoundary from './components/ErrorBoundary';
+
+// CMS chỉ mình chủ trang dùng, nhưng nó nặng hơn cả phần portfolio cộng lại.
+// Tách riêng để khách vào xem trang không phải tải kèm toàn bộ trình quản trị.
+const CMSPage = lazy(() => import('./components/CMS/CMSPage'));
+
+// Màn hình chờ trong lúc tải gói CMS (chỉ chớp qua một nhịp ở lần vào đầu tiên)
+function CMSLoadingScreen() {
+  return (
+    <div className="min-h-screen w-full bg-[#08080A] flex flex-col items-center justify-center gap-4">
+      <div className="w-10 h-10 rounded-2xl border-2 border-[#C3EA39]/25 border-t-[#C3EA39] animate-spin" />
+      <p className="text-xs font-mono text-white/40 tracking-wider">Đang mở CMS...</p>
+    </div>
+  );
+}
 
 // Multi-layer Anti-Theft & Content Protection Shield (Active on live production domains)
 function SecurityShield() {
@@ -264,7 +277,11 @@ function PortfolioApp() {
 
   // If on /cms, show full CMS Dashboard
   if (currentPath === '/cms') {
-    return <CMSPage onBackToPortfolio={() => navigateTo('/')} />;
+    return (
+      <Suspense fallback={<CMSLoadingScreen />}>
+        <CMSPage onBackToPortfolio={() => navigateTo('/')} />
+      </Suspense>
+    );
   }
 
   // Otherwise, render main Portfolio

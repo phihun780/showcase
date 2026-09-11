@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { usePortfolioData } from '../context/PortfolioDataContext';
 import ProjectModal from './ProjectModal';
+import SmartImage from './SmartImage';
 
 export default function WorkSection() {
   const { projects, profile } = usePortfolioData();
@@ -79,15 +80,19 @@ export default function WorkSection() {
                 const isActive = selectedIndex === idx;
 
                 return (
-                  <motion.div
+                  <motion.button
                     key={item.id}
+                    type="button"
                     initial={{ opacity: 0, x: -30 }}
                     whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: true, margin: "-50px" }}
                     transition={{ duration: 0.5, delay: idx * 0.08, ease: [0.16, 1, 0.3, 1] }}
                     onMouseEnter={() => setSelectedIndex(idx)}
+                    onFocus={() => setSelectedIndex(idx)}
                     onClick={() => setSelectedIndex(idx)}
-                    className={`cursor-pointer rounded-2xl transition-all duration-300 relative overflow-hidden ${
+                    aria-pressed={isActive}
+                    aria-label={`Xem dự án ${item.title}${item.year ? `, năm ${item.year}` : ''}`}
+                    className={`w-full text-left cursor-pointer rounded-2xl transition-all duration-300 relative overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C3EA39] focus-visible:ring-offset-2 focus-visible:ring-offset-[#08080A] ${
                       isScrollable ? 'py-3 sm:py-3.5 px-5 sm:px-6 min-h-[58px] sm:min-h-[75px]' : 'flex-1 py-3 sm:py-3.5 px-5 sm:px-6'
                     } flex items-center justify-between ${
                       isActive
@@ -100,11 +105,14 @@ export default function WorkSection() {
                       <span className={`font-mono font-bold text-xs ${isActive ? 'text-[#C3EA39]' : 'text-white/40'}`}>
                         {idx < 9 ? `0${idx + 1}` : idx + 1}
                       </span>
-                      <h3 className={`font-bold text-sm sm:text-base uppercase tracking-tight transition-colors ${
+                      {/* span chứ không phải h3: tiêu đề thật của dự án đang chọn
+                          nằm ở khung preview bên phải, để h3 ở đây sẽ trùng lặp
+                          và cũng không được phép nằm trong <button>. */}
+                      <span className={`font-bold text-sm sm:text-base uppercase tracking-tight transition-colors ${
                         isActive ? 'text-white' : 'text-white/60'
                       }`}>
                         {item.title}
-                      </h3>
+                      </span>
                     </div>
 
                     {/* Right: Year */}
@@ -113,7 +121,7 @@ export default function WorkSection() {
                     }`}>
                       {item.year}
                     </span>
-                  </motion.div>
+                  </motion.button>
                 );
               })}
 
@@ -171,16 +179,20 @@ export default function WorkSection() {
               transition={{ duration: 0.7, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
               className="lg:col-span-7 flex flex-col justify-center h-full"
             >
+              {/* Cả thẻ vẫn bấm được bằng chuột, nhưng phần tử nhận focus là cái
+                  <button> bọc tiêu đề bên dưới — nó phủ kín thẻ bằng ::after.
+                  Nhờ vậy <h3> giữ nguyên (không thể đặt h3 trong button). */}
               <div
-                onClick={() => setActiveProjectModal(currentProject)}
-                className="group cursor-pointer relative aspect-[16/10] w-full rounded-3xl overflow-hidden bg-black border-2 border-white/10 hover:border-[#C3EA39] transition-all duration-500 shadow-2xl flex flex-col justify-end p-6 sm:p-8"
+                className="group cursor-pointer relative aspect-[16/10] w-full rounded-3xl overflow-hidden bg-black border-2 border-white/10 hover:border-[#C3EA39] focus-within:border-[#C3EA39] transition-all duration-500 shadow-2xl flex flex-col justify-end p-6 sm:p-8 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[#C3EA39] has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-[#08080A]"
               >
                 {/* Dynamic Project Image */}
                 {currentProject.coverImage && (
-                  <img
+                  <SmartImage
                     key={currentProject.coverImage}
                     src={currentProject.coverImage}
                     alt={currentProject.title}
+                    /* Desktop: cột 7/12 của khung 1280px. Mobile: trọn bề ngang trừ lề */
+                    sizes="(min-width: 1024px) 740px, calc(100vw - 40px)"
                     onContextMenu={(e) => e.preventDefault()}
                     onDragStart={(e) => e.preventDefault()}
                     loading="lazy"
@@ -195,7 +207,14 @@ export default function WorkSection() {
                 {/* Bottom Clean Project Info */}
                 <div className="relative z-10 space-y-1 sm:space-y-1.5">
                   <h3 className="text-lg sm:text-xl md:text-2xl font-bold uppercase text-white tracking-tight group-hover:text-[#C3EA39] transition-colors">
-                    {currentProject.title}
+                    <button
+                      type="button"
+                      onClick={() => setActiveProjectModal(currentProject)}
+                      aria-label={`Mở chi tiết dự án ${currentProject.title}`}
+                      className="text-left cursor-pointer focus:outline-none after:absolute after:inset-0 after:z-20 after:content-['']"
+                    >
+                      {currentProject.title}
+                    </button>
                   </h3>
                   <p className="text-xs sm:text-sm text-white/70 font-light max-w-lg line-clamp-1">
                     {currentProject.subtitle}

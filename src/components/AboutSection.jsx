@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Download, ArrowUpRight, Check, Copy, Loader2, Sparkles } from 'lucide-react';
 import { usePortfolioData } from '../context/PortfolioDataContext';
+import SmartImage from './SmartImage';
 
 export default function AboutSection() {
   const { profile } = usePortfolioData();
@@ -110,9 +111,11 @@ export default function AboutSection() {
             {/* Visual Photo Card */}
             <div className="relative rounded-3xl overflow-hidden h-full min-h-[380px] sm:min-h-[440px] bg-[#121216] border border-white/10 group flex flex-col justify-end">
               {profile.avatar || profile.image ? (
-                <img
+                <SmartImage
                   src={profile.avatar || profile.image}
                   alt={profile.name}
+                  /* Desktop: cột 5/12 của khung 1280px. Mobile: trọn bề ngang trừ lề */
+                  sizes="(min-width: 1024px) 520px, calc(100vw - 40px)"
                   onContextMenu={(e) => e.preventDefault()}
                   onDragStart={(e) => e.preventDefault()}
                   loading="lazy"

@@ -3,7 +3,32 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, SlidersHorizontal, ChevronLeft, ChevronRight, Layers } from 'lucide-react';
 import { usePortfolioData } from '../context/PortfolioDataContext';
 import BeforeAfterSlider from './BeforeAfterSlider';
+import SmartImage from './SmartImage';
 import { extractEmbedSrc, extractJuxtaposeUid } from '../utils/juxtaposeUtils';
+
+// Khung banner bám theo đúng tỷ lệ của ảnh, thay vì đóng cứng 16/9 - 21/9.
+//
+// VÌ SAO: khung cố định + object-cover nghĩa là ảnh nào không đúng tỷ lệ đó sẽ
+// bị xén. Với ảnh 2048x762 (tỷ lệ 2.69) thì khung 16/9 trên mobile xén mất 34%
+// bề ngang — chữ hai bên mép banner bị cắt cụt.
+//
+// Chặn trên/dưới để một tấm ảnh vuông hay quá dài cũng không làm vỡ bố cục.
+const RATIO_MIN = 1.6;
+const RATIO_MAX = 3.2;
+
+function clampRatio(r) {
+  if (!Number.isFinite(r) || r <= 0) return null;
+  return Math.min(RATIO_MAX, Math.max(RATIO_MIN, r));
+}
+
+// Ảnh đại diện cho tỷ lệ của một banner. Banner nhúng iframe thì không đo được.
+function measurableImage(banner) {
+  if (!banner) return null;
+  if (banner.beforeImage && banner.afterImage) return banner.afterImage;
+  const isEmbed = banner.type === 'embed' || Boolean(banner.embedCode || banner.embedUrl);
+  if (isEmbed) return null;
+  return banner.image || null;
+}
 
 // Juxtapose / Image Banner Renderer
 function BannerItem({ banner, isActive }) {
@@ -23,6 +48,8 @@ function BannerItem({ banner, isActive }) {
           afterImage={banner.afterImage}
           beforeLabel={banner.beforeLabel || ''}
           afterLabel={banner.afterLabel || ''}
+          /* Khung tối đa 1280px trừ lề; dưới đó chiếm trọn bề ngang */
+          sizes="(min-width: 1360px) 1280px, calc(100vw - 40px)"
         />
       </div>
     );
@@ -56,9 +83,10 @@ function BannerItem({ banner, isActive }) {
         isActive ? 'opacity-100 scale-100 z-10' : 'opacity-0 scale-105 z-0'
       }`}
     >
-      <img
+      <SmartImage
         src={banner.image}
         alt={banner.title || 'Banner'}
+        sizes="(min-width: 1360px) 1280px, calc(100vw - 40px)"
         onContextMenu={(e) => e.preventDefault()}
         onDragStart={(e) => e.preventDefault()}
         loading={isActive ? 'eager' : 'lazy'}
@@ -77,6 +105,27 @@ export default function CoverBannerSection() {
   const banners = coverBanners || [];
   const safeIndex = currentIndex < banners.length ? currentIndex : 0;
   const currentBanner = banners[safeIndex];
+
+  // Đo tỷ lệ thật của banner đang hiển thị.
+  const [ratio, setRatio] = useState(null);
+  const measureSrc = measurableImage(currentBanner);
+
+  useEffect(() => {
+    if (!measureSrc) {
+      setRatio(null);
+      return;
+    }
+    let alive = true;
+    const img = new Image();
+    img.onload = () => {
+      if (alive && img.naturalHeight > 0) {
+        setRatio(clampRatio(img.naturalWidth / img.naturalHeight));
+      }
+    };
+    img.onerror = () => alive && setRatio(null);
+    img.src = measureSrc;
+    return () => { alive = false; };
+  }, [measureSrc]);
 
   // Auto rotate: 5.5s for static images, 14s for interactive Juxtapose embeds
   useEffect(() => {
@@ -133,7 +182,16 @@ export default function CoverBannerSection() {
             className="relative"
           >
             {/* Widescreen Banner Container (Responsive 16:9 Mobile / 21:9 Desktop) */}
-            <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] rounded-2xl sm:rounded-3xl overflow-hidden bg-black border-2 border-white/10 shadow-2xl select-none group touch-pan-y">
+            {/* Không có tỷ lệ đo được (banner nhúng iframe) thì quay về khung mặc định.
+                Cố tình KHÔNG transition aspect-ratio: đó là thuộc tính layout, animate
+                nó bắt trình duyệt reflow mỗi khung hình ngay vùng hero, và nếu transition
+                bị ngắt giữa chừng thì khung kẹt luôn ở tỷ lệ cũ. */}
+            <div
+              className={`relative w-full rounded-2xl sm:rounded-3xl overflow-hidden bg-black border-2 border-white/10 shadow-2xl select-none group touch-pan-y ${
+                ratio ? '' : 'aspect-[16/9] sm:aspect-[21/9]'
+              }`}
+              style={ratio ? { aspectRatio: String(ratio) } : undefined}
+            >
               
               {/* Render All Banners */}
               {banners.map((banner, idx) => (

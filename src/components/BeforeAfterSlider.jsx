@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
+import SmartImage from './SmartImage';
 
 export default function BeforeAfterSlider({
   beforeImage,
@@ -7,6 +8,8 @@ export default function BeforeAfterSlider({
   afterLabel = '',
   initialPosition = 50,
   className = '',
+  // Bề ngang ảnh sẽ chiếm trên màn hình, để trình duyệt chọn đúng cỡ.
+  sizes = '100vw',
 }) {
   const [position, setPosition] = useState(initialPosition);
   const [isDragging, setIsDragging] = useState(false);
@@ -53,10 +56,12 @@ export default function BeforeAfterSlider({
       className={`relative w-full h-full overflow-hidden select-none cursor-ew-resize touch-none ${className}`}
     >
       {/* 1. Background Image (After / Right Image) */}
-      <img
+      <SmartImage
         src={afterImage}
         alt={afterLabel || 'Sau (After)'}
+        sizes={sizes}
         draggable={false}
+        decoding="async"
         className="absolute inset-0 w-full h-full object-cover pointer-events-none"
       />
       {afterLabel && (
@@ -70,10 +75,12 @@ export default function BeforeAfterSlider({
         className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden"
         style={{ clipPath: `inset(0 ${100 - position}% 0 0)` }}
       >
-        <img
+        <SmartImage
           src={beforeImage}
           alt={beforeLabel || 'Trước (Before)'}
+          sizes={sizes}
           draggable={false}
+          decoding="async"
           className="absolute inset-0 w-full h-full object-cover pointer-events-none"
         />
         {beforeLabel && (

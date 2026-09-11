@@ -1,4 +1,5 @@
 import { uploadToR2 } from './r2Storage';
+import { RESPONSIVE_WIDTHS, withResponsiveMarker, variantUrl } from './responsiveImage';
 
 /**
  * Client-Side High-Fidelity Image Optimizer
@@ -160,26 +161,115 @@ export function getProjectFolderPath(projectOrTitle, id = null) {
 export async function optimizeAndUploadToR2(file, folderPrefix = 'uploads') {
   const optimized = await optimizeImageFile(file);
   const ext = optimized.isGif ? 'gif' : 'webp';
-  const cleanName = file.name ? file.name.replace(/[^a-zA-Z0-9.-]/g, '_').toLowerCase() : `img.${ext}`;
-  const key = `${folderPrefix}/${Date.now()}_${cleanName}`;
+
+  // Ép đúng đuôi theo định dạng THẬT sau khi nén. Trước đây tên file giữ nguyên
+  // đuôi gốc (vd ".png") dù nội dung đã là WebP, gây nhầm lẫn khi xem kho R2.
+  const rawName = file.name
+    ? file.name.replace(/[^a-zA-Z0-9.-]/g, '_').toLowerCase().replace(/\.[^.]+$/, '')
+    : 'img';
+
+  return uploadWithVariants({
+    blob: optimized.blob,
+    dataUrl: optimized.dataUrl,
+    width: optimized.width || 0,
+    mimeType: optimized.format,
+    folderPrefix,
+    baseName: rawName,
+    ext,
+    skipVariants: optimized.isGif,
+    isGif: optimized.isGif,
+  });
+}
+
+/**
+ * Tải một ảnh lên R2 kèm các bản thu nhỏ.
+ *
+ * Dùng chung cho cả luồng tải ảnh thường lẫn luồng cắt ảnh trong CMS — nhờ vậy
+ * mọi ảnh vào kho đều có srcset, không phụ thuộc người dùng bấm đường nào.
+ *
+ * An toàn: dựng và tải TẤT CẢ bản thu nhỏ trước; chỉ khi mọi bản đều xong thì
+ * ảnh gốc mới mang tên có đánh dấu. Hỏng bất kỳ bước nào -> ảnh gốc giữ tên
+ * thường, trang web chạy như cũ, không bao giờ có srcset trỏ vào file rỗng.
+ */
+export async function uploadWithVariants({
+  blob,
+  dataUrl,
+  width,
+  mimeType = 'image/webp',
+  folderPrefix = 'uploads',
+  baseName = 'img',
+  ext = 'webp',
+  skipVariants = false,
+  isGif = false,
+}) {
+  const stamp = Date.now();
+  const variantWidths = skipVariants || !width
+    ? []
+    : RESPONSIVE_WIDTHS.filter(w => w <= width * 0.9);
+
+  let ladder = [];
+  let variants = [];
+  if (variantWidths.length > 0) {
+    try {
+      variants = await Promise.all(
+        variantWidths.map(async (w) => ({
+          width: w,
+          blob: await resizeToWidth(dataUrl, w, mimeType),
+        }))
+      );
+      ladder = [...variantWidths, width];
+    } catch (err) {
+      console.warn('Không dựng được bản thu nhỏ, dùng một mình ảnh gốc:', err);
+      ladder = [];
+      variants = [];
+    }
+  }
+
+  const fileName = ladder.length > 0
+    ? withResponsiveMarker(`${baseName}.${ext}`, ladder)
+    : `${baseName}.${ext}`;
+  const key = `${folderPrefix}/${stamp}_${fileName}`;
 
   try {
-    // Attempt direct upload to Cloudflare R2
-    const uploadRes = await uploadToR2(optimized.blob || optimized.dataUrl, key, optimized.format);
-    return {
-      url: uploadRes.url,
-      isR2: true,
-      isGif: optimized.isGif,
-      format: optimized.format,
-    };
+    if (variants.length > 0) {
+      await Promise.all(
+        variants.map(v => uploadToR2(v.blob, variantUrl(key, v.width), mimeType))
+      );
+    }
+
+    const uploadRes = await uploadToR2(blob || dataUrl, key, mimeType);
+    return { url: uploadRes.url, isR2: true, isGif, format: mimeType, widths: ladder };
   } catch (err) {
     console.warn('R2 direct upload failed, using local base64 fallback:', err);
-    // Graceful fallback to dataUrl
-    return {
-      url: optimized.dataUrl,
-      isR2: false,
-      isGif: optimized.isGif,
-      format: optimized.format,
-    };
+    return { url: dataUrl, isR2: false, isGif, format: mimeType, widths: [] };
   }
+}
+
+/**
+ * Vẽ lại ảnh ở một bề ngang nhỏ hơn. Dùng chất lượng 0.86 — bản thu nhỏ được
+ * xem ở kích thước nhỏ nên không cần 0.90 như ảnh gốc.
+ */
+function resizeToWidth(sourceDataUrl, targetWidth, mimeType = 'image/webp') {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const ratio = targetWidth / img.naturalWidth;
+      const canvas = document.createElement('canvas');
+      canvas.width = targetWidth;
+      canvas.height = Math.max(1, Math.round(img.naturalHeight * ratio));
+
+      const ctx = canvas.getContext('2d');
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      canvas.toBlob(
+        b => (b ? resolve(b) : reject(new Error('toBlob trả về null'))),
+        mimeType === 'image/gif' ? 'image/webp' : mimeType,
+        0.86
+      );
+    };
+    img.onerror = () => reject(new Error('Không giải mã được ảnh để thu nhỏ'));
+    img.src = sourceDataUrl;
+  });
 }

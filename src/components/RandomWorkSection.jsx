@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePortfolioData } from '../context/PortfolioDataContext';
+import SmartImage from './SmartImage';
 
 export default function RandomWorkSection() {
   const { randomWorks, profile } = usePortfolioData();
@@ -80,9 +81,11 @@ export default function RandomWorkSection() {
                             : 'opacity-0 z-0 pointer-events-none'
                         }`}
                       >
-                        <img
+                        <SmartImage
                           src={item.image}
                           alt={item.title || `Random Artwork ${idx + 1}`}
+                          /* Mobile: gần trọn bề ngang. Desktop: cột 7/12, tối đa 700px */
+                          sizes="(min-width: 1024px) 700px, calc(100vw - 40px)"
                           onContextMenu={(e) => e.preventDefault()}
                           onDragStart={(e) => e.preventDefault()}
                           loading="lazy"

@@ -9,7 +9,8 @@ import {
   Image as ImageIcon,
   Link as LinkIcon,
   Trash2,
-  Sparkles
+  Sparkles,
+  Loader2
 } from 'lucide-react';
 import { extractEmbedSrc } from '../../utils/juxtaposeUtils';
 import BeforeAfterSlider from '../BeforeAfterSlider';
@@ -27,7 +28,8 @@ export default function JuxtaposeEmbedModal({ isOpen, initialData, onSave, onClo
   const [showAfterUrl, setShowAfterUrl] = useState(false);
   const [isBeforeDragging, setIsBeforeDragging] = useState(false);
   const [isAfterDragging, setIsAfterDragging] = useState(false);
-  
+  const [uploadingCount, setUploadingCount] = useState(0);
+
   // Embed code state
   const [embedCode, setEmbedCode] = useState('');
   const [previewSrc, setPreviewSrc] = useState('');
@@ -74,13 +76,28 @@ export default function JuxtaposeEmbedModal({ isOpen, initialData, onSave, onClo
     setShowAfterUrl(false);
   }, [isOpen, initialData]);
 
-  const processFile = (file, setter) => {
+  // Nén ảnh rồi đẩy thẳng lên R2, chỉ giữ lại đường link trong portfolio.json.
+  // KHÔNG nhúng base64 vào đây: ảnh banner nằm trong dữ liệu sẽ khiến mọi khách
+  // vào trang phải tải nguyên tấm ảnh trước khi thấy nội dung, và làm tràn
+  // localStorage trên Safari.
+  const processFile = async (file, setter) => {
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setter(ev.target.result);
-    };
-    reader.readAsDataURL(file);
+    setUploadingCount((n) => n + 1);
+    try {
+      const { url, isR2 } = await optimizeAndUploadToR2(file, 'cover_banners');
+      if (!isR2) {
+        alert(
+          'Không tải được ảnh lên kho R2 — kiểm tra kết nối rồi thử lại.\n' +
+          'Ảnh chỉ đang hiển thị tạm trên máy bạn, lưu lại sẽ làm trang web nặng lên rất nhiều.'
+        );
+      }
+      setter(url);
+    } catch (err) {
+      console.error('Cover banner upload failed:', err);
+      alert('Tải ảnh lên thất bại. Vui lòng thử lại.');
+    } finally {
+      setUploadingCount((n) => n - 1);
+    }
   };
 
   const handleBeforeFileUpload = (e) => {
@@ -103,6 +120,11 @@ export default function JuxtaposeEmbedModal({ isOpen, initialData, onSave, onClo
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    if (uploadingCount > 0) {
+      alert('Ảnh đang được tải lên, đợi một chút rồi lưu nhé.');
+      return;
+    }
 
     if (activeMode === 'direct') {
       if (!beforeImage.trim() || !afterImage.trim()) {
@@ -141,6 +163,7 @@ export default function JuxtaposeEmbedModal({ isOpen, initialData, onSave, onClo
   };
 
   const hasDirectImages = Boolean(beforeImage && afterImage);
+  const isUploading = uploadingCount > 0;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-2.5 sm:p-5 animate-fadeIn">
@@ -288,11 +311,20 @@ export default function JuxtaposeEmbedModal({ isOpen, initialData, onSave, onClo
                         : 'border-white/10 hover:border-[#C3EA39]/50 bg-black/30 hover:bg-black/50'
                     }`}
                   >
-                    <Upload className="w-5 h-5 text-white/30 group-hover:text-[#C3EA39] group-hover:scale-110 transition-all mb-1" />
-                    <span className="text-xs font-mono font-bold text-white/70 group-hover:text-white">
-                      Tải ảnh Trước
-                    </span>
-                    <span className="text-[10px] font-mono text-white/30">Kéo thả hoặc bấm vào đây</span>
+                    {isUploading ? (
+                      <>
+                        <Loader2 className="w-5 h-5 text-[#C3EA39] animate-spin mb-1" />
+                        <span className="text-xs font-mono font-bold text-white/70">Đang nén &amp; tải lên...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-5 h-5 text-white/30 group-hover:text-[#C3EA39] group-hover:scale-110 transition-all mb-1" />
+                        <span className="text-xs font-mono font-bold text-white/70 group-hover:text-white">
+                          Tải ảnh Trước
+                        </span>
+                        <span className="text-[10px] font-mono text-white/30">Kéo thả hoặc bấm vào đây</span>
+                      </>
+                    )}
                   </div>
                 )}
 
@@ -396,11 +428,20 @@ export default function JuxtaposeEmbedModal({ isOpen, initialData, onSave, onClo
                         : 'border-white/10 hover:border-[#C3EA39]/50 bg-black/30 hover:bg-black/50'
                     }`}
                   >
-                    <Upload className="w-5 h-5 text-white/30 group-hover:text-[#C3EA39] group-hover:scale-110 transition-all mb-1" />
-                    <span className="text-xs font-mono font-bold text-white/70 group-hover:text-white">
-                      Tải ảnh Sau
-                    </span>
-                    <span className="text-[10px] font-mono text-white/30">Kéo thả hoặc bấm vào đây</span>
+                    {isUploading ? (
+                      <>
+                        <Loader2 className="w-5 h-5 text-[#C3EA39] animate-spin mb-1" />
+                        <span className="text-xs font-mono font-bold text-white/70">Đang nén &amp; tải lên...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-5 h-5 text-white/30 group-hover:text-[#C3EA39] group-hover:scale-110 transition-all mb-1" />
+                        <span className="text-xs font-mono font-bold text-white/70 group-hover:text-white">
+                          Tải ảnh Sau
+                        </span>
+                        <span className="text-[10px] font-mono text-white/30">Kéo thả hoặc bấm vào đây</span>
+                      </>
+                    )}
                   </div>
                 )}
 
@@ -539,10 +580,20 @@ export default function JuxtaposeEmbedModal({ isOpen, initialData, onSave, onClo
           <button
             type="submit"
             form="juxtapose-modal-form"
-            className="px-5 py-2 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black font-display font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md shadow-[#C3EA39]/15 hover:scale-[1.01] active:scale-95 min-h-[38px]"
+            disabled={isUploading}
+            className="px-5 py-2 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black font-display font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md shadow-[#C3EA39]/15 hover:scale-[1.01] active:scale-95 min-h-[38px] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
           >
-            <Check className="w-4 h-4" />
-            <span>Lưu Banner</span>
+            {isUploading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Đang tải ảnh...</span>
+              </>
+            ) : (
+              <>
+                <Check className="w-4 h-4" />
+                <span>Lưu Banner</span>
+              </>
+            )}
           </button>
         </div>
 

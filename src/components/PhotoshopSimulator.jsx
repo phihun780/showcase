@@ -73,11 +73,12 @@ export default function PhotoshopSimulator() {
   const activeArtwork = ARTWORKS.find((a) => a.id === selectedArtworkId) || ARTWORKS[0];
 
   // Stage timeline tracking for realistic Photoshop status updates
+  //
+  // Chạy trên CẢ mobile: phần vẽ SVG vốn luôn chạy ở mọi thiết bị (framer-motion
+  // trong chính các <path>), nên nếu ở đây nhảy thẳng sang 'complete' thì dòng
+  // trạng thái báo "100% Vector Complete" trong khi hình vẫn đang vẽ dở.
+  // Ba cái setTimeout này gần như không tốn gì.
   useEffect(() => {
-    if (isMobile) {
-      setDrawStage('complete');
-      return;
-    }
     setDrawStage('drawing');
     const t1 = setTimeout(() => setDrawStage('coloring'), 1600);
     const t2 = setTimeout(() => setDrawStage('detailing'), 2700);
@@ -88,17 +89,19 @@ export default function PhotoshopSimulator() {
       clearTimeout(t2);
       clearTimeout(t3);
     };
-  }, [selectedArtworkId, animKey, isMobile]);
+  }, [selectedArtworkId, animKey]);
 
-  // Auto switch between Cat and Dog on desktop only
+  // Tự đổi qua lại Mèo <-> Chó, chạy trên cả mobile lẫn desktop.
+  // Chỉ là một setInterval 10 giây nên không ảnh hưởng hiệu năng; thứ nặng trên
+  // iOS là hiệu ứng nghiêng 3D và khối trôi lơ lửng — mấy cái đó vẫn tắt ở
+  // mobile qua biến isMobile bên dưới.
   useEffect(() => {
-    if (isMobile) return;
     const timer = setInterval(() => {
       setSelectedArtworkId((prev) => (prev === 'cat' ? 'dog' : 'cat'));
       setAnimKey((k) => k + 1);
     }, 10000);
     return () => clearInterval(timer);
-  }, [isMobile]);
+  }, []);
 
   const handleSelectAnimal = (id) => {
     setSelectedArtworkId(id);
@@ -255,6 +258,7 @@ export default function PhotoshopSimulator() {
             <button
               onClick={handleReplay}
               title="Vẽ lại từ đầu"
+              aria-label="Vẽ lại từ đầu"
               className="p-1 rounded bg-[#202020] hover:bg-[#333] border border-[#3e3e3e] text-[#aaa] hover:text-white transition-colors cursor-pointer"
             >
               <RotateCcw className="w-3 h-3 sm:w-3.5 sm:h-3.5" />

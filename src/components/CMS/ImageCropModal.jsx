@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { X, Check, ZoomIn, ZoomOut, RotateCcw, Crop, Sparkles, Loader2, Maximize2 } from 'lucide-react';
-import { uploadToR2 } from '../../utils/r2Storage';
+import { uploadWithVariants } from '../../utils/imageOptimizer';
 
 const FILTER_PRESETS = [
   {
@@ -389,13 +389,25 @@ export default function ImageCropModal({
           ? 'profile'
           : 'projects';
       }
-      const key = `${finalPrefix}/${Date.now()}_${isOgMode ? 'og' : 'cropped'}.${outputExt}`;
+      const baseName = isOgMode ? 'og' : 'cropped';
 
       exportCanvas.toBlob(
         async (blob) => {
           if (blob) {
             try {
-              const res = await uploadToR2(blob, key, outputType);
+              // Đi qua uploadWithVariants để ảnh cắt cũng có bản thu nhỏ, giống
+              // hệt luồng tải ảnh thường. Ảnh dùng cho thẻ og: thì bỏ qua, vì
+              // Facebook/Zalo cần đúng một đường dẫn cố định 1200x630.
+              const res = await uploadWithVariants({
+                blob,
+                dataUrl,
+                width: exportCanvas.width,
+                mimeType: outputType,
+                folderPrefix: finalPrefix,
+                baseName,
+                ext: outputExt,
+                skipVariants: isOgMode,
+              });
               if (res && res.url) {
                 onCropComplete(res.url);
                 setIsSaving(false);
