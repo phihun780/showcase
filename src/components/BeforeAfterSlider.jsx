@@ -15,18 +15,32 @@ export default function BeforeAfterSlider({
   const [isDragging, setIsDragging] = useState(false);
 
   const containerRef = useRef(null);
-  const clipRef = useRef(null);      // lớp bọc ảnh "Trước"
+  const clipRef = useRef(null);      // khung cắt ảnh "Trước"
+  const counterRef = useRef(null);   // lớp kéo ngược để ảnh đứng yên
   const dividerRef = useRef(null);   // vạch chia + tay nắm
 
   // Vị trí sống trong lúc kéo. React KHÔNG dựng lại giao diện theo cái này.
   const posRef = useRef(initialPosition);
   const rectRef = useRef(null);      // kích thước khung, đo 1 lần lúc chạm xuống
 
-  // Ghi thẳng vào DOM. Đây là lý do kéo mượt: mỗi lần ngón tay nhúc nhích
-  // chỉ đổi 2 thuộc tính CSS, không đụng gì tới React.
+  // Ghi thẳng vào DOM, và CHỈ dùng transform.
+  //
+  // VÌ SAO KHÔNG DÙNG clip-path VÀ left:
+  //   clip-path -> Safari phải VẼ LẠI cả tấm ảnh 2048px mỗi khung hình
+  //   left: %   -> đổi vị trí bắt trình duyệt TÍNH LẠI LAYOUT mỗi khung hình
+  // Cả hai đều chạy trên CPU nên trên điện thoại là giật cục, nhảy từng nấc.
+  //
+  // transform thì trình duyệt đẩy thẳng xuống GPU: không vẽ lại, không tính
+  // lại layout, chỉ dịch chuyển lớp đã có sẵn.
+  //
+  // CÁCH CẮT BẰNG TRANSFORM: khung ngoài (overflow hidden) dịch sang TRÁI d%,
+  // lớp trong dịch sang PHẢI đúng d% để ảnh đứng nguyên tại chỗ. Phần ảnh lòi
+  // ra khỏi khung ngoài bị cắt -> còn lại đúng dải bên trái rộng pos%.
   const paint = useCallback((pos) => {
-    if (clipRef.current) clipRef.current.style.clipPath = `inset(0 ${100 - pos}% 0 0)`;
-    if (dividerRef.current) dividerRef.current.style.left = `${pos}%`;
+    const d = 100 - pos;
+    if (clipRef.current) clipRef.current.style.transform = `translateX(-${d}%)`;
+    if (counterRef.current) counterRef.current.style.transform = `translateX(${d}%)`;
+    if (dividerRef.current) dividerRef.current.style.transform = `translateX(${pos}%)`;
   }, []);
 
   // Vẽ NGAY trong sự kiện, không qua requestAnimationFrame.
@@ -122,37 +136,55 @@ export default function BeforeAfterSlider({
         ref={clipRef}
         className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden"
         style={{
-          clipPath: `inset(0 ${100 - position}% 0 0)`,
+          transform: `translateX(-${100 - position}%)`,
           // Chỉ báo trước lúc đang kéo; để thường trực sẽ giữ một lớp GPU
           // riêng suốt thời gian trang mở, tốn bộ nhớ vô ích.
-          willChange: isDragging ? 'clip-path' : undefined,
+          willChange: isDragging ? 'transform' : undefined,
         }}
       >
-        <SmartImage
-          src={beforeImage}
-          alt={beforeLabel || 'Trước (Before)'}
-          sizes={sizes}
-          draggable={false}
-          decoding="async"
-          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-        />
-        {beforeLabel && (
-          <span className="absolute bottom-4 left-4 px-2.5 py-1 rounded-lg bg-black/80 backdrop-blur-md text-white text-[11px] font-mono pointer-events-none z-10 border border-white/10 shadow-lg">
-            {beforeLabel}
-          </span>
-        )}
+        {/* Kéo ngược lại đúng bằng khung ngoài, để ảnh đứng yên tại chỗ */}
+        <div
+          ref={counterRef}
+          className="absolute inset-0 w-full h-full"
+          style={{
+            transform: `translateX(${100 - position}%)`,
+            willChange: isDragging ? 'transform' : undefined,
+          }}
+        >
+          <SmartImage
+            src={beforeImage}
+            alt={beforeLabel || 'Trước (Before)'}
+            sizes={sizes}
+            draggable={false}
+            decoding="async"
+            className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+          />
+          {beforeLabel && (
+            <span className="absolute bottom-4 left-4 px-2.5 py-1 rounded-lg bg-black/80 backdrop-blur-md text-white text-[11px] font-mono pointer-events-none z-10 border border-white/10 shadow-lg">
+              {beforeLabel}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* 3. Divider Line & Interactive Handle */}
+      {/* Lớp bọc rộng bằng cả khung: translateX theo % ở đây là % của BỀ NGANG
+          KHUNG, nên dịch đúng vị trí. Nếu đặt transform thẳng lên vạch 2px thì
+          % sẽ tính theo 2px đó — sai hoàn toàn. */}
       <div
         ref={dividerRef}
-        className="absolute top-0 bottom-0 w-[2px] bg-white shadow-[0_0_12px_rgba(0,0,0,0.8)] z-20 pointer-events-none"
-        style={{ left: `${position}%`, willChange: isDragging ? 'left' : undefined }}
+        className="absolute inset-0 z-20 pointer-events-none"
+        style={{
+          transform: `translateX(${position}%)`,
+          willChange: isDragging ? 'transform' : undefined,
+        }}
       >
-        <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white text-black shadow-2xl border-2 border-black/80 flex items-center justify-center pointer-events-auto cursor-grab active:cursor-grabbing hover:scale-110 active:scale-95 transition-transform">
-          <div className="flex items-center gap-0.5 text-[9px] font-bold text-black select-none">
-            <span>◀</span>
-            <span>▶</span>
+        <div className="absolute top-0 bottom-0 left-0 w-[2px] bg-white shadow-[0_0_12px_rgba(0,0,0,0.8)]">
+          <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white text-black shadow-2xl border-2 border-black/80 flex items-center justify-center pointer-events-auto cursor-grab active:cursor-grabbing hover:scale-110 active:scale-95 transition-transform">
+            <div className="flex items-center gap-0.5 text-[9px] font-bold text-black select-none">
+              <span>◀</span>
+              <span>▶</span>
+            </div>
           </div>
         </div>
       </div>
