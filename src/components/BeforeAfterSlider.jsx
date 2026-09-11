@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useLayoutEffect } from 'react';
 import SmartImage from './SmartImage';
 
 export default function BeforeAfterSlider({
@@ -13,41 +13,88 @@ export default function BeforeAfterSlider({
 }) {
   const [position, setPosition] = useState(initialPosition);
   const [isDragging, setIsDragging] = useState(false);
-  const containerRef = useRef(null);
 
-  const handleMove = useCallback((clientX) => {
-    if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const x = clientX - rect.left;
-    const newPos = Math.max(0, Math.min(100, (x / rect.width) * 100));
-    setPosition(newPos);
+  const containerRef = useRef(null);
+  const clipRef = useRef(null);      // lớp bọc ảnh "Trước"
+  const dividerRef = useRef(null);   // vạch chia + tay nắm
+
+  // Vị trí sống trong lúc kéo. React KHÔNG dựng lại giao diện theo cái này.
+  const posRef = useRef(initialPosition);
+  const rectRef = useRef(null);      // kích thước khung, đo 1 lần lúc chạm xuống
+
+  // Ghi thẳng vào DOM. Đây là lý do kéo mượt: mỗi lần ngón tay nhúc nhích
+  // chỉ đổi 2 thuộc tính CSS, không đụng gì tới React.
+  const paint = useCallback((pos) => {
+    if (clipRef.current) clipRef.current.style.clipPath = `inset(0 ${100 - pos}% 0 0)`;
+    if (dividerRef.current) dividerRef.current.style.left = `${pos}%`;
   }, []);
 
+  // Vẽ NGAY trong sự kiện, không qua requestAnimationFrame.
+  // Trình duyệt vốn đã gộp pointermove theo nhịp khung hình, nên bọc thêm rAF
+  // chỉ đẩy phần vẽ sang khung sau — tức là thêm một khung trễ, đúng thứ làm
+  // thanh trượt có cảm giác chạy sau ngón tay. Ghi style không bắt tính lại
+  // layout ngay; trình duyệt tự dồn lại xử lý một lần trước khi vẽ.
+  const moveTo = useCallback((clientX) => {
+    const rect = rectRef.current;
+    if (!rect || !rect.width) return;
+    const pos = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
+    posRef.current = pos;
+    paint(pos);
+  }, [paint]);
+
+  // Gỡ listener của lần kéo hiện tại.
+  const detachRef = useRef(null);
+
   const handlePointerDown = (e) => {
+    // Đo khung MỘT lần ở đây thay vì mỗi lần ngón tay di chuyển. Gọi
+    // getBoundingClientRect() trong pointermove buộc trình duyệt tính lại
+    // layout liên tục — chính là thứ gây cảm giác kéo bị trễ.
+    rectRef.current = containerRef.current?.getBoundingClientRect() || null;
+    moveTo(e.clientX);
     setIsDragging(true);
-    handleMove(e.clientX);
+
+    // Giữ con trỏ/ngón tay bám vào phần tử này kể cả khi trượt ra ngoài.
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* trình duyệt cũ */ }
+
+    // Gắn listener NGAY tại đây, không qua useEffect. Nếu chờ effect thì phải
+    // đợi React render xong mới gắn được, và những lần ngón tay nhúc nhích
+    // sớm nhất sẽ rơi mất — cảm giác là thanh trượt "đơ" một nhịp lúc bắt đầu.
+    detachRef.current?.();
+
+    const onMove = (ev) => moveTo(ev.clientX);
+    const onUp = () => {
+      detachRef.current?.();
+      setIsDragging(false);
+      // Chốt lại vào state để React và DOM khớp nhau sau khi thả tay.
+      setPosition(posRef.current);
+    };
+    // Khung có thể đổi kích thước giữa chừng (xoay ngang máy) -> đo lại.
+    const onResize = () => {
+      rectRef.current = containerRef.current?.getBoundingClientRect() || null;
+    };
+
+    window.addEventListener('pointermove', onMove, { passive: true });
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
+    window.addEventListener('resize', onResize);
+
+    detachRef.current = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
+      window.removeEventListener('resize', onResize);
+      detachRef.current = null;
+    };
   };
 
-  useEffect(() => {
-    const handlePointerMove = (e) => {
-      if (!isDragging) return;
-      handleMove(e.clientX);
-    };
+  // Dọn sạch nếu component bị gỡ giữa lúc đang kéo.
+  useEffect(() => () => detachRef.current?.(), []);
 
-    const handlePointerUp = () => {
-      setIsDragging(false);
-    };
-
-    if (isDragging) {
-      window.addEventListener('pointermove', handlePointerMove);
-      window.addEventListener('pointerup', handlePointerUp);
-    }
-
-    return () => {
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerup', handlePointerUp);
-    };
-  }, [isDragging, handleMove]);
+  // Nếu React dựng lại giao diện giữa lúc đang kéo (vd banner tự đổi slide),
+  // style inline sẽ quay về giá trị cũ trong state — vẽ đè lại ngay để không giật.
+  useLayoutEffect(() => {
+    paint(isDragging ? posRef.current : position);
+  }, [position, isDragging, paint]);
 
   return (
     <div
@@ -72,8 +119,14 @@ export default function BeforeAfterSlider({
 
       {/* 2. Foreground Image (Before / Left Image - Clipped by Slider) */}
       <div
+        ref={clipRef}
         className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden"
-        style={{ clipPath: `inset(0 ${100 - position}% 0 0)` }}
+        style={{
+          clipPath: `inset(0 ${100 - position}% 0 0)`,
+          // Chỉ báo trước lúc đang kéo; để thường trực sẽ giữ một lớp GPU
+          // riêng suốt thời gian trang mở, tốn bộ nhớ vô ích.
+          willChange: isDragging ? 'clip-path' : undefined,
+        }}
       >
         <SmartImage
           src={beforeImage}
@@ -92,8 +145,9 @@ export default function BeforeAfterSlider({
 
       {/* 3. Divider Line & Interactive Handle */}
       <div
+        ref={dividerRef}
         className="absolute top-0 bottom-0 w-[2px] bg-white shadow-[0_0_12px_rgba(0,0,0,0.8)] z-20 pointer-events-none"
-        style={{ left: `${position}%` }}
+        style={{ left: `${position}%`, willChange: isDragging ? 'left' : undefined }}
       >
         <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white text-black shadow-2xl border-2 border-black/80 flex items-center justify-center pointer-events-auto cursor-grab active:cursor-grabbing hover:scale-110 active:scale-95 transition-transform">
           <div className="flex items-center gap-0.5 text-[9px] font-bold text-black select-none">
