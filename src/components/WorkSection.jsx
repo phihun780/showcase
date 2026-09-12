@@ -13,8 +13,11 @@ export default function WorkSection() {
   const previewRef = useRef(null);
   const [originRect, setOriginRect] = useState(null);
 
-  const openProject = (project) => {
-    const r = previewRef.current?.getBoundingClientRect();
+  // choBay: chỉ bay khi khung preview ĐANG hiện đúng dự án này. Bấm một hàng
+  // chưa được chọn (hay gặp trên điện thoại vì không có rê chuột) mà vẫn bay
+  // thì ảnh sẽ vọt ra từ khung đang hiện dự án khác — trông như nhảy lung tung.
+  const openProject = (project, choBay = true) => {
+    const r = choBay ? previewRef.current?.getBoundingClientRect() : null;
     setOriginRect(r ? { left: r.left, top: r.top, width: r.width, height: r.height } : null);
     setActiveProjectModal(project);
     // Đẩy URL riêng lên thanh địa chỉ -> copy link gửi được, và nút Back đóng modal.
@@ -143,9 +146,17 @@ export default function WorkSection() {
                     transition={{ duration: 0.5, delay: idx * 0.08, ease: [0.16, 1, 0.3, 1] }}
                     onMouseEnter={() => setSelectedIndex(idx)}
                     onFocus={() => setSelectedIndex(idx)}
-                    onClick={() => setSelectedIndex(idx)}
-                    aria-pressed={isActive}
-                    aria-label={`Xem dự án ${item.title}${item.year ? `, năm ${item.year}` : ''}`}
+                    /* Bấm vào hàng là MỞ dự án luôn. Trước đây nó chỉ đổi ảnh
+                       preview, nên ai bấm vào tên dự án cũng tưởng trang hỏng —
+                       phải bấm tiếp vào ảnh bên phải mới ra nội dung. */
+                    onClick={() => {
+                      const dangHien = selectedIndex === idx;
+                      setSelectedIndex(idx);
+                      openProject(item, dangHien);
+                    }}
+                    aria-haspopup="dialog"
+                    aria-current={isActive ? 'true' : undefined}
+                    aria-label={`Mở dự án ${item.title}${item.year ? `, năm ${item.year}` : ''}`}
                     className={`w-full text-left cursor-pointer rounded-2xl transition-all duration-300 relative overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C3EA39] focus-visible:ring-offset-2 focus-visible:ring-offset-[#08080A] ${
                       isScrollable ? 'py-3 sm:py-3.5 px-5 sm:px-6 min-h-[58px] sm:min-h-[75px]' : 'flex-1 py-3 sm:py-3.5 px-5 sm:px-6'
                     } flex items-center justify-between ${
