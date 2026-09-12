@@ -6,6 +6,7 @@ import CoverBannerSection from './components/CoverBannerSection';
 import RandomWorkSection from './components/RandomWorkSection';
 import WorkSection from './components/WorkSection';
 import AboutSection from './components/AboutSection';
+import ClientMemoriesSection from './components/ClientMemoriesSection';
 import Footer from './components/Footer';
 import CursorSpotlight from './components/CursorSpotlight';
 import SeasonalAtmosphere from './components/SeasonalAtmosphere';
@@ -331,6 +332,7 @@ function PortfolioApp() {
         <CoverBannerSection />
         <RandomWorkSection />
         <WorkSection />
+        <ClientMemoriesSection />
         <AboutSection />
       </main>
 

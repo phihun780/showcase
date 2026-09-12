@@ -8,7 +8,9 @@ const TOKEN_TTL_MS = 12 * 60 * 60 * 1000;
 
 // Chỉ những thư mục này mới được phép ghi/xoá. Thư mục "data" (chứa
 // portfolio.json) cố tình không có ở đây để không thể bị xoá nhầm.
-const WRITABLE_FOLDERS = ['projects', 'cover_banners', 'random_works', 'profile', 'uploads'];
+// "clients" là nơi chứa logo và ảnh của các brand đã làm việc cùng
+// (clients/, clients/logos/, clients/gallery/).
+const WRITABLE_FOLDERS = ['projects', 'cover_banners', 'random_works', 'profile', 'clients', 'uploads'];
 
 export function json(data, status = 200) {
   return new Response(JSON.stringify(data), {

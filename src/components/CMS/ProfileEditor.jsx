@@ -39,8 +39,13 @@ export default function ProfileEditor({ profile, onSave }) {
     section02Number: profile?.section02Number || '02',
     section02Title: profile?.section02Title || 'Dự án của tui',
 
-    section03Number: profile?.section03Number || '03',
-    section03Title: profile?.section03Title || 'Về tui',
+    // Mục "Về tui" chuyển sang số 04 vì mục Brand chen vào vị trí 03.
+    // Kế thừa giá trị cũ để tuỳ chỉnh của người dùng không mất.
+    section04Number: profile?.section04Number || '04',
+    section04Title: profile?.section04Title || profile?.section03Title || 'Về tui',
+    // Mục Brand đã làm việc cùng
+    sectionClientsNumber: profile?.sectionClientsNumber || '03',
+    sectionClientsTitle: profile?.sectionClientsTitle || 'Bạn đồng hành',
     cvButtonText: profile?.cvButtonText || 'TẢI CV / RESUME (PDF)',
 
     // Footer Customization
@@ -88,8 +93,10 @@ export default function ProfileEditor({ profile, onSave }) {
         section01Subtitle: profile.section01Subtitle ?? prev.section01Subtitle,
         section02Number: profile.section02Number ?? prev.section02Number,
         section02Title: profile.section02Title ?? prev.section02Title,
-        section03Number: profile.section03Number ?? prev.section03Number,
-        section03Title: profile.section03Title ?? prev.section03Title,
+        section04Number: profile.section04Number ?? prev.section04Number,
+        section04Title: profile.section04Title ?? prev.section04Title,
+        sectionClientsNumber: profile.sectionClientsNumber ?? prev.sectionClientsNumber,
+        sectionClientsTitle: profile.sectionClientsTitle ?? prev.sectionClientsTitle,
         cvButtonText: profile.cvButtonText ?? prev.cvButtonText,
         footerCopyright: profile.footerCopyright ?? prev.footerCopyright,
         footerTagline: profile.footerTagline ?? prev.footerTagline,
@@ -745,9 +752,9 @@ export default function ProfileEditor({ profile, onSave }) {
               <label className="text-xs font-mono text-white/70 uppercase block">Số mục</label>
               <input
                 type="text"
-                value={formData.section03Number || ''}
-                placeholder="03"
-                onChange={(e) => setFormData({ ...formData, section03Number: e.target.value })}
+                value={formData.section04Number || ''}
+                placeholder="04"
+                onChange={(e) => setFormData({ ...formData, section04Number: e.target.value })}
                 className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-[#C3EA39] font-mono font-bold text-center text-base sm:text-xs"
               />
             </div>
@@ -756,9 +763,9 @@ export default function ProfileEditor({ profile, onSave }) {
               <label className="text-xs font-mono text-white/70 uppercase block">Tiêu đề mục</label>
               <input
                 type="text"
-                value={formData.section03Title || ''}
+                value={formData.section04Title || ''}
                 placeholder="Về tui"
-                onChange={(e) => setFormData({ ...formData, section03Title: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, section04Title: e.target.value })}
                 className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white font-bold text-base sm:text-xs"
               />
             </div>

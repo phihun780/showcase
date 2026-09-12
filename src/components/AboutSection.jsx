@@ -89,10 +89,10 @@ export default function AboutSection() {
         >
           <div className="flex items-baseline gap-3 sm:gap-4">
             <span className="text-3xl sm:text-4xl md:text-5xl font-mono font-extrabold text-[#C3EA39]">
-              {profile?.section03Number || '03'}
+              {profile?.section04Number || '04'}
             </span>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight">
-              {profile?.section03Title || 'Về tui'}
+              {profile?.section04Title || profile?.section03Title || 'Về tui'}
             </h2>
           </div>
         </motion.div>
