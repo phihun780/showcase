@@ -10,6 +10,7 @@ import Footer from './components/Footer';
 import CursorSpotlight from './components/CursorSpotlight';
 import SeasonalAtmosphere from './components/SeasonalAtmosphere';
 import ErrorBoundary from './components/ErrorBoundary';
+import { PROJECT_ROUTE } from './utils/projectUrl';
 
 // CMS chỉ mình chủ trang dùng, nhưng nó nặng hơn cả phần portfolio cộng lại.
 // Tách riêng để khách vào xem trang không phải tải kèm toàn bộ trình quản trị.
@@ -235,10 +236,14 @@ function PortfolioApp() {
       if (typeof window !== 'undefined') {
         const rawPath = (window.location.pathname || '').toLowerCase().replace(/\/+$/, '') || '/';
         if (
-          rawPath !== '/' && 
-          rawPath !== '/cms' && 
-          !rawPath.endsWith('/cms') && 
-          !rawPath.startsWith('/api')
+          rawPath !== '/' &&
+          rawPath !== '/cms' &&
+          !rawPath.endsWith('/cms') &&
+          !rawPath.startsWith('/api') &&
+          // Trang chi tiết dự án (/du-an/<slug>) là đường dẫn hợp lệ — WorkSection
+          // tự quản lý nó. Không loại trừ ở đây thì link chia sẻ vừa mở đã bị
+          // xoá ngay về "/" và người nhận không thấy dự án nào.
+          !rawPath.startsWith(PROJECT_ROUTE)
         ) {
           window.history.replaceState({}, '', '/');
         }

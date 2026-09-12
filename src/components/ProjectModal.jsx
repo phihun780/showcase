@@ -1,12 +1,45 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { projectUrl } from '../utils/projectUrl';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ArrowRight, ArrowLeft, ArrowUp, Layers } from 'lucide-react';
+import { X, ArrowRight, ArrowLeft, ArrowUp, Layers, Share2, Check } from 'lucide-react';
+
+// Chép chuỗi vào bộ nhớ tạm, trả về true/false.
+//
+// navigator.clipboard là cách chuẩn nhưng nó TỪ CHỐI khi trang không có focus,
+// hoặc khi trang chạy http:// thay vì https://. Nên phải có đường lui: tạo một
+// ô textarea ẩn, bôi đen rồi gọi execCommand('copy') — cách cũ nhưng chạy được
+// ở những chỗ API mới bị chặn.
+async function chepVaoBoNhoTam(text) {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch { /* rơi xuống cách dự phòng bên dưới */ }
+
+  try {
+    const o = document.createElement('textarea');
+    o.value = text;
+    o.setAttribute('readonly', '');
+    // Đặt ngoài tầm nhìn nhưng VẪN nằm trong layout — display:none thì không bôi đen được.
+    o.style.cssText = 'position:fixed;top:0;left:-9999px;opacity:0;';
+    document.body.appendChild(o);
+    o.select();
+    o.setSelectionRange(0, text.length);
+    const xong = document.execCommand('copy');
+    document.body.removeChild(o);
+    return xong;
+  } catch {
+    return false;
+  }
+}
 
 export default function ProjectModal({ project, isOpen, originRect, onClose, onSelectNextProject }) {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [shareState, setShareState] = useState('idle'); // 'idle' | 'copied' | 'failed'
   const containerRef = useRef(null);
   const coverRef = useRef(null);
 
@@ -137,6 +170,32 @@ export default function ProjectModal({ project, isOpen, originRect, onClose, onS
     }
   };
 
+  // Chia sẻ link riêng của dự án.
+  // Trên điện thoại ưu tiên bảng chia sẻ của hệ điều hành (gửi thẳng qua Zalo,
+  // Messenger...); máy tính không có thì chép vào bộ nhớ tạm.
+  const handleShare = async () => {
+    const url = projectUrl(project);
+    const duLieu = { title: project.title, text: project.subtitle || project.title, url };
+
+    if (navigator.share && navigator.canShare?.(duLieu)) {
+      try {
+        await navigator.share(duLieu);
+        return;
+      } catch (err) {
+        // Người dùng bấm huỷ bảng chia sẻ -> không phải lỗi, cũng không chép link.
+        if (err?.name === 'AbortError') return;
+      }
+    }
+
+    if (await chepVaoBoNhoTam(url)) {
+      setShareState('copied');
+      setTimeout(() => setShareState('idle'), 2200);
+    } else {
+      setShareState('failed');
+      setTimeout(() => setShareState('idle'), 4000);
+    }
+  };
+
   const handleNextProjectClick = (e) => {
     e?.stopPropagation();
     if (containerRef.current) {
@@ -261,15 +320,38 @@ export default function ProjectModal({ project, isOpen, originRect, onClose, onS
               <span>QUAY LẠI DANH SÁCH</span>
             </button>
 
-            {onSelectNextProject && (
+            <div className="flex items-center gap-2 sm:gap-3">
+              <button
+                type="button"
+                onClick={handleShare}
+                aria-label={`Chia sẻ dự án ${project.title}`}
+                className="px-4 py-2.5 rounded-full border border-white/20 hover:border-[#C3EA39] bg-white/5 hover:bg-[#C3EA39]/10 text-white hover:text-[#C3EA39] font-display font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer"
+              >
+                {shareState === 'copied' ? (
+                  <>
+                    <Check className="w-3.5 h-3.5" />
+                    <span>ĐÃ CHÉP LINK</span>
+                  </>
+                ) : shareState === 'failed' ? (
+                  <span className="normal-case tracking-normal">Chép không được — bấm giữ thanh địa chỉ để copy</span>
+                ) : (
+                  <>
+                    <Share2 className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">CHIA SẺ</span>
+                  </>
+                )}
+              </button>
+
+              {onSelectNextProject && (
               <button
                 onClick={handleNextProjectClick}
                 className="px-5 py-2.5 rounded-full bg-[#C3EA39] hover:bg-[#d4f854] text-black font-display font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-[1.02] cursor-pointer"
               >
                 <span>DỰ ÁN TIẾP THEO</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            )}
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
           </div>
 
         </div>

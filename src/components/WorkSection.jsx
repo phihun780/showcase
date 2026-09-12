@@ -1,8 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { usePortfolioData } from '../context/PortfolioDataContext';
 import ProjectModal from './ProjectModal';
 import SmartImage from './SmartImage';
+import { projectPath, slugFromLocation, findProjectBySlug } from '../utils/projectUrl';
 
 export default function WorkSection() {
   const { projects, profile } = usePortfolioData();
@@ -16,7 +17,45 @@ export default function WorkSection() {
     const r = previewRef.current?.getBoundingClientRect();
     setOriginRect(r ? { left: r.left, top: r.top, width: r.width, height: r.height } : null);
     setActiveProjectModal(project);
+    // Đẩy URL riêng lên thanh địa chỉ -> copy link gửi được, và nút Back đóng modal.
+    window.history.pushState({ duAn: project.id }, '', projectPath(project));
   };
+
+  const closeProject = () => {
+    setActiveProjectModal(null);
+    setOriginRect(null);
+    // Lùi lại đúng một bước thay vì đẩy thêm "/" mới, để bấm Back nhiều lần
+    // không phải đi ngược qua một chuỗi dài các lần mở modal.
+    if (window.history.state?.duAn) window.history.back();
+    else window.history.replaceState({}, '', '/');
+  };
+
+  // Đồng bộ hai chiều giữa URL và modal.
+  useEffect(() => {
+    if (projects.length === 0) return;
+
+    const dongBo = () => {
+      const slug = slugFromLocation();
+      const duAn = findProjectBySlug(projects, slug);
+      if (duAn) {
+        const idx = projects.findIndex(p => p.id === duAn.id);
+        if (idx >= 0) setSelectedIndex(idx);
+        // Mở từ link dán thẳng vào trình duyệt thì không có điểm xuất phát để bay.
+        setOriginRect(null);
+        setActiveProjectModal(duAn);
+      } else {
+        setActiveProjectModal(null);
+        setOriginRect(null);
+        // Link tới dự án đã bị xoá/đổi tên: đưa về trang chủ thay vì để lại một
+        // đường dẫn rác trên thanh địa chỉ.
+        if (slug) window.history.replaceState({}, '', '/');
+      }
+    };
+
+    dongBo();                                     // lúc tải trang: /du-an/<slug> -> mở luôn
+    window.addEventListener('popstate', dongBo);  // Back/Forward -> đóng/mở theo
+    return () => window.removeEventListener('popstate', dongBo);
+  }, [projects]);
 
   const safeIndex = selectedIndex < projects.length ? selectedIndex : 0;
   const currentProject = projects[safeIndex] || projects[0] || {};
@@ -28,6 +67,9 @@ export default function WorkSection() {
     // bay từ chỗ khuất ra trông như ảnh nhảy lung tung.
     setOriginRect(null);
     setActiveProjectModal(projects[nextIdx]);
+    // replaceState chứ không pushState: bấm "tiếp theo" 6 lần rồi bấm Back
+    // không nên phải bấm 6 lần mới thoát ra.
+    window.history.replaceState({ duAn: projects[nextIdx].id }, '', projectPath(projects[nextIdx]));
   };
 
   const MIN_SLOTS = 5;
@@ -258,7 +300,7 @@ export default function WorkSection() {
         project={activeProjectModal}
         isOpen={Boolean(activeProjectModal)}
         originRect={originRect}
-        onClose={() => setActiveProjectModal(null)}
+        onClose={closeProject}
         onSelectNextProject={handleNextProject}
       />
     </section>
