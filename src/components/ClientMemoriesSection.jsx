@@ -4,6 +4,51 @@ import { usePortfolioData } from '../context/PortfolioDataContext';
 import ClientMemoryModal from './ClientMemoryModal';
 import { HeartHandshake } from 'lucide-react';
 
+
+// Vị trí và độ sâu của từng brand trong không gian.
+//
+// Ngẫu nhiên nhưng TẤT ĐỊNH: sinh từ chỉ số chứ không phải Math.random().
+// Dùng Math.random() thì mỗi lần React dựng lại là cả đám nhảy chỗ.
+function ngauNhien(hat) {
+  const x = Math.sin(hat * 12.9898) * 43758.5453;
+  return x - Math.floor(x);           // 0..1, luôn ra cùng kết quả với cùng hạt
+}
+
+// Chia khung thành các ô rồi thả mỗi brand vào một ô kèm xê dịch nhẹ.
+// Rải tự do hoàn toàn thì với nhiều brand sẽ có cái chồng lên nhau; cách này
+// trông vẫn ngẫu nhiên mà chắc chắn không đè nhau.
+function viTriBrand(idx, tong) {
+  const cot = tong <= 3 ? tong : tong <= 8 ? 3 : 4;
+  const hang = Math.ceil(tong / cot);
+  const c = idx % cot;
+  const h = Math.floor(idx / cot);
+
+  // Trả về vị trí dạng TỈ LỆ 0..1, còn việc chừa lề để cho CSS calc() lo.
+  //
+  // Chừa lề bằng % thì màn rộng cũng chừa đúng ngần ấy % — đo ở 1280px thấy
+  // các brand dồn hết vào dải 34%-66%, hai bên trống hoác. Chừa bằng px thì
+  // lề luôn vừa đúng nửa bề ngang một brand, bất kể khung to hay nhỏ.
+  const rongO = 1 / cot;
+  const caoO = 1 / hang;
+
+  // Xê dịch trong lòng ô, chừa mép để không dính viền
+  const lechX = (ngauNhien(idx * 3 + 1) - 0.5) * rongO * 0.42;
+  const lechY = (ngauNhien(idx * 7 + 2) - 0.5) * caoO * 0.42;
+
+  // Độ sâu 0 = xa nhất, 1 = gần nhất
+  const sau = 0.25 + ngauNhien(idx * 11 + 5) * 0.75;
+
+  return {
+    // 0..1 — ghép vào calc() ở JSX
+    fx: Math.min(1, Math.max(0, rongO * (c + 0.5) + lechX)),
+    fy: Math.min(1, Math.max(0, caoO * (h + 0.5) + lechY)),
+    sau,
+    tiLe: 0.58 + sau * 0.42,          // xa thì nhỏ, gần thì to
+    mo: 0.32 + sau * 0.68,            // xa thì mờ
+    nhoe: (1 - sau) * 1.6,            // xa thì nhoè nhẹ
+  };
+}
+
 export default function ClientMemoriesSection() {
   const { clients, profile } = usePortfolioData();
   const clientList = clients || [];
@@ -39,25 +84,31 @@ export default function ClientMemoriesSection() {
     return () => mq.removeEventListener('change', capNhat);
   }, []);
 
-  // Nghiêng ô theo vị trí con trỏ. Ghi THẲNG vào style, không qua React state:
-  // pointermove bắn liên tục, để React dựng lại cả lưới mỗi lần là giật ngay.
-  const nghiengTheoChuot = useCallback((e) => {
+  // Rê chuột trong khung thì cả cảnh dịch theo, mỗi brand dịch một mức khác
+  // nhau tuỳ độ sâu — cái ở gần chạy nhanh, cái ở xa chạy chậm. Đó là thứ tạo
+  // cảm giác nhìn vào một không gian có chiều sâu thật.
+  //
+  // Chỉ ghi hai biến CSS, còn việc ghép transform để cho CSS lo. Nhờ vậy phần
+  // phóng to/thu nhỏ theo độ sâu không bị JS ghi đè mất.
+  const raiTheoChuot = useCallback((e) => {
     if (!co3D) return;
-    const o = e.currentTarget;
-    const lop = o.querySelector('[data-nghieng]');
-    if (!lop) return;
-    const r = o.getBoundingClientRect();
-    // -1..1 tính từ tâm ô
-    const x = ((e.clientX - r.left) / r.width) * 2 - 1;
+    const khung = e.currentTarget;
+    const r = khung.getBoundingClientRect();
+    const x = ((e.clientX - r.left) / r.width) * 2 - 1;   // -1..1
     const y = ((e.clientY - r.top) / r.height) * 2 - 1;
-    const DO_NGHIENG = 11;
-    lop.style.transform =
-      `rotateY(${x * DO_NGHIENG}deg) rotateX(${-y * DO_NGHIENG}deg) translateZ(26px)`;
+    for (const el of khung.querySelectorAll('[data-sau]')) {
+      const sau = parseFloat(el.dataset.sau) || 0;
+      const bien = 26 * sau;
+      el.style.setProperty('--dx', `${-x * bien}px`);
+      el.style.setProperty('--dy', `${-y * bien * 0.6}px`);
+    }
   }, [co3D]);
 
-  const thoiNghieng = useCallback((e) => {
-    const lop = e.currentTarget.querySelector('[data-nghieng]');
-    if (lop) lop.style.transform = '';
+  const thoiRai = useCallback((e) => {
+    for (const el of e.currentTarget.querySelectorAll('[data-sau]')) {
+      el.style.setProperty('--dx', '0px');
+      el.style.setProperty('--dy', '0px');
+    }
   }, []);
 
   return (
@@ -118,96 +169,91 @@ export default function ClientMemoriesSection() {
             </p>
           </motion.div>
         ) : (
-          /* TƯỜNG LOGO
+          /* KHÔNG GIAN 3D RẢI THEO ĐỘ SÂU
            *
-           * Cố tình KHÔNG dùng lại kiểu "chọn 1 từ danh sách -> hiện khung lớn"
-           * của mục Dự Án. Hai mục mang hai thông điệp khác nhau:
-           *   Dự Án = chiều sâu, ít mà kỹ  -> xem từng cái một là đúng
-           *   Brand = chiều rộng           -> giá trị nằm ở SỐ LƯỢNG thấy cùng lúc
-           * Cho xem một brand tại một thời điểm là giấu mất chính thứ đáng khoe.
+           * Cố tình KHÔNG dùng lưới đều: lưới đều thì mọi brand cùng kích thước,
+           * cùng khoảng cách — đọc ra là một bảng dữ liệu, không phải một không
+           * gian. Ở đây mỗi brand nằm ở một độ sâu khác nhau, nên có cái nổi rõ
+           * phía trước, có cái lùi xa mờ đi.
            *
-           * Các ô dính liền nhau bằng đường kẻ tóc (viền chồng lên nhau nhờ
-           * -space-*-px) để đọc ra như MỘT tấm bảng liền, không phải một mớ thẻ
-           * rời — đó là điểm tách hẳn khỏi ngôn ngữ thẻ bo góc của mục Dự Án.
+           * Ba thứ cùng đổi theo độ sâu mới ra cảm giác thật:
+           *   gần -> to hơn, rõ hơn, nét hơn
+           *   xa  -> nhỏ hơn, mờ hơn, nhoè nhẹ
+           * Chỉ đổi mỗi kích thước thì trông như phóng to thu nhỏ vô nghĩa.
            */
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
             viewport={{ once: true, margin: '-60px' }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            style={{ perspective: co3D ? '1100px' : undefined }}
-            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 rounded-2xl overflow-hidden border border-white/10 bg-[#0E0E12]"
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            onPointerMove={raiTheoChuot}
+            onPointerLeave={thoiRai}
+            style={{ perspective: co3D ? '1200px' : undefined }}
+            className="relative w-full h-[380px] sm:h-[440px] lg:h-[500px] rounded-3xl border border-white/10 bg-[#0B0B0E] overflow-hidden"
           >
+            {/* Vệt sáng nền để cảnh có không khí, không phẳng lì */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{ background: 'radial-gradient(ellipse at 50% 45%, rgba(195,234,57,0.07) 0%, transparent 62%)' }}
+            />
+
             {clientList.map((client, idx) => {
               const ten = client.clientName || 'Brand';
+              const v = viTriBrand(idx, clientList.length);
               return (
-                <button
+                <div
                   key={client.id || idx}
-                  type="button"
-                  onClick={() => handleOpenLightbox(client, 0)}
-                  onPointerMove={nghiengTheoChuot}
-                  onPointerLeave={thoiNghieng}
-                  aria-label={`Xem những gì đã làm cho ${ten}`}
-                  className="group/o relative aspect-[4/3] flex items-center justify-center p-5 sm:p-7 border-r border-b border-white/[0.07] cursor-pointer transition-colors duration-300 hover:bg-[#16161C] focus-visible:outline-none focus-visible:bg-[#16161C] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#C3EA39]"
+                  data-sau={v.sau}
+                  className="absolute"
+                  style={{
+                    // Lề 82px ngang / 58px dọc = quá nửa bề ngang & chiều cao
+                    // tối đa của một brand, nên không bao giờ lòi ra khỏi khung.
+                    left: `calc(82px + (100% - 164px) * ${v.fx})`,
+                    top: `calc(58px + (100% - 116px) * ${v.fy})`,
+                    // Ghép sẵn ở CSS: parallax (--dx/--dy do JS ghi) + căn giữa + tỉ lệ theo độ sâu.
+                    transform: `translate(-50%, -50%) translate3d(var(--dx, 0px), var(--dy, 0px), 0) scale(${v.tiLe})`,
+                    transition: 'transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)',
+                    zIndex: Math.round(v.sau * 100),
+                  }}
                 >
-                  {/* Hai lớp lồng nhau, KHÔNG gộp làm một:
-                      lớp ngoài chạy hiệu ứng trôi bằng CSS animation,
-                      lớp trong nhận góc nghiêng do JS ghi vào.
-                      Cả hai cùng dùng transform — để chung một thẻ thì cái này
-                      đè mất cái kia. */}
+                  {/* Lớp trôi riêng: nó cũng ghi vào transform nên phải tách khỏi
+                      lớp parallax ở trên, không thì hai bên đè mất nhau. */}
                   <div
-                    className={co3D ? 'o-troi absolute inset-0' : 'absolute inset-0'}
-                    style={co3D ? { animationDelay: `${(idx % 4) * 0.55}s` } : undefined}
+                    className={co3D ? 'o-troi' : undefined}
+                    style={co3D ? { animationDelay: `${(idx % 5) * 0.8}s`, animationDuration: `${7 + (idx % 3)}s` } : undefined}
                   >
-                    <div
-                      data-nghieng=""
-                      className="w-full h-full flex items-center justify-center transition-transform duration-500 ease-out"
-                      style={co3D ? { transformStyle: 'preserve-3d' } : undefined}
+                    <button
+                      type="button"
+                      onClick={() => handleOpenLightbox(client, 0)}
+                      aria-label={`Xem những gì đã làm cho ${ten}`}
+                      style={{ opacity: v.mo, filter: v.nhoe > 0.15 ? `blur(${v.nhoe}px)` : undefined }}
+                      className="group/o relative flex flex-col items-center gap-2 px-4 py-3 rounded-2xl cursor-pointer transition-[opacity,filter,transform] duration-500 hover:!opacity-100 hover:!blur-none hover:scale-110 focus-visible:outline-none focus-visible:!opacity-100 focus-visible:!blur-none focus-visible:ring-2 focus-visible:ring-[#C3EA39]"
                     >
+                      {client.logo ? (
+                        <img
+                          src={client.logo}
+                          alt={ten}
+                          loading="lazy"
+                          decoding="async"
+                          onContextMenu={(e) => e.preventDefault()}
+                          onDragStart={(e) => e.preventDefault()}
+                          className="max-h-16 sm:max-h-20 w-auto max-w-[30vw] sm:max-w-[150px] object-contain grayscale group-hover/o:grayscale-0 transition-[filter] duration-500 select-none"
+                        />
+                      ) : (
+                        <span className="font-display font-extrabold text-center text-white text-sm sm:text-lg leading-tight max-w-[30vw] sm:max-w-[150px] select-none">
+                          {ten}
+                        </span>
+                      )}
 
-                  {/* Số thứ tự mờ ở góc — gợi cảm giác một bộ sưu tập có đánh số */}
-                  <span className="absolute top-2.5 left-3 font-mono text-[10px] text-white/20 group-hover/o:text-[#C3EA39]/70 transition-colors">
-                    {String(idx + 1).padStart(2, '0')}
-                  </span>
-
-                  {client.logo ? (
-                    <img
-                      src={client.logo}
-                      alt={ten}
-                      loading="lazy"
-                      decoding="async"
-                      onContextMenu={(e) => e.preventDefault()}
-                      onDragStart={(e) => e.preventDefault()}
-                      /* Xám và mờ khi nghỉ, bật sáng đủ màu khi rê vào: cả tường
-                         trông tĩnh và gọn, brand nào được chú ý thì nổi lên. */
-                      className="max-h-14 sm:max-h-16 w-auto max-w-[75%] object-contain grayscale opacity-45 group-hover/o:grayscale-0 group-hover/o:opacity-100 group-hover/o:scale-105 transition-all duration-400 ease-out select-none"
-                    />
-                  ) : (
-                    /* Chưa có logo thì dựng ô chữ cho tử tế, không để trống */
-                    <span className="font-display font-bold text-center text-sm sm:text-base leading-tight text-white/45 group-hover/o:text-white group-hover/o:scale-105 transition-all duration-400 px-1">
-                      {ten}
-                    </span>
-                  )}
-
-                    </div>
+                      {/* Dịch vụ chỉ hiện khi để ý tới brand đó */}
+                      <span className="font-mono text-[10px] text-[#C3EA39] opacity-0 group-hover/o:opacity-100 focus-visible:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+                        {client.service || 'Xem chi tiết'}{client.year ? ` · ${client.year}` : ''}
+                      </span>
+                    </button>
                   </div>
-
-                  {/* Dịch vụ trượt lên từ đáy ô khi rê vào */}
-                  <span className="absolute inset-x-0 bottom-0 px-3 pb-2.5 pt-6 text-[10px] sm:text-[11px] font-mono text-center text-[#C3EA39] bg-gradient-to-t from-[#0E0E12] via-[#0E0E12]/85 to-transparent translate-y-full group-hover/o:translate-y-0 opacity-0 group-hover/o:opacity-100 transition-all duration-300 ease-out pointer-events-none truncate">
-                    {client.service || 'Xem chi tiết'}{client.year ? ` · ${client.year}` : ''}
-                  </span>
-                </button>
+                </div>
               );
             })}
-
-            {/* Ô trống lấp cho hàng cuối luôn đầy, để tấm bảng không bị khuyết góc */}
-            {Array.from({ length: (4 - (clientList.length % 4)) % 4 }).map((_, i) => (
-              <div
-                key={`o-trong-${i}`}
-                aria-hidden="true"
-                className="hidden lg:block aspect-[4/3] border-r border-b border-white/[0.07] bg-[repeating-linear-gradient(45deg,transparent,transparent_9px,rgba(255,255,255,0.02)_9px,rgba(255,255,255,0.02)_18px)]"
-              />
-            ))}
           </motion.div>
         )}
 
