@@ -4,7 +4,7 @@ import { Menu, X } from 'lucide-react';
 import { usePortfolioData } from '../context/PortfolioDataContext';
 
 export default function Header({ activeSection, setActiveSection, onOpenCMS }) {
-  const { projects, profile, clients } = usePortfolioData();
+  const { projects, profile } = usePortfolioData();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [titleIndex, setTitleIndex] = useState(0);
 
