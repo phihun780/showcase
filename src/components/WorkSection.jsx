@@ -4,6 +4,28 @@ import { usePortfolioData } from '../context/PortfolioDataContext';
 import ProjectModal from './ProjectModal';
 import SmartImage from './SmartImage';
 import { projectPath, slugFromLocation, findProjectBySlug } from '../utils/projectUrl';
+import ScrollArea from './ScrollArea';
+
+// Khung chứa danh sách dự án. Đủ ngắn thì xếp thường; dài quá thì bọc trong
+// vùng cuộn có thanh chỉ báo tự vẽ (thanh trượt gốc của trình duyệt không chỉnh
+// mảnh hơn được — xem chú thích trong ScrollArea.jsx).
+function KhungDanhSach({ isScrollable, children }) {
+  if (!isScrollable) {
+    return (
+      <div className="lg:col-span-5 flex flex-col justify-between gap-2.5 sm:gap-3 h-full">
+        {children}
+      </div>
+    );
+  }
+  return (
+    <ScrollArea
+      className="lg:col-span-5 h-full max-h-[340px] sm:max-h-[425px]"
+      innerClassName="flex flex-col pr-3 space-y-2.5 sm:space-y-3"
+    >
+      {children}
+    </ScrollArea>
+  );
+}
 
 export default function WorkSection() {
   const { projects, profile } = usePortfolioData();
@@ -125,13 +147,7 @@ export default function WorkSection() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">
             
             {/* Left: Clean Project Selector List (5 Cols) - Perfectly matching right preview height */}
-            <div
-              className={`lg:col-span-5 flex flex-col ${
-                isScrollable
-                  ? 'h-full max-h-[340px] sm:max-h-[425px] overflow-y-auto custom-scrollbar pr-1.5 space-y-2.5 sm:space-y-3'
-                  : 'justify-between gap-2.5 sm:gap-3 h-full'
-              }`}
-            >
+            <KhungDanhSach isScrollable={isScrollable}>
               {/* Actual Projects */}
               {projects.map((item, idx) => {
                 const isActive = selectedIndex === idx;
@@ -234,7 +250,7 @@ export default function WorkSection() {
                   </div>
                 );
               })}
-            </div>
+            </KhungDanhSach>
 
             {/* Right: Clean Visual Showcase Canvas (7 Cols) - LOCKED 16:10 ASPECT RATIO */}
             <motion.div

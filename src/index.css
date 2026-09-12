@@ -134,46 +134,33 @@
 }
 
 /* Modal and Element Custom Scrollbar - Ultra Modern Floating Pill */
-.custom-scrollbar,
-.modal-scrollbar {
+/* THANH TRƯỢT
+ *
+ * Chromium tu ban 121 uu tien thuoc tinh chuan `scrollbar-width` va BO QUA
+ * toan bo `::-webkit-scrollbar` khi thuoc tinh do duoc dat. Da do thuc te:
+ *   scrollbar-width: thin -> 10px   |  auto -> 15px  |  none -> 0px
+ *   ::-webkit-scrollbar { width: 4px } -> khong tac dung gi
+ * Nen moi thu chinh bang ::-webkit-scrollbar deu vo nghia, va thanh truot rot
+ * ve kieu mac dinh cua Windows: day, xam, kem hai nut mui ten o hai dau.
+ *
+ * Cach duy nhat kiem soat duoc hinh thuc: an han thanh goc roi tu ve mot
+ * thanh chi bao rieng (xem ScrollArea.jsx).
+ */
+.no-native-scrollbar {
+  scrollbar-width: none;            /* Firefox + Chromium moi */
+  -ms-overflow-style: none;         /* Edge cu */
+}
+.no-native-scrollbar::-webkit-scrollbar {
+  display: none;                    /* Safari + Chromium cu */
+  width: 0;
+  height: 0;
+}
+
+/* Cho cac bang trong CMS: chi dung thuoc tinh CHUAN, vi do la thu duy nhat
+   trinh duyet con nghe theo. Khong to ve chinh bang ::-webkit-scrollbar nua. */
+.custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
-}
-
-.custom-scrollbar::-webkit-scrollbar,
-.modal-scrollbar::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track,
-.modal-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-  margin-top: 24px;
-  margin-bottom: 24px;
-  border-radius: 9999px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb,
-.modal-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 9999px;
-  border: 1.5px solid transparent;
-  background-clip: padding-box;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.custom-scrollbar:hover::-webkit-scrollbar-thumb,
-.modal-scrollbar:hover::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.25);
-  background-clip: padding-box;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover,
-.modal-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #C3EA39 !important;
-  background-clip: padding-box;
-  box-shadow: 0 0 14px rgba(195, 234, 57, 0.7);
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
 }
 
 /* Selection */
