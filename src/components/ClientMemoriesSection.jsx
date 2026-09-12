@@ -1,31 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { usePortfolioData } from '../context/PortfolioDataContext';
 import ClientMemoryModal from './ClientMemoryModal';
-import { 
-  Sparkles, 
-  Maximize2, 
-  Building2, 
-  Calendar, 
-  Tag, 
-  HeartHandshake, 
-  ExternalLink, 
-  Layers, 
-  ChevronLeft, 
-  ChevronRight,
-  Eye,
-  Quote
-} from 'lucide-react';
+import { HeartHandshake } from 'lucide-react';
 
 export default function ClientMemoriesSection() {
   const { clients, profile } = usePortfolioData();
   const clientList = clients || [];
-
-  // Active Partner in Spotlight
-  const [activePartnerIndex, setActivePartnerIndex] = useState(0);
-
-  // Active Image within the Spotlight Stage
-  const [activeStageImageIndex, setActiveStageImageIndex] = useState(0);
 
   // Cinema Lightbox Modal config
   const [modalConfig, setModalConfig] = useState({
@@ -33,37 +14,6 @@ export default function ClientMemoriesSection() {
     client: null,
     initialIndex: 0,
   });
-
-  // Reset stage image index when active partner changes
-  useEffect(() => {
-    setActiveStageImageIndex(0);
-  }, [activePartnerIndex]);
-
-  // If partner index out of bounds (e.g., after deletion), reset to 0
-  useEffect(() => {
-    if (activePartnerIndex >= clientList.length) {
-      setActivePartnerIndex(Math.max(0, clientList.length - 1));
-    }
-  }, [clientList.length, activePartnerIndex]);
-
-  const activePartner = clientList[activePartnerIndex] || clientList[0];
-
-  const currentDeliverables = activePartner ? Array.from(new Set([
-    activePartner.coverImage,
-    ...(Array.isArray(activePartner.gallery) ? activePartner.gallery : [])
-  ].filter(Boolean))) : [];
-
-  const currentStageImage = currentDeliverables[activeStageImageIndex] || activePartner?.coverImage || '';
-
-  const handleNextPartner = () => {
-    if (clientList.length === 0) return;
-    setActivePartnerIndex((prev) => (prev + 1) % clientList.length);
-  };
-
-  const handlePrevPartner = () => {
-    if (clientList.length === 0) return;
-    setActivePartnerIndex((prev) => (prev - 1 + clientList.length) % clientList.length);
-  };
 
   const handleOpenLightbox = (client, index = 0) => {
     setModalConfig({
@@ -135,275 +85,76 @@ export default function ClientMemoriesSection() {
             </p>
           </motion.div>
         ) : (
-          /* IDEA 2: INTERACTIVE ART EXHIBITION & SPOTLIGHT REEL STAGE */
-          <div className="space-y-6 sm:space-y-8">
-            
-            {/* 1. BRAND SELECTOR MARQUEE / EXHIBITION NAV STRIP */}
-            <div className="relative p-2 rounded-2xl bg-[#121216] border border-white/10 shadow-lg flex items-center justify-between gap-2">
-              
-              {/* Left Arrow */}
-              <button
-                onClick={handlePrevPartner}
-                className="hidden sm:flex p-2.5 rounded-xl bg-white/5 hover:bg-[#C3EA39] text-white hover:text-black transition-all cursor-pointer shrink-0 border border-white/10 active:scale-95 shadow-md"
-                title="Bạn đồng hành trước"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-
-              {/* Horizontal Scrollable Brand Pills */}
-              <div className="flex-1 flex items-center gap-2 overflow-x-auto no-scrollbar py-1 px-1">
-                {clientList.map((client, idx) => {
-                  const isActive = idx === activePartnerIndex;
-                  return (
-                    <button
-                      key={client.id || idx}
-                      onClick={() => setActivePartnerIndex(idx)}
-                      className={`group relative px-4 py-2.5 rounded-xl text-xs sm:text-sm font-display font-bold flex items-center gap-2.5 transition-all cursor-pointer whitespace-nowrap shrink-0 select-none active:scale-95 ${
-                        isActive
-                          ? 'bg-[#C3EA39] text-black shadow-md shadow-[#C3EA39]/20'
-                          : 'bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/5'
-                      }`}
-                    >
-                      {/* Brand Logo Avatar in Pill */}
-                      {client.logo ? (
-                        <img
-                          src={client.logo}
-                          alt={client.clientName}
-                          className={`w-5 h-5 rounded-md object-cover ${isActive ? 'bg-black/10' : 'bg-white/10'}`}
-                        />
-                      ) : (
-                        <span className={`text-[11px] font-mono font-extrabold ${isActive ? 'text-black' : 'text-[#C3EA39]'}`}>
-                          0{idx + 1}
-                        </span>
-                      )}
-
-                      <span>{client.clientName}</span>
-
-                      {client.featured && (
-                        <Sparkles className={`w-3 h-3 ${isActive ? 'text-black' : 'text-[#C3EA39]'}`} />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Right Arrow */}
-              <button
-                onClick={handleNextPartner}
-                className="hidden sm:flex p-2.5 rounded-xl bg-white/5 hover:bg-[#C3EA39] text-white hover:text-black transition-all cursor-pointer shrink-0 border border-white/10 active:scale-95 shadow-md"
-                title="Bạn đồng hành tiếp theo"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-
-            </div>
-
-            {/* 2. THE SPOTLIGHT VISUAL STAGE (Sân Khấu Nghệ Thuật) */}
-            {/* CỐ TÌNH KHÔNG bọc AnimatePresence mode="wait".
-                mode="wait" bắt phần tử cũ chạy xong hiệu ứng thoát rồi mới gắn
-                cái mới vào — nên nếu hiệu ứng thoát không kết thúc thì khung chi
-                tiết KẸT vĩnh viễn ở brand cũ dù đã bấm sang brand khác. Đã gặp
-                đúng lỗi này khi test: pill đã đổi sang brand 04 mà khung vẫn hiện
-                brand 01.
-                Đổi key là phần tử tự dựng lại và chạy initial -> animate, không
-                phải chờ ai thoát cả. */}
-            <>
-              {activePartner && (
-                <motion.div
-                  key={activePartner.id || activePartnerIndex}
-                  initial={{ opacity: 0, y: 25 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-                  className="rounded-3xl bg-[#121216]/95 border border-white/15 p-5 sm:p-8 md:p-10 shadow-2xl space-y-6 sm:space-y-8 relative overflow-hidden"
+          /* TƯỜNG LOGO
+           *
+           * Cố tình KHÔNG dùng lại kiểu "chọn 1 từ danh sách -> hiện khung lớn"
+           * của mục Dự Án. Hai mục mang hai thông điệp khác nhau:
+           *   Dự Án = chiều sâu, ít mà kỹ  -> xem từng cái một là đúng
+           *   Brand = chiều rộng           -> giá trị nằm ở SỐ LƯỢNG thấy cùng lúc
+           * Cho xem một brand tại một thời điểm là giấu mất chính thứ đáng khoe.
+           *
+           * Các ô dính liền nhau bằng đường kẻ tóc (viền chồng lên nhau nhờ
+           * -space-*-px) để đọc ra như MỘT tấm bảng liền, không phải một mớ thẻ
+           * rời — đó là điểm tách hẳn khỏi ngôn ngữ thẻ bo góc của mục Dự Án.
+           */
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-60px' }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 rounded-2xl overflow-hidden border border-white/10 bg-[#0E0E12]"
+          >
+            {clientList.map((client, idx) => {
+              const ten = client.clientName || 'Brand';
+              return (
+                <button
+                  key={client.id || idx}
+                  type="button"
+                  onClick={() => handleOpenLightbox(client, 0)}
+                  aria-label={`Xem những gì đã làm cho ${ten}`}
+                  className="group/o relative aspect-[4/3] flex items-center justify-center p-5 sm:p-7 border-r border-b border-white/[0.07] cursor-pointer transition-colors duration-300 hover:bg-[#16161C] focus-visible:outline-none focus-visible:bg-[#16161C] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#C3EA39]"
                 >
-                  {/* Decorative Subtle Corner Glow */}
-                  <div 
-                    className="absolute -top-24 -right-24 w-96 h-96 pointer-events-none rounded-full"
-                    style={{ background: 'radial-gradient(circle, rgba(195, 234, 57, 0.08) 0%, transparent 70%)' }}
-                  />
+                  {/* Số thứ tự mờ ở góc — gợi cảm giác một bộ sưu tập có đánh số */}
+                  <span className="absolute top-2.5 left-3 font-mono text-[10px] text-white/20 group-hover/o:text-[#C3EA39]/70 transition-colors">
+                    {String(idx + 1).padStart(2, '0')}
+                  </span>
 
-                  {/* SPOTLIGHT HEADER: Brand Profile + Tags + Direct External Link */}
-                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 pb-6 border-b border-white/10 relative z-10">
-                    
-                    {/* Brand Info */}
-                    <div className="flex items-start sm:items-center gap-4 sm:gap-5">
-                      {activePartner.logo ? (
-                        <img
-                          src={activePartner.logo}
-                          alt={activePartner.clientName}
-                          className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover bg-white/5 border border-white/20 p-1.5 shrink-0 shadow-xl"
-                        />
-                      ) : (
-                        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[#C3EA39]/15 border border-[#C3EA39]/30 flex items-center justify-center text-[#C3EA39] font-mono font-extrabold text-2xl shrink-0 shadow-xl">
-                          ✦
-                        </div>
-                      )}
-
-                      <div className="space-y-1.5">
-                        <div className="flex items-center flex-wrap gap-2.5">
-                          <h3 className="text-2xl sm:text-3xl md:text-4xl font-display font-extrabold text-white tracking-tight">
-                            {activePartner.clientName}
-                          </h3>
-
-                          {activePartner.featured && (
-                            <span className="px-2.5 py-0.5 rounded-full bg-[#C3EA39] text-black text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1 shadow-sm">
-                              <Sparkles className="w-3 h-3" />
-                              <span>Nổi bật</span>
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="flex items-center flex-wrap gap-2 sm:gap-3 text-xs font-mono">
-                          <span className="text-[#C3EA39] font-semibold flex items-center gap-1">
-                            <Tag className="w-3.5 h-3.5" />
-                            {activePartner.service || 'Graphic Design & Branding'}
-                          </span>
-
-                          {activePartner.year && (
-                            <>
-                              <span className="text-white/20">•</span>
-                              <span className="text-white/70 flex items-center gap-1 bg-white/5 px-2.5 py-0.5 rounded-md border border-white/10">
-                                <Calendar className="w-3 h-3" />
-                                {activePartner.year}
-                              </span>
-                            </>
-                          )}
-
-                          <span className="text-white/20">•</span>
-                          <span className="text-white/40 flex items-center gap-1">
-                            <Layers className="w-3.5 h-3.5" />
-                            <span>{currentDeliverables.length} ấn phẩm bàn giao</span>
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Right: Actions */}
-                    <div className="flex items-center gap-2.5 self-start lg:self-center shrink-0">
-                      {activePartner.link && (
-                        <a
-                          href={activePartner.link.startsWith('http') ? activePartner.link : `https://${activePartner.link}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/15 text-white/90 hover:text-white text-xs font-mono font-medium flex items-center gap-1.5 border border-white/10 transition-all cursor-pointer shadow-sm active:scale-95"
-                          title="Ghé thăm website / fanpage của bạn"
-                        >
-                          <span>Ghé thăm bạn</span>
-                          <ExternalLink className="w-3.5 h-3.5 text-[#C3EA39]" />
-                        </a>
-                      )}
-
-                      <button
-                        onClick={() => handleOpenLightbox(activePartner, activeStageImageIndex)}
-                        className="px-4 py-2.5 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-md shadow-[#C3EA39]/15 active:scale-95"
-                      >
-                        <Maximize2 className="w-3.5 h-3.5" />
-                        <span>Xem Toàn Cảnh ({currentDeliverables.length})</span>
-                      </button>
-                    </div>
-
-                  </div>
-
-                  {/* SOUVENIR STORY / ARTIST NOTE */}
-                  {activePartner.note && (
-                    <div className="relative p-4 sm:p-5 rounded-2xl bg-white/[0.03] border border-white/10 text-white/85 text-xs sm:text-sm leading-relaxed font-light whitespace-pre-line flex items-start gap-3">
-                      <Quote className="w-5 h-5 text-[#C3EA39] shrink-0 opacity-80 mt-0.5" />
-                      <div className="flex-1">
-                        <span className="text-[#C3EA39] font-mono text-xs font-bold block mb-1">Kỷ niệm cùng bạn:</span>
-                        {activePartner.note}
-                      </div>
-                    </div>
+                  {client.logo ? (
+                    <img
+                      src={client.logo}
+                      alt={ten}
+                      loading="lazy"
+                      decoding="async"
+                      onContextMenu={(e) => e.preventDefault()}
+                      onDragStart={(e) => e.preventDefault()}
+                      /* Xám và mờ khi nghỉ, bật sáng đủ màu khi rê vào: cả tường
+                         trông tĩnh và gọn, brand nào được chú ý thì nổi lên. */
+                      className="max-h-14 sm:max-h-16 w-auto max-w-[75%] object-contain grayscale opacity-45 group-hover/o:grayscale-0 group-hover/o:opacity-100 group-hover/o:scale-105 transition-all duration-400 ease-out select-none"
+                    />
+                  ) : (
+                    /* Chưa có logo thì dựng ô chữ cho tử tế, không để trống */
+                    <span className="font-display font-bold text-center text-sm sm:text-base leading-tight text-white/45 group-hover/o:text-white group-hover/o:scale-105 transition-all duration-400 px-1">
+                      {ten}
+                    </span>
                   )}
 
-                  {/* MAIN HERO ARTWORK EXHIBITION STAGE */}
-                  <div className="space-y-4">
-                    
-                    {/* Big Showcase Canvas */}
-                    <div 
-                      onClick={() => handleOpenLightbox(activePartner, activeStageImageIndex)}
-                      className="group/canvas relative w-full aspect-[16/10] sm:aspect-[16/9] lg:aspect-[21/9] max-h-[580px] rounded-2xl sm:rounded-3xl overflow-hidden bg-black border border-white/15 hover:border-[#C3EA39] transition-all duration-500 cursor-pointer shadow-2xl"
-                    >
-                      <AnimatePresence mode="wait">
-                        <motion.img
-                          key={currentStageImage}
-                          src={currentStageImage}
-                          alt={activePartner.clientName}
-                          initial={{ opacity: 0, scale: 0.98 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ duration: 0.4 }}
-                          loading="eager"
-                          decoding="async"
-                          onContextMenu={(e) => e.preventDefault()}
-                          onDragStart={(e) => e.preventDefault()}
-                          className="w-full h-full object-cover group-hover/canvas:scale-[1.02] transition-transform duration-700 ease-out"
-                        />
-                      </AnimatePresence>
+                  {/* Dịch vụ trượt lên từ đáy ô khi rê vào */}
+                  <span className="absolute inset-x-0 bottom-0 px-3 pb-2.5 pt-6 text-[10px] sm:text-[11px] font-mono text-center text-[#C3EA39] bg-gradient-to-t from-[#0E0E12] via-[#0E0E12]/85 to-transparent translate-y-full group-hover/o:translate-y-0 opacity-0 group-hover/o:opacity-100 transition-all duration-300 ease-out pointer-events-none truncate">
+                    {client.service || 'Xem chi tiết'}{client.year ? ` · ${client.year}` : ''}
+                  </span>
+                </button>
+              );
+            })}
 
-                      {/* Top Overlay Indicator */}
-                      <div className="absolute top-4 left-4 z-20 px-3 py-1 rounded-full bg-black/80 backdrop-blur-md border border-white/15 text-xs font-mono text-white/90 flex items-center gap-2 shadow-lg">
-                        <span className="w-2 h-2 rounded-full bg-[#C3EA39]" />
-                        <span>Ấn phẩm #{activeStageImageIndex + 1} / {currentDeliverables.length}</span>
-                      </div>
-
-                      {/* Top Right Inspect Button */}
-                      <div className="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-black/75 backdrop-blur-md border border-white/20 text-white/80 group-hover/canvas:text-black group-hover/canvas:bg-[#C3EA39] group-hover/canvas:border-[#C3EA39] flex items-center justify-center transition-all duration-300 opacity-0 group-hover/canvas:opacity-100 group-hover/canvas:scale-105 shadow-xl">
-                        <Maximize2 className="w-4 h-4" />
-                      </div>
-
-                      {/* Bottom Caption Gradient Strip */}
-                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent p-4 sm:p-6 flex items-end justify-between pointer-events-none">
-                        <span className="font-mono text-xs sm:text-sm text-white/80 font-medium">
-                          ✦ Nhấp vào ảnh để phóng to xem chi tiết chất liệu & thiết kế
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* INTERACTIVE DELIVERABLES FILMSTRIP REEL (Dải cuộn các ấn phẩm) */}
-                    {currentDeliverables.length > 1 && (
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-xs font-mono text-white/50 px-1">
-                          <span>Bộ sưu tập các ấn phẩm ({currentDeliverables.length})</span>
-                          <span>Bấm để đổi góc nhìn</span>
-                        </div>
-
-                        <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-2 px-1">
-                          {currentDeliverables.map((img, i) => {
-                            const isCurrent = i === activeStageImageIndex;
-
-                            return (
-                              <button
-                                key={i}
-                                onClick={() => setActiveStageImageIndex(i)}
-                                className={`group/thumb relative rounded-xl overflow-hidden aspect-[16/10] w-28 sm:w-36 shrink-0 border-2 transition-all cursor-pointer ${
-                                  isCurrent
-                                    ? 'border-[#C3EA39] scale-105 shadow-lg shadow-[#C3EA39]/30 ring-2 ring-[#C3EA39]/20'
-                                    : 'border-white/15 opacity-60 hover:opacity-100 hover:border-white/40'
-                                }`}
-                              >
-                                <img
-                                  src={img}
-                                  alt={`Thumbnail ${i + 1}`}
-                                  className="w-full h-full object-cover"
-                                  loading="lazy"
-                                />
-                                <div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-black/80 text-[10px] font-mono text-white/80">
-                                  #{i + 1}
-                                </div>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-
-                  </div>
-
-                </motion.div>
-              )}
-            </>
-
-          </div>
+            {/* Ô trống lấp cho hàng cuối luôn đầy, để tấm bảng không bị khuyết góc */}
+            {Array.from({ length: (4 - (clientList.length % 4)) % 4 }).map((_, i) => (
+              <div
+                key={`o-trong-${i}`}
+                aria-hidden="true"
+                className="hidden lg:block aspect-[4/3] border-r border-b border-white/[0.07] bg-[repeating-linear-gradient(45deg,transparent,transparent_9px,rgba(255,255,255,0.02)_9px,rgba(255,255,255,0.02)_18px)]"
+              />
+            ))}
+          </motion.div>
         )}
 
       </div>
