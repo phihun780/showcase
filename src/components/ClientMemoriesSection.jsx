@@ -1,130 +1,74 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { usePortfolioData } from '../context/PortfolioDataContext';
 import ClientMemoryModal from './ClientMemoryModal';
 import { HeartHandshake } from 'lucide-react';
 
-
-// Vị trí và độ sâu của từng brand trong không gian.
-//
-// Ngẫu nhiên nhưng TẤT ĐỊNH: sinh từ chỉ số chứ không phải Math.random().
-// Dùng Math.random() thì mỗi lần React dựng lại là cả đám nhảy chỗ.
-function ngauNhien(hat) {
-  const x = Math.sin(hat * 12.9898) * 43758.5453;
-  return x - Math.floor(x);           // 0..1, luôn ra cùng kết quả với cùng hạt
-}
-
-// Chia khung thành các ô rồi thả mỗi brand vào một ô kèm xê dịch nhẹ.
-// Rải tự do hoàn toàn thì với nhiều brand sẽ có cái chồng lên nhau; cách này
-// trông vẫn ngẫu nhiên mà chắc chắn không đè nhau.
-function viTriBrand(idx, tong) {
-  const cot = tong <= 3 ? tong : tong <= 8 ? 3 : 4;
-  const hang = Math.ceil(tong / cot);
-  const c = idx % cot;
-  const h = Math.floor(idx / cot);
-
-  // Trả về vị trí dạng TỈ LỆ 0..1, còn việc chừa lề để cho CSS calc() lo.
-  //
-  // Chừa lề bằng % thì màn rộng cũng chừa đúng ngần ấy % — đo ở 1280px thấy
-  // các brand dồn hết vào dải 34%-66%, hai bên trống hoác. Chừa bằng px thì
-  // lề luôn vừa đúng nửa bề ngang một brand, bất kể khung to hay nhỏ.
-  const rongO = 1 / cot;
-  const caoO = 1 / hang;
-
-  // Xê dịch trong lòng ô, chừa mép để không dính viền
-  const lechX = (ngauNhien(idx * 3 + 1) - 0.5) * rongO * 0.42;
-  const lechY = (ngauNhien(idx * 7 + 2) - 0.5) * caoO * 0.42;
-
-  // Độ sâu 0 = xa nhất, 1 = gần nhất
-  const sau = 0.25 + ngauNhien(idx * 11 + 5) * 0.75;
-
-  return {
-    // 0..1 — ghép vào calc() ở JSX
-    fx: Math.min(1, Math.max(0, rongO * (c + 0.5) + lechX)),
-    fy: Math.min(1, Math.max(0, caoO * (h + 0.5) + lechY)),
-    sau,
-    tiLe: 0.58 + sau * 0.42,          // xa thì nhỏ, gần thì to
-    mo: 0.32 + sau * 0.68,            // xa thì mờ
-    nhoe: (1 - sau) * 1.6,            // xa thì nhoè nhẹ
-  };
-}
-
+/**
+ * Các brand đã làm việc cùng.
+ *
+ * Danh sách tên brand cỡ lớn; rê chuột tới dòng nào thì ảnh bìa của brand đó
+ * hiện ra và bay theo con trỏ.
+ *
+ * VÌ SAO KIỂU NÀY:
+ *  - Chữ lớn tự lấp đầy không gian. Bản trước rải 4 brand trong khung 500px và
+ *    chỉ lấp được ~3% diện tích — nhìn như đồ đạc thưa thớt trong phòng rộng.
+ *  - Dùng đúng thứ đang có: ảnh bìa. Không brand nào có logo nên mọi thiết kế
+ *    dựa vào logo đều hụt.
+ *  - Khác hẳn mục Dự Án: bên đó là danh sách nhỏ + khung ảnh cố định; bên này
+ *    là chữ lớn + ảnh chạy theo tay.
+ */
 export default function ClientMemoriesSection() {
   const { clients, profile } = usePortfolioData();
   const clientList = clients || [];
 
-  // Cinema Lightbox Modal config
-  const [modalConfig, setModalConfig] = useState({
-    isOpen: false,
-    client: null,
-    initialIndex: 0,
-  });
+  const [modalConfig, setModalConfig] = useState({ isOpen: false, client: null, initialIndex: 0 });
+  const [dongDangRe, setDongDangRe] = useState(-1);
+
+  const khungRef = useRef(null);
+  const anhBayRef = useRef(null);
 
   const handleOpenLightbox = (client, index = 0) => {
-    setModalConfig({
-      isOpen: true,
-      client,
-      initialIndex: index,
-    });
+    setModalConfig({ isOpen: true, client, initialIndex: index });
   };
-
   const handleCloseLightbox = () => {
     setModalConfig(prev => ({ ...prev, isOpen: false }));
   };
 
-  // Chỉ bật nghiêng 3D trên máy có chuột thật.
-  // Điện thoại không rê được nên hiệu ứng vô nghĩa, mà lại tốn GPU — cùng lý do
-  // PhotoshopSimulator đã tắt nghiêng 3D ở mobile từ trước.
-  const [co3D, setCo3D] = useState(false);
+  // Chỉ bật ảnh bay trên máy có chuột thật. Điện thoại không rê được nên mỗi
+  // dòng hiện sẵn một ảnh nhỏ bên cạnh thay thế.
+  const [coReChuot, setCoReChuot] = useState(false);
   useEffect(() => {
     const mq = window.matchMedia('(hover: hover) and (pointer: fine)');
-    const capNhat = () => setCo3D(mq.matches);
+    const capNhat = () => setCoReChuot(mq.matches);
     capNhat();
     mq.addEventListener('change', capNhat);
     return () => mq.removeEventListener('change', capNhat);
   }, []);
 
-  // Rê chuột trong khung thì cả cảnh dịch theo, mỗi brand dịch một mức khác
-  // nhau tuỳ độ sâu — cái ở gần chạy nhanh, cái ở xa chạy chậm. Đó là thứ tạo
-  // cảm giác nhìn vào một không gian có chiều sâu thật.
-  //
-  // Chỉ ghi hai biến CSS, còn việc ghép transform để cho CSS lo. Nhờ vậy phần
-  // phóng to/thu nhỏ theo độ sâu không bị JS ghi đè mất.
-  const raiTheoChuot = useCallback((e) => {
-    if (!co3D) return;
-    const khung = e.currentTarget;
+  // Ghi thẳng vị trí vào style. pointermove bắn liên tục — để React dựng lại
+  // cả danh sách mỗi lần là giật ngay.
+  const anhChayTheoChuot = useCallback((e) => {
+    const anh = anhBayRef.current;
+    const khung = khungRef.current;
+    if (!anh || !khung) return;
     const r = khung.getBoundingClientRect();
-    const x = ((e.clientX - r.left) / r.width) * 2 - 1;   // -1..1
-    const y = ((e.clientY - r.top) / r.height) * 2 - 1;
-    for (const el of khung.querySelectorAll('[data-sau]')) {
-      const sau = parseFloat(el.dataset.sau) || 0;
-      const bien = 26 * sau;
-      el.style.setProperty('--dx', `${-x * bien}px`);
-      el.style.setProperty('--dy', `${-y * bien * 0.6}px`);
-    }
-  }, [co3D]);
-
-  const thoiRai = useCallback((e) => {
-    for (const el of e.currentTarget.querySelectorAll('[data-sau]')) {
-      el.style.setProperty('--dx', '0px');
-      el.style.setProperty('--dy', '0px');
-    }
+    anh.style.transform = `translate3d(${e.clientX - r.left}px, ${e.clientY - r.top}px, 0)`;
   }, []);
 
   return (
-    <section 
-      id="clients" 
+    <section
+      id="clients"
       className="pt-12 sm:pt-20 pb-14 sm:pb-24 scroll-mt-16 relative w-full max-w-full overflow-hidden touch-pan-y"
     >
-      {/* Subtle Exhibition Atmosphere Glow */}
-      <div 
-        className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[850px] h-[500px] pointer-events-none rounded-full" 
+      <div
+        className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[850px] h-[500px] pointer-events-none rounded-full"
         style={{ background: 'radial-gradient(circle, rgba(195, 234, 57, 0.07) 0%, transparent 70%)' }}
       />
 
       <div className="max-w-7xl mx-auto px-5 sm:px-8 relative z-10 space-y-8 sm:space-y-10">
-        
-        {/* SECTION HEADER */}
+
+        {/* ĐẦU MỤC */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -148,11 +92,10 @@ export default function ClientMemoriesSection() {
 
           <div className="flex items-center gap-2 font-mono text-xs text-white/50 shrink-0">
             <span className="w-2 h-2 rounded-full bg-[#C3EA39] animate-pulse" />
-            <span>Triển lãm cùng [{clientList.length}] bạn đồng hành</span>
+            <span>Đã đồng hành cùng [{clientList.length}] thương hiệu</span>
           </div>
         </motion.div>
 
-        {/* Empty State */}
         {clientList.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -160,106 +103,108 @@ export default function ClientMemoriesSection() {
             viewport={{ once: true }}
             className="p-12 sm:p-16 rounded-3xl border-2 border-dashed border-white/15 bg-[#121216]/40 text-center flex flex-col items-center justify-center space-y-3"
           >
-            <div className="w-12 h-12 rounded-2xl bg-[#C3EA39]/10 text-[#C3EA39] flex items-center justify-center font-mono font-bold text-lg">
+            <div className="w-12 h-12 rounded-2xl bg-[#C3EA39]/10 text-[#C3EA39] flex items-center justify-center">
               <HeartHandshake className="w-6 h-6" />
             </div>
             <h3 className="text-lg sm:text-xl font-display font-bold text-white">Chưa có bạn đồng hành nào</h3>
             <p className="text-xs text-white/50 max-w-sm">
-              Bạn có thể vào trang quản trị CMS để thêm tên thương hiệu, ảnh sản phẩm đã bàn giao và những câu chuyện kỷ niệm đáng nhớ.
+              Vào trang quản trị CMS để thêm thương hiệu, ảnh sản phẩm đã bàn giao và câu chuyện đi kèm.
             </p>
           </motion.div>
         ) : (
-          /* KHÔNG GIAN 3D RẢI THEO ĐỘ SÂU
-           *
-           * Cố tình KHÔNG dùng lưới đều: lưới đều thì mọi brand cùng kích thước,
-           * cùng khoảng cách — đọc ra là một bảng dữ liệu, không phải một không
-           * gian. Ở đây mỗi brand nằm ở một độ sâu khác nhau, nên có cái nổi rõ
-           * phía trước, có cái lùi xa mờ đi.
-           *
-           * Ba thứ cùng đổi theo độ sâu mới ra cảm giác thật:
-           *   gần -> to hơn, rõ hơn, nét hơn
-           *   xa  -> nhỏ hơn, mờ hơn, nhoè nhẹ
-           * Chỉ đổi mỗi kích thước thì trông như phóng to thu nhỏ vô nghĩa.
-           */
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true, margin: '-60px' }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            onPointerMove={raiTheoChuot}
-            onPointerLeave={thoiRai}
-            style={{ perspective: co3D ? '1200px' : undefined }}
-            className="relative w-full h-[380px] sm:h-[440px] lg:h-[500px] rounded-3xl border border-white/10 bg-[#0B0B0E] overflow-hidden"
+          <div
+            ref={khungRef}
+            onPointerMove={coReChuot ? anhChayTheoChuot : undefined}
+            onPointerLeave={() => setDongDangRe(-1)}
+            className="relative"
           >
-            {/* Vệt sáng nền để cảnh có không khí, không phẳng lì */}
-            <div
-              className="absolute inset-0 pointer-events-none"
-              style={{ background: 'radial-gradient(ellipse at 50% 45%, rgba(195,234,57,0.07) 0%, transparent 62%)' }}
-            />
-
-            {clientList.map((client, idx) => {
-              const ten = client.clientName || 'Brand';
-              const v = viTriBrand(idx, clientList.length);
-              return (
+            {/* Ảnh bay theo con trỏ. Một phần tử duy nhất dùng chung cho mọi
+                dòng — chỉ đổi src, không dựng thêm thẻ nào.
+                Có transition 160ms cho ảnh bám hơi trễ một nhịp: đây là chi tiết
+                trang trí nên độ trễ đó làm nó mượt mà, khác hẳn thanh trượt kéo
+                tay vốn phải bám tức thì. */}
+            {coReChuot && (
+              <div
+                ref={anhBayRef}
+                aria-hidden="true"
+                className="pointer-events-none absolute top-0 left-0 z-20 will-change-transform"
+                style={{ transition: 'transform 160ms cubic-bezier(0.16, 1, 0.3, 1)' }}
+              >
                 <div
-                  key={client.id || idx}
-                  data-sau={v.sau}
-                  className="absolute"
+                  className="w-[260px] lg:w-[330px] aspect-[4/3] rounded-2xl overflow-hidden border border-white/15 shadow-2xl bg-black transition-all duration-300"
                   style={{
-                    // Lề 82px ngang / 58px dọc = quá nửa bề ngang & chiều cao
-                    // tối đa của một brand, nên không bao giờ lòi ra khỏi khung.
-                    left: `calc(82px + (100% - 164px) * ${v.fx})`,
-                    top: `calc(58px + (100% - 116px) * ${v.fy})`,
-                    // Ghép sẵn ở CSS: parallax (--dx/--dy do JS ghi) + căn giữa + tỉ lệ theo độ sâu.
-                    transform: `translate(-50%, -50%) translate3d(var(--dx, 0px), var(--dy, 0px), 0) scale(${v.tiLe})`,
-                    transition: 'transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)',
-                    zIndex: Math.round(v.sau * 100),
+                    opacity: dongDangRe >= 0 ? 1 : 0,
+                    // Căn giữa và phóng to GỘP CHUNG một chuỗi transform.
+                    // Tách ra dùng class -translate-x-1/2 thì transform inline ở
+                    // đây đè mất nó, ảnh sẽ lấy góc trên-trái bám con trỏ thay
+                    // vì lấy tâm — lệch đúng nửa khung ảnh.
+                    transform: `translate(-50%, -50%) scale(${dongDangRe >= 0 ? 1 : 0.85})`,
                   }}
                 >
-                  {/* Lớp trôi riêng: nó cũng ghi vào transform nên phải tách khỏi
-                      lớp parallax ở trên, không thì hai bên đè mất nhau. */}
-                  <div
-                    className={co3D ? 'o-troi' : undefined}
-                    style={co3D ? { animationDelay: `${(idx % 5) * 0.8}s`, animationDuration: `${7 + (idx % 3)}s` } : undefined}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => handleOpenLightbox(client, 0)}
-                      aria-label={`Xem những gì đã làm cho ${ten}`}
-                      style={{ opacity: v.mo, filter: v.nhoe > 0.15 ? `blur(${v.nhoe}px)` : undefined }}
-                      className="group/o relative flex flex-col items-center gap-2 px-4 py-3 rounded-2xl cursor-pointer transition-[opacity,filter,transform] duration-500 hover:!opacity-100 hover:!blur-none hover:scale-110 focus-visible:outline-none focus-visible:!opacity-100 focus-visible:!blur-none focus-visible:ring-2 focus-visible:ring-[#C3EA39]"
-                    >
-                      {client.logo ? (
-                        <img
-                          src={client.logo}
-                          alt={ten}
-                          loading="lazy"
-                          decoding="async"
-                          onContextMenu={(e) => e.preventDefault()}
-                          onDragStart={(e) => e.preventDefault()}
-                          className="max-h-16 sm:max-h-20 w-auto max-w-[30vw] sm:max-w-[150px] object-contain grayscale group-hover/o:grayscale-0 transition-[filter] duration-500 select-none"
-                        />
-                      ) : (
-                        <span className="font-display font-extrabold text-center text-white text-sm sm:text-lg leading-tight max-w-[30vw] sm:max-w-[150px] select-none">
-                          {ten}
-                        </span>
-                      )}
-
-                      {/* Dịch vụ chỉ hiện khi để ý tới brand đó */}
-                      <span className="font-mono text-[10px] text-[#C3EA39] opacity-0 group-hover/o:opacity-100 focus-visible:opacity-100 transition-opacity duration-300 whitespace-nowrap">
-                        {client.service || 'Xem chi tiết'}{client.year ? ` · ${client.year}` : ''}
-                      </span>
-                    </button>
-                  </div>
+                  {dongDangRe >= 0 && clientList[dongDangRe]?.coverImage && (
+                    <img
+                      src={clientList[dongDangRe].coverImage}
+                      alt=""
+                      className="w-full h-full object-cover"
+                      draggable={false}
+                    />
+                  )}
                 </div>
-              );
-            })}
-          </motion.div>
+              </div>
+            )}
+
+            {/* DANH SÁCH TÊN BRAND CỠ LỚN */}
+            <div className="border-t border-white/10">
+              {clientList.map((client, idx) => {
+                const ten = client.clientName || 'Brand';
+                const dangRe = dongDangRe === idx;
+                return (
+                  <motion.button
+                    key={client.id || idx}
+                    type="button"
+                    initial={{ opacity: 0, y: 18 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: '-40px' }}
+                    transition={{ duration: 0.5, delay: idx * 0.07, ease: [0.16, 1, 0.3, 1] }}
+                    onPointerEnter={() => setDongDangRe(idx)}
+                    onFocus={() => setDongDangRe(idx)}
+                    onBlur={() => setDongDangRe(-1)}
+                    onClick={() => handleOpenLightbox(client, 0)}
+                    aria-label={`Xem những gì đã làm cho ${ten}`}
+                    className="group/h w-full text-left border-b border-white/10 py-5 sm:py-7 flex items-center gap-4 sm:gap-6 cursor-pointer focus-visible:outline-none focus-visible:bg-white/[0.03] transition-colors"
+                  >
+                    <span className={`font-mono text-[11px] sm:text-xs shrink-0 w-6 transition-colors ${dangRe ? 'text-[#C3EA39]' : 'text-white/25'}`}>
+                      {String(idx + 1).padStart(2, '0')}
+                    </span>
+
+                    {/* Điện thoại không rê chuột được nên hiện luôn ảnh nhỏ */}
+                    {!coReChuot && client.coverImage && (
+                      <span className="shrink-0 w-14 h-11 rounded-lg overflow-hidden border border-white/10 bg-black">
+                        <img src={client.coverImage} alt="" className="w-full h-full object-cover" draggable={false} />
+                      </span>
+                    )}
+
+                    <span
+                      className={`flex-1 font-display font-extrabold uppercase tracking-tight leading-[1.05] text-2xl sm:text-4xl lg:text-5xl transition-all duration-500 ease-out ${
+                        dangRe ? 'text-[#C3EA39] sm:translate-x-3' : 'text-white/85'
+                      }`}
+                    >
+                      {ten}
+                    </span>
+
+                    <span className={`hidden sm:block shrink-0 font-mono text-[11px] lg:text-xs text-right max-w-[190px] transition-colors ${dangRe ? 'text-white/80' : 'text-white/35'}`}>
+                      {client.service || 'Xem chi tiết'}
+                      {client.year ? <><br />{client.year}</> : null}
+                    </span>
+                  </motion.button>
+                );
+              })}
+            </div>
+          </div>
         )}
 
       </div>
 
-      {/* Cinema Lightbox Modal */}
       <ClientMemoryModal
         client={modalConfig.client}
         isOpen={modalConfig.isOpen}
