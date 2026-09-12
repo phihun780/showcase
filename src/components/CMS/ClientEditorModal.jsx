@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Upload, Check, Loader2, Sparkles, Building2, Image as ImageIcon, Link as LinkIcon, Calendar, Tag, MessageSquareQuote, Trash2, ArrowLeft, ArrowRight, Layers, Plus, HeartHandshake } from 'lucide-react';
 import { optimizeAndUploadToR2 } from '../../utils/imageOptimizer';
 
@@ -15,6 +15,30 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
     link: client?.link || '',
     featured: Boolean(client?.featured),
   }));
+
+  // Nạp lại dữ liệu mỗi lần mở form.
+  //
+  // useState(() => ...) ở trên chỉ chạy ĐÚNG MỘT LẦN lúc mount. Modal này không
+  // bị gỡ khi đóng, nên lần đầu nó chụp client = null rồi giữ mãi trạng thái
+  // rỗng đó — bấm "Sửa" brand nào cũng ra form trắng, năm nhảy về năm hiện tại,
+  // 0 ảnh. Sửa xong lưu là ghi đè mất sạch dữ liệu cũ của brand.
+  //
+  // ProjectEditorModal vốn đã có effect tương tự; riêng file này thiếu.
+  useEffect(() => {
+    if (!isOpen) return;
+    setFormData({
+      id: client?.id || '',
+      clientName: client?.clientName || '',
+      service: client?.service || '',
+      year: client?.year || `${new Date().getFullYear()}`,
+      logo: client?.logo || '',
+      coverImage: client?.coverImage || '',
+      gallery: Array.isArray(client?.gallery) ? client.gallery : [],
+      note: client?.note || '',
+      link: client?.link || '',
+      featured: Boolean(client?.featured),
+    });
+  }, [isOpen, client?.id]);
 
   const [isUploadingCover, setIsUploadingCover] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
