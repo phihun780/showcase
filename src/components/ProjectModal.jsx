@@ -170,22 +170,11 @@ export default function ProjectModal({ project, isOpen, originRect, onClose, onS
     }
   };
 
-  // Chia sẻ link riêng của dự án.
-  // Trên điện thoại ưu tiên bảng chia sẻ của hệ điều hành (gửi thẳng qua Zalo,
-  // Messenger...); máy tính không có thì chép vào bộ nhớ tạm.
+  // Bấm là chép link dự án vào bộ nhớ tạm. Cố tình KHÔNG gọi bảng chia sẻ của
+  // hệ điều hành (navigator.share): nó mở một lớp giao diện lạ đè lên, và trên
+  // máy tính thì đa số trình duyệt không có. Một hành vi duy nhất, đoán được.
   const handleShare = async () => {
     const url = projectUrl(project);
-    const duLieu = { title: project.title, text: project.subtitle || project.title, url };
-
-    if (navigator.share && navigator.canShare?.(duLieu)) {
-      try {
-        await navigator.share(duLieu);
-        return;
-      } catch (err) {
-        // Người dùng bấm huỷ bảng chia sẻ -> không phải lỗi, cũng không chép link.
-        if (err?.name === 'AbortError') return;
-      }
-    }
 
     if (await chepVaoBoNhoTam(url)) {
       setShareState('copied');
