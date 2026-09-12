@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { usePortfolioData } from '../context/PortfolioDataContext';
 import ProjectModal from './ProjectModal';
@@ -8,6 +8,15 @@ export default function WorkSection() {
   const { projects, profile } = usePortfolioData();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [activeProjectModal, setActiveProjectModal] = useState(null);
+  // Toạ độ khung preview lúc bấm — điểm xuất phát cho ảnh bay vào modal.
+  const previewRef = useRef(null);
+  const [originRect, setOriginRect] = useState(null);
+
+  const openProject = (project) => {
+    const r = previewRef.current?.getBoundingClientRect();
+    setOriginRect(r ? { left: r.left, top: r.top, width: r.width, height: r.height } : null);
+    setActiveProjectModal(project);
+  };
 
   const safeIndex = selectedIndex < projects.length ? selectedIndex : 0;
   const currentProject = projects[safeIndex] || projects[0] || {};
@@ -15,6 +24,9 @@ export default function WorkSection() {
   const handleNextProject = () => {
     const nextIdx = (selectedIndex + 1) % projects.length;
     setSelectedIndex(nextIdx);
+    // Đổi dự án NGAY TRONG modal thì không bay: khung preview đang bị modal che,
+    // bay từ chỗ khuất ra trông như ảnh nhảy lung tung.
+    setOriginRect(null);
     setActiveProjectModal(projects[nextIdx]);
   };
 
@@ -185,20 +197,27 @@ export default function WorkSection() {
               <div
                 className="group cursor-pointer relative aspect-[16/10] w-full rounded-3xl overflow-hidden bg-black border-2 border-white/10 hover:border-[#C3EA39] focus-within:border-[#C3EA39] transition-all duration-500 shadow-2xl flex flex-col justify-end p-6 sm:p-8 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[#C3EA39] has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-[#08080A]"
               >
-                {/* Dynamic Project Image */}
+                {/* Dynamic Project Image — ĐIỂM XUẤT PHÁT của hiệu ứng bay.
+                    Chỉ cần một thẻ div thường có ref để đo toạ độ lúc bấm.
+                    KHÔNG dùng layoutId của framer-motion: đã thử và dính 3 lỗi
+                    (exit treo vĩnh viễn, transform cộng dồn mỗi lần mở/đóng, và
+                    còn sót scale 1.59 sau khi bấm "dự án tiếp theo"). Tự tính
+                    đường bay thì kiểm soát được hết, không có trạng thái ẩn. */}
                 {currentProject.coverImage && (
-                  <SmartImage
-                    key={currentProject.coverImage}
-                    src={currentProject.coverImage}
-                    alt={currentProject.title}
-                    /* Desktop: cột 7/12 của khung 1280px. Mobile: trọn bề ngang trừ lề */
-                    sizes="(min-width: 1024px) 740px, calc(100vw - 40px)"
-                    onContextMenu={(e) => e.preventDefault()}
-                    onDragStart={(e) => e.preventDefault()}
-                    loading="lazy"
-                    decoding="async"
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                  />
+                  <div ref={previewRef} className="absolute inset-0 w-full h-full">
+                    <SmartImage
+                      key={currentProject.coverImage}
+                      src={currentProject.coverImage}
+                      alt={currentProject.title}
+                      /* Desktop: cột 7/12 của khung 1280px. Mobile: trọn bề ngang trừ lề */
+                      sizes="(min-width: 1024px) 740px, calc(100vw - 40px)"
+                      onContextMenu={(e) => e.preventDefault()}
+                      onDragStart={(e) => e.preventDefault()}
+                      loading="lazy"
+                      decoding="async"
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                    />
+                  </div>
                 )}
 
                 {/* Gradient Vignette at bottom */}
@@ -209,7 +228,7 @@ export default function WorkSection() {
                   <h3 className="text-lg sm:text-xl md:text-2xl font-bold uppercase text-white tracking-tight group-hover:text-[#C3EA39] transition-colors">
                     <button
                       type="button"
-                      onClick={() => setActiveProjectModal(currentProject)}
+                      onClick={() => openProject(currentProject)}
                       aria-label={`Mở chi tiết dự án ${currentProject.title}`}
                       className="text-left cursor-pointer focus:outline-none after:absolute after:inset-0 after:z-20 after:content-['']"
                     >
@@ -229,10 +248,16 @@ export default function WorkSection() {
 
       </div>
 
-      {/* Case Study Modal */}
+      {/* Case Study Modal
+          CỐ TÌNH KHÔNG bọc AnimatePresence. Đã thử và hỏng: AnimatePresence +
+          createPortal + layoutId hai chiều làm animation bay ngược không bao giờ
+          kết thúc, nên exit treo vĩnh viễn — modal không đóng được, scroll kẹt
+          khoá, ảnh nguồn đứng nguyên ở opacity 0.
+          Giữ một chiều: bay vào thì có hiệu ứng, đóng thì tắt ngay và dứt khoát. */}
       <ProjectModal
         project={activeProjectModal}
         isOpen={Boolean(activeProjectModal)}
+        originRect={originRect}
         onClose={() => setActiveProjectModal(null)}
         onSelectNextProject={handleNextProject}
       />
