@@ -31,6 +31,22 @@ export default function WorkSection() {
   const { projects, profile } = usePortfolioData();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [activeProjectModal, setActiveProjectModal] = useState(null);
+  // Máy có rê chuột thật hay không.
+  //
+  // Dùng `(hover: hover)` chứ không đo bề rộng màn hình, vì khác biệt ở đây
+  // ĐÚNG LÀ chuyện rê chuột: có rê được thì khung ảnh đã đổi theo con trỏ rồi,
+  // bấm là mở luôn. Không rê được (điện thoại, máy tính bảng) thì lần chạm đầu
+  // phải dùng để xem ảnh bìa, chạm vào ảnh lớn mới mở.
+  // Màn hình nhỏ gắn chuột, hay máy tính màn cảm ứng, đều được nhận đúng.
+  const [coReChuot, setCoReChuot] = useState(true);
+  useEffect(() => {
+    const mq = window.matchMedia('(hover: hover) and (pointer: fine)');
+    const capNhat = () => setCoReChuot(mq.matches);
+    capNhat();
+    mq.addEventListener('change', capNhat);
+    return () => mq.removeEventListener('change', capNhat);
+  }, []);
+
   const openProject = (project) => {
     setActiveProjectModal(project);
     // Đẩy URL riêng lên thanh địa chỉ -> copy link gửi được, và nút Back đóng modal.
@@ -146,16 +162,20 @@ export default function WorkSection() {
                     transition={{ duration: 0.5, delay: idx * 0.08, ease: [0.16, 1, 0.3, 1] }}
                     onMouseEnter={() => setSelectedIndex(idx)}
                     onFocus={() => setSelectedIndex(idx)}
-                    /* Bấm vào hàng là MỞ dự án luôn. Trước đây nó chỉ đổi ảnh
-                       preview, nên ai bấm vào tên dự án cũng tưởng trang hỏng —
-                       phải bấm tiếp vào ảnh bên phải mới ra nội dung. */
+                    /* Máy có chuột: bấm hàng là mở luôn (khung ảnh đã đổi sẵn
+                       theo con trỏ). Điện thoại: chạm hàng chỉ đổi ảnh bìa để
+                       xem trước, phải chạm vào ảnh lớn mới mở dự án. */
                     onClick={() => {
                       setSelectedIndex(idx);
-                      openProject(item);
+                      if (coReChuot) openProject(item);
                     }}
-                    aria-haspopup="dialog"
+                    aria-haspopup={coReChuot ? 'dialog' : undefined}
                     aria-current={isActive ? 'true' : undefined}
-                    aria-label={`Mở dự án ${item.title}${item.year ? `, năm ${item.year}` : ''}`}
+                    aria-label={
+                      coReChuot
+                        ? `Mở dự án ${item.title}${item.year ? `, năm ${item.year}` : ''}`
+                        : `Xem ảnh bìa dự án ${item.title}${item.year ? `, năm ${item.year}` : ''}`
+                    }
                     className={`w-full text-left cursor-pointer rounded-2xl transition-all duration-300 relative overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C3EA39] focus-visible:ring-offset-2 focus-visible:ring-offset-[#08080A] ${
                       isScrollable ? 'py-3 sm:py-3.5 px-5 sm:px-6 min-h-[58px] sm:min-h-[75px]' : 'flex-1 py-3 sm:py-3.5 px-5 sm:px-6'
                     } flex items-center justify-between ${
