@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { usePortfolioData } from '../context/PortfolioDataContext';
 import ClientMemoryModal from './ClientMemoryModal';
@@ -26,6 +26,39 @@ export default function ClientMemoriesSection() {
   const handleCloseLightbox = () => {
     setModalConfig(prev => ({ ...prev, isOpen: false }));
   };
+
+  // Chỉ bật nghiêng 3D trên máy có chuột thật.
+  // Điện thoại không rê được nên hiệu ứng vô nghĩa, mà lại tốn GPU — cùng lý do
+  // PhotoshopSimulator đã tắt nghiêng 3D ở mobile từ trước.
+  const [co3D, setCo3D] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(hover: hover) and (pointer: fine)');
+    const capNhat = () => setCo3D(mq.matches);
+    capNhat();
+    mq.addEventListener('change', capNhat);
+    return () => mq.removeEventListener('change', capNhat);
+  }, []);
+
+  // Nghiêng ô theo vị trí con trỏ. Ghi THẲNG vào style, không qua React state:
+  // pointermove bắn liên tục, để React dựng lại cả lưới mỗi lần là giật ngay.
+  const nghiengTheoChuot = useCallback((e) => {
+    if (!co3D) return;
+    const o = e.currentTarget;
+    const lop = o.querySelector('[data-nghieng]');
+    if (!lop) return;
+    const r = o.getBoundingClientRect();
+    // -1..1 tính từ tâm ô
+    const x = ((e.clientX - r.left) / r.width) * 2 - 1;
+    const y = ((e.clientY - r.top) / r.height) * 2 - 1;
+    const DO_NGHIENG = 11;
+    lop.style.transform =
+      `rotateY(${x * DO_NGHIENG}deg) rotateX(${-y * DO_NGHIENG}deg) translateZ(26px)`;
+  }, [co3D]);
+
+  const thoiNghieng = useCallback((e) => {
+    const lop = e.currentTarget.querySelector('[data-nghieng]');
+    if (lop) lop.style.transform = '';
+  }, []);
 
   return (
     <section 
@@ -102,6 +135,7 @@ export default function ClientMemoriesSection() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-60px' }}
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            style={{ perspective: co3D ? '1100px' : undefined }}
             className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 rounded-2xl overflow-hidden border border-white/10 bg-[#0E0E12]"
           >
             {clientList.map((client, idx) => {
@@ -111,9 +145,26 @@ export default function ClientMemoriesSection() {
                   key={client.id || idx}
                   type="button"
                   onClick={() => handleOpenLightbox(client, 0)}
+                  onPointerMove={nghiengTheoChuot}
+                  onPointerLeave={thoiNghieng}
                   aria-label={`Xem những gì đã làm cho ${ten}`}
                   className="group/o relative aspect-[4/3] flex items-center justify-center p-5 sm:p-7 border-r border-b border-white/[0.07] cursor-pointer transition-colors duration-300 hover:bg-[#16161C] focus-visible:outline-none focus-visible:bg-[#16161C] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#C3EA39]"
                 >
+                  {/* Hai lớp lồng nhau, KHÔNG gộp làm một:
+                      lớp ngoài chạy hiệu ứng trôi bằng CSS animation,
+                      lớp trong nhận góc nghiêng do JS ghi vào.
+                      Cả hai cùng dùng transform — để chung một thẻ thì cái này
+                      đè mất cái kia. */}
+                  <div
+                    className={co3D ? 'o-troi absolute inset-0' : 'absolute inset-0'}
+                    style={co3D ? { animationDelay: `${(idx % 4) * 0.55}s` } : undefined}
+                  >
+                    <div
+                      data-nghieng=""
+                      className="w-full h-full flex items-center justify-center transition-transform duration-500 ease-out"
+                      style={co3D ? { transformStyle: 'preserve-3d' } : undefined}
+                    >
+
                   {/* Số thứ tự mờ ở góc — gợi cảm giác một bộ sưu tập có đánh số */}
                   <span className="absolute top-2.5 left-3 font-mono text-[10px] text-white/20 group-hover/o:text-[#C3EA39]/70 transition-colors">
                     {String(idx + 1).padStart(2, '0')}
@@ -137,6 +188,9 @@ export default function ClientMemoriesSection() {
                       {ten}
                     </span>
                   )}
+
+                    </div>
+                  </div>
 
                   {/* Dịch vụ trượt lên từ đáy ô khi rê vào */}
                   <span className="absolute inset-x-0 bottom-0 px-3 pb-2.5 pt-6 text-[10px] sm:text-[11px] font-mono text-center text-[#C3EA39] bg-gradient-to-t from-[#0E0E12] via-[#0E0E12]/85 to-transparent translate-y-full group-hover/o:translate-y-0 opacity-0 group-hover/o:opacity-100 transition-all duration-300 ease-out pointer-events-none truncate">

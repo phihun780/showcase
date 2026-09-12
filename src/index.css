@@ -163,6 +163,34 @@
   scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
 }
 
+
+/* Ô tường logo trôi lơ lửng.
+ *
+ * Chỉ động vào transform — trình duyệt đẩy thẳng xuống GPU, không vẽ lại,
+ * không tính lại layout. Biên độ cố ý nhỏ (7px) và nhịp chậm: mục đích là
+ * làm tấm bảng "thở", không phải nhảy múa.
+ *
+ * Mỗi ô lệch pha nhau bằng animation-delay đặt trong JSX, nên cả tường gợn
+ * như sóng chứ không lên xuống đồng loạt.
+ */
+@keyframes troi-lo-lung {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50%      { transform: translate3d(0, -7px, 0); }
+}
+.o-troi {
+  animation: troi-lo-lung 7s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* Ai bật "Giảm chuyển động" trong hệ điều hành thì đứng yên. Đây là chuyển
+   động lặp vô hạn nên tôn trọng cài đặt đó là bắt buộc, không phải tuỳ chọn. */
+@media (prefers-reduced-motion: reduce) {
+  .o-troi {
+    animation: none;
+    will-change: auto;
+  }
+}
+
 /* Selection */
 ::selection {
   background-color: #C3EA39;
