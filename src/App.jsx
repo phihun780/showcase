@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, lazy, Suspense } from 'react';
 import { PortfolioDataProvider, usePortfolioData } from './context/PortfolioDataContext';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -128,6 +128,9 @@ function PortfolioApp() {
   };
 
   const [currentPath, setCurrentPath] = useState(getCleanPath);
+  // Giữ đường dẫn hiện tại ở dạng ref để so sánh được ngay trong handler,
+  // không phải chờ React dựng lại.
+  const currentPathRef = useRef(currentPath);
 
   const [activeSection, setActiveSection] = useState('work');
 
@@ -227,10 +230,21 @@ function PortfolioApp() {
   useEffect(() => {
     const handleLocationChange = () => {
       const clean = getCleanPath();
+      // CHỈ cuộn lên đầu khi đổi trang thật (/ <-> /cms).
+      //
+      // Mở rồi đóng một dự án cũng bắn popstate, nhưng getCleanPath() trả "/"
+      // cho cả "/" lẫn "/du-an/<slug>" nên thực chất không đổi trang nào. Cuộn
+      // lên đầu ở đây khiến đóng dự án xong bị văng về đầu trang thay vì đứng
+      // yên tại mục Dự Án.
+      const doiTrangThat = currentPathRef.current !== clean;
+      currentPathRef.current = clean;
       setCurrentPath(clean);
-      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-      if (document.documentElement) document.documentElement.scrollTop = 0;
-      if (document.body) document.body.scrollTop = 0;
+
+      if (doiTrangThat) {
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+        if (document.documentElement) document.documentElement.scrollTop = 0;
+        if (document.body) document.body.scrollTop = 0;
+      }
 
       // Auto-normalize any extra path like /phihun or /phihun/ back to clean /
       if (typeof window !== 'undefined') {
