@@ -13,7 +13,9 @@
 
 const CACHE_MS = 60 * 1000; // đọc lại nội dung CMS tối đa 1 phút/lần
 
-let cache = { at: 0, key: '', data: null };
+// Giữ DỮ LIỆU THÔ chứ không giữ SEO đã dựng sẵn: cùng một lần đọc phải phục vụ
+// được cả trang chủ lẫn từng trang dự án.
+let cache = { at: 0, data: null };
 
 const IMAGE_TYPES = {
   png: 'image/png',
@@ -47,7 +49,58 @@ function buildSeo(profile, origin) {
   const image = usableImage(profile.ogImage) || `${origin}/og-image.png`;
   const favicon = usableImage(profile.favicon) || `${origin}/favicon.png`;
 
-  return { title, description, image, imageType: imageTypeOf(image), favicon, origin };
+  return { title, description, image, imageType: imageTypeOf(image), favicon, origin, url: `${origin}/` };
+}
+
+// Đường dẫn riêng của dự án: /du-an/<slug>
+const PROJECT_ROUTE = '/du-an';
+
+// PHẢI khớp từng ký tự với slugifyTitle trong src/utils/projectUrl.js.
+// Lệch một chút là link chia sẻ không tìm ra dự án và rơi về thẻ mặc định.
+function slugifyTitle(text) {
+  if (!text) return '';
+  return text
+    .toString()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[đĐ]/g, 'd')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function projectSlug(project) {
+  if (!project) return '';
+  return slugifyTitle(project.title) || String(project.id || '');
+}
+
+// Lấy slug từ đường dẫn, trả null nếu không phải trang dự án.
+function slugFromPath(pathname) {
+  const clean = (pathname || '').replace(/\/+$/, '');
+  if (!clean.toLowerCase().startsWith(`${PROJECT_ROUTE}/`)) return null;
+  const slug = clean.slice(PROJECT_ROUTE.length + 1);
+  return slug ? decodeURIComponent(slug).toLowerCase() : null;
+}
+
+// Thẻ preview riêng cho một dự án: tiêu đề dự án + ảnh cover của chính nó.
+// Nhờ vậy dán link vào Zalo/Messenger sẽ ra đúng ảnh dự án, không phải ảnh
+// chung của cả trang.
+function buildProjectSeo(project, profile, origin) {
+  const nen = buildSeo(profile, origin);
+  const ten = (project.title || '').trim();
+  const title = ten ? `${ten} — ${(profile.name || 'Phi Hùng').trim()}` : nen.title;
+  const description = (project.subtitle || '').trim() || nen.description;
+  const image = usableImage(project.coverImage) || nen.image;
+
+  return {
+    ...nen,
+    title,
+    description,
+    image,
+    imageType: imageTypeOf(image),
+    url: `${origin}${PROJECT_ROUTE}/${projectSlug(project)}`,
+  };
 }
 
 const PUBLIC_R2_URL = 'https://pub-0ad262edfb6a4345a3bd61b2110c549c.r2.dev';
@@ -56,8 +109,8 @@ function getBucket(env) {
   return env.PORTFOLIO_ASSETS || env.showcase || env.BUCKET || env.R2 || env.SHOWCASE || null;
 }
 
-async function loadSeo(env, origin) {
-  if (cache.data && cache.key === origin && Date.now() - cache.at < CACHE_MS) {
+async function loadData(env) {
+  if (cache.data && Date.now() - cache.at < CACHE_MS) {
     return cache.data;
   }
 
@@ -90,9 +143,8 @@ async function loadSeo(env, origin) {
 
   try {
     const parsed = JSON.parse(rawJson);
-    const seo = buildSeo(parsed?.profile || {}, origin);
-    cache = { at: Date.now(), key: origin, data: seo };
-    return seo;
+    cache = { at: Date.now(), data: parsed };
+    return parsed;
   } catch {
     return null; // hỏng thì cứ dùng thẻ mặc định trong index.html
   }
@@ -140,9 +192,18 @@ export async function onRequest(context) {
     return response;
   }
 
-  const origin = new URL(context.request.url).origin;
-  const seo = await loadSeo(context.env, origin);
-  if (!seo) return response;
+  const { origin, pathname } = new URL(context.request.url);
+  const data = await loadData(context.env);
+  if (!data) return response;
+
+  const profile = data.profile || {};
+  const slug = slugFromPath(pathname);
+  const duAn = slug && Array.isArray(data.projects)
+    ? data.projects.find(p => projectSlug(p) === slug)
+    : null;
+
+  // Link dự án -> thẻ preview của chính dự án đó. Còn lại dùng thẻ chung.
+  const seo = duAn ? buildProjectSeo(duAn, profile, origin) : buildSeo(profile, origin);
 
   const values = {
     'og:title': seo.title,
@@ -153,7 +214,7 @@ export async function onRequest(context) {
     'og:image': seo.image,
     'twitter:image': seo.image,
     'og:image:type': seo.imageType,
-    'og:url': `${origin}/`,
+    'og:url': seo.url,
   };
 
   const rewritten = new HTMLRewriter()
@@ -161,7 +222,7 @@ export async function onRequest(context) {
     .on('meta', new MetaRewriter(values))
     .on('link[rel~="icon"]', new IconRewriter(seo.favicon))
     .on('link[rel="canonical"]', {
-      element: el => el.setAttribute('href', `${origin}/`),
+      element: el => el.setAttribute('href', seo.url),
     })
     .transform(response);
 
