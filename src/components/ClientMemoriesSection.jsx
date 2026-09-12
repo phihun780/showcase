@@ -185,7 +185,10 @@ export default function ClientMemoriesSection() {
                     )}
 
                     <span
-                      className={`flex-1 font-display font-extrabold uppercase tracking-tight leading-[1.05] text-2xl sm:text-4xl lg:text-5xl transition-all duration-500 ease-out ${
+                      /* Nhỏ hơn tiêu đề mục một bậc rõ ràng. Trước đây cả hai
+                         cùng text-5xl (48px) ở desktop nên tên brand đá ngang
+                         hàng với "Bạn đồng hành", mất thứ bậc đọc. */
+                      className={`flex-1 font-display font-extrabold uppercase tracking-tight leading-[1.05] text-lg sm:text-2xl lg:text-4xl transition-all duration-500 ease-out ${
                         dangRe ? 'text-[#C3EA39] sm:translate-x-3' : 'text-white/85'
                       }`}
                     >
