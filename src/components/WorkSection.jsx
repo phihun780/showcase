@@ -291,21 +291,29 @@ export default function WorkSection() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent pointer-events-none" />
 
                 {/* Bottom Clean Project Info */}
-                <div className="relative z-10 space-y-1 sm:space-y-1.5">
+                <div className="relative z-10 space-y-1 sm:space-y-1.5 pointer-events-none">
                   <h3 className="text-lg sm:text-xl md:text-2xl font-bold uppercase text-white tracking-tight group-hover:text-[#C3EA39] transition-colors">
-                    <button
-                      type="button"
-                      onClick={() => openProject(currentProject)}
-                      aria-label={`Mở chi tiết dự án ${currentProject.title}`}
-                      className="text-left cursor-pointer focus:outline-none after:absolute after:inset-0 after:z-20 after:content-['']"
-                    >
-                      {currentProject.title}
-                    </button>
+                    {currentProject.title}
                   </h3>
                   <p className="text-xs sm:text-sm text-white/70 font-light max-w-lg line-clamp-1">
                     {currentProject.subtitle}
                   </p>
                 </div>
+
+                {/* Nút mở dự án, phủ KÍN cả thẻ.
+                    Trước đây nút bọc quanh dòng tiêu đề và dùng ::after để trải
+                    rộng ra. Nhưng ::after bám theo phần tử có position gần nhất —
+                    là khối chữ ở đáy, không phải cả thẻ — nên vùng bấm chỉ được
+                    266x27 trên tổng 318x199, tức 11% diện tích. Chạm vào ảnh là
+                    trúng thẻ <img>, không mở gì.
+                    Để nút thành phần tử riêng phủ inset-0 thì vùng bấm đúng bằng
+                    cả thẻ, mà <h3> vẫn nằm ngoài nút (h3 trong button là HTML sai). */}
+                <button
+                  type="button"
+                  onClick={() => openProject(currentProject)}
+                  aria-label={`Mở chi tiết dự án ${currentProject.title}`}
+                  className="absolute inset-0 z-30 w-full h-full cursor-pointer focus:outline-none"
+                />
 
               </div>
             </motion.div>
