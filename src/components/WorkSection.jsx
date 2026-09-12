@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { usePortfolioData } from '../context/PortfolioDataContext';
 import ProjectModal from './ProjectModal';
@@ -31,16 +31,7 @@ export default function WorkSection() {
   const { projects, profile } = usePortfolioData();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [activeProjectModal, setActiveProjectModal] = useState(null);
-  // Toạ độ khung preview lúc bấm — điểm xuất phát cho ảnh bay vào modal.
-  const previewRef = useRef(null);
-  const [originRect, setOriginRect] = useState(null);
-
-  // choBay: chỉ bay khi khung preview ĐANG hiện đúng dự án này. Bấm một hàng
-  // chưa được chọn (hay gặp trên điện thoại vì không có rê chuột) mà vẫn bay
-  // thì ảnh sẽ vọt ra từ khung đang hiện dự án khác — trông như nhảy lung tung.
-  const openProject = (project, choBay = true) => {
-    const r = choBay ? previewRef.current?.getBoundingClientRect() : null;
-    setOriginRect(r ? { left: r.left, top: r.top, width: r.width, height: r.height } : null);
+  const openProject = (project) => {
     setActiveProjectModal(project);
     // Đẩy URL riêng lên thanh địa chỉ -> copy link gửi được, và nút Back đóng modal.
     window.history.pushState({ duAn: project.id }, '', projectPath(project));
@@ -48,7 +39,6 @@ export default function WorkSection() {
 
   const closeProject = () => {
     setActiveProjectModal(null);
-    setOriginRect(null);
     // Lùi lại đúng một bước thay vì đẩy thêm "/" mới, để bấm Back nhiều lần
     // không phải đi ngược qua một chuỗi dài các lần mở modal.
     if (window.history.state?.duAn) window.history.back();
@@ -65,12 +55,9 @@ export default function WorkSection() {
       if (duAn) {
         const idx = projects.findIndex(p => p.id === duAn.id);
         if (idx >= 0) setSelectedIndex(idx);
-        // Mở từ link dán thẳng vào trình duyệt thì không có điểm xuất phát để bay.
-        setOriginRect(null);
         setActiveProjectModal(duAn);
       } else {
         setActiveProjectModal(null);
-        setOriginRect(null);
         // Link tới dự án đã bị xoá/đổi tên: đưa về trang chủ thay vì để lại một
         // đường dẫn rác trên thanh địa chỉ.
         if (slug) window.history.replaceState({}, '', '/');
@@ -88,9 +75,6 @@ export default function WorkSection() {
   const handleNextProject = () => {
     const nextIdx = (selectedIndex + 1) % projects.length;
     setSelectedIndex(nextIdx);
-    // Đổi dự án NGAY TRONG modal thì không bay: khung preview đang bị modal che,
-    // bay từ chỗ khuất ra trông như ảnh nhảy lung tung.
-    setOriginRect(null);
     setActiveProjectModal(projects[nextIdx]);
     // replaceState chứ không pushState: bấm "tiếp theo" 6 lần rồi bấm Back
     // không nên phải bấm 6 lần mới thoát ra.
@@ -166,9 +150,8 @@ export default function WorkSection() {
                        preview, nên ai bấm vào tên dự án cũng tưởng trang hỏng —
                        phải bấm tiếp vào ảnh bên phải mới ra nội dung. */
                     onClick={() => {
-                      const dangHien = selectedIndex === idx;
                       setSelectedIndex(idx);
-                      openProject(item, dangHien);
+                      openProject(item);
                     }}
                     aria-haspopup="dialog"
                     aria-current={isActive ? 'true' : undefined}
@@ -266,14 +249,9 @@ export default function WorkSection() {
               <div
                 className="group cursor-pointer relative aspect-[16/10] w-full rounded-3xl overflow-hidden bg-black border-2 border-white/10 hover:border-[#C3EA39] focus-within:border-[#C3EA39] transition-all duration-500 shadow-2xl flex flex-col justify-end p-6 sm:p-8 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[#C3EA39] has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-[#08080A]"
               >
-                {/* Dynamic Project Image — ĐIỂM XUẤT PHÁT của hiệu ứng bay.
-                    Chỉ cần một thẻ div thường có ref để đo toạ độ lúc bấm.
-                    KHÔNG dùng layoutId của framer-motion: đã thử và dính 3 lỗi
-                    (exit treo vĩnh viễn, transform cộng dồn mỗi lần mở/đóng, và
-                    còn sót scale 1.59 sau khi bấm "dự án tiếp theo"). Tự tính
-                    đường bay thì kiểm soát được hết, không có trạng thái ẩn. */}
+                {/* Dynamic Project Image */}
                 {currentProject.coverImage && (
-                  <div ref={previewRef} className="absolute inset-0 w-full h-full">
+                  <div className="absolute inset-0 w-full h-full">
                     <SmartImage
                       key={currentProject.coverImage}
                       src={currentProject.coverImage}
@@ -326,7 +304,6 @@ export default function WorkSection() {
       <ProjectModal
         project={activeProjectModal}
         isOpen={Boolean(activeProjectModal)}
-        originRect={originRect}
         onClose={closeProject}
         onSelectNextProject={handleNextProject}
       />

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { projectUrl } from '../utils/projectUrl';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -35,66 +35,12 @@ async function chepVaoBoNhoTam(text) {
   }
 }
 
-export default function ProjectModal({ project, isOpen, originRect, onClose, onSelectNextProject }) {
+export default function ProjectModal({ project, isOpen, onClose, onSelectNextProject }) {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [shareState, setShareState] = useState('idle'); // 'idle' | 'copied' | 'failed'
   const containerRef = useRef(null);
-  const coverRef = useRef(null);
-
-  // Ảnh cover "bay" từ khung preview ngoài danh sách vào vị trí của nó trong modal.
-  //
-  // Kỹ thuật FLIP tự viết: ảnh đã được dựng ở ĐÚNG chỗ cuối cùng, ta đo nó, tính
-  // độ lệch so với điểm xuất phát, đặt ngược transform về chỗ cũ rồi thả cho nó
-  // chạy về 0. Chỉ transform nên chạy trên GPU, không vẽ lại ảnh từng khung.
-  //
-  // Tự viết thay vì dùng layoutId của framer-motion vì layoutId + createPortal
-  // đã gây 3 lỗi: exit treo vĩnh viễn, transform cộng dồn mỗi lần mở/đóng, và
-  // sót scale 1.59 sau khi bấm "dự án tiếp theo". Ở đây không có trạng thái ẩn
-  // nào được giữ lại giữa các lần mở.
-  useLayoutEffect(() => {
-    const el = coverRef.current;
-    if (!el || !originRect || !isOpen) return;
-
-    const r = el.getBoundingClientRect();
-    if (!r.width || !r.height) return;
-
-    const dx = originRect.left - r.left;
-    const dy = originRect.top - r.top;
-    const sx = originRect.width / r.width;
-    const sy = originRect.height / r.height;
-
-    el.style.transformOrigin = 'top left';
-    el.style.transition = 'none';
-    el.style.transform = `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`;
-    el.style.willChange = 'transform';
-
-    // Ép trình duyệt chốt trạng thái đầu ngay lập tức. Dùng reflow đồng bộ thay
-    // vì requestAnimationFrame: rAF không chạy khi tab bị ẩn, ảnh sẽ kẹt ở vị
-    // trí xuất phát vĩnh viễn.
-    void el.offsetWidth;
-
-    el.style.transition = 'transform 450ms cubic-bezier(0.16, 1, 0.3, 1)';
-    el.style.transform = 'translate(0px, 0px) scale(1, 1)';
-
-    const xong = () => {
-      el.style.transition = '';
-      el.style.transform = '';
-      el.style.transformOrigin = '';
-      el.style.willChange = '';
-    };
-    el.addEventListener('transitionend', xong, { once: true });
-    // Lưới an toàn: nếu transitionend không bao giờ bắn (tab ẩn, reduced motion,
-    // transition bị ngắt) thì vẫn phải dọn, không được để ảnh kẹt lệch chỗ.
-    const chot = setTimeout(xong, 700);
-
-    return () => {
-      clearTimeout(chot);
-      el.removeEventListener('transitionend', xong);
-      xong();
-    };
-  }, [originRect, isOpen, project?.id]);
 
   const gallery = project?.gallery || [];
   const galleryCount = gallery.length;
@@ -249,23 +195,6 @@ export default function ProjectModal({ project, isOpen, originRect, onClose, onS
         {/* Modal Content: Title + Subtitle -> Full Image Gallery */}
         <div className="p-5 sm:p-10 md:p-14 space-y-6 sm:space-y-10">
           
-          {/* Ảnh cover — ĐIỂM ĐÁP của hiệu ứng bay. Xem coverRef ở trên. */}
-          {project.coverImage && (
-            <div
-              ref={coverRef}
-              className="rounded-2xl overflow-hidden border border-white/10 bg-black shadow-xl"
-            >
-              <img
-                src={project.coverImage}
-                alt={project.title}
-                onContextMenu={(e) => e.preventDefault()}
-                onDragStart={(e) => e.preventDefault()}
-                decoding="async"
-                className="w-full h-auto object-cover select-none"
-              />
-            </div>
-          )}
-
           {/* Title & Subtitle */}
           <div className="pr-14 sm:pr-16 space-y-1.5 sm:space-y-2">
             <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-bold uppercase text-white tracking-tight leading-snug">
