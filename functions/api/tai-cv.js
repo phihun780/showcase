@@ -1,6 +1,13 @@
 import { json, getBucket, PUBLIC_R2_URL } from './_lib.js';
 import { s3GetObject } from './_s3.js';
 
+// Tên file lúc người ta tải về. CỐ ĐỊNH, không lấy theo tên file trong kho.
+//
+// Trong kho tên là `cv-<mốc thời gian>.pdf` — mốc thời gian có là để đổi CV mới
+// thì trình duyệt không giữ bản cũ trong bộ nhớ đệm. Nhưng đó là chuyện nội bộ;
+// khách tải về mà thấy một dãy số thì chẳng biết là gì.
+const TEN_TAI_VE = 'CV_Ng Dinh Phi Hung_Graphic Designer';
+
 /**
  * Tải CV về máy. Đây là đường CÔNG KHAI — khách vào xem trang bấm là tải được,
  * không cần đăng nhập gì.
@@ -44,7 +51,9 @@ export async function onRequestGet(context) {
 
   if (!key || key.includes('..')) return json({ error: 'CV không nằm trong kho' }, 400);
 
-  const ten = key.split('/').pop() || 'CV.pdf';
+  // Đuôi lấy theo file thật trong kho, phòng khi sau này CV không phải PDF.
+  const duoi = (key.split('.').pop() || 'pdf').toLowerCase();
+  const ten = `${TEN_TAI_VE}.${duoi}`;
   const traVe = (body, contentType) =>
     new Response(body, {
       headers: {

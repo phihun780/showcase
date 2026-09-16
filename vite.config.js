@@ -257,7 +257,10 @@ function r2DevPlugin() {
             }
 
             const out = await s3.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
-            const ten = key.split('/').pop() || 'CV.pdf';
+            // Tên cố định, khớp với functions/api/tai-cv.js. Tên trong kho là
+            // `cv-<mốc thời gian>.pdf`, khách tải về thấy dãy số thì không hiểu gì.
+            const duoi = (key.split('.').pop() || 'pdf').toLowerCase();
+            const ten = `CV_Ng Dinh Phi Hung_Graphic Designer.${duoi}`;
             res.setHeader('Content-Type', out.ContentType || 'application/pdf');
             res.setHeader(
               'Content-Disposition',
