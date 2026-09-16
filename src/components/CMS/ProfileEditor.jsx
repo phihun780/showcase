@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Check, Upload, Image as ImageIcon, Sparkles, Loader2, Crop, GripVertical, Edit3 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Plus, Trash2, Check, Upload, Image as ImageIcon, Sparkles, Loader2, Crop, GripVertical, Edit3, FileText } from 'lucide-react';
 import { optimizeAndUploadToR2 } from '../../utils/imageOptimizer';
-import { deleteFromR2 } from '../../utils/r2Storage';
+import { deleteFromR2, uploadToR2 } from '../../utils/r2Storage';
 import ImageCropModal from './ImageCropModal';
 
 export default function ProfileEditor({ profile, onSave }) {
@@ -124,6 +124,43 @@ export default function ProfileEditor({ profile, onSave }) {
   const [optimizeNotice, setOptimizeNotice] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [cropImageSrc, setCropImageSrc] = useState(null);
+
+  // Tải file CV lên. Cố ý KHÔNG đi qua bộ tối ưu ảnh: nó nén và đổi sang WebP,
+  // đúng thứ cần cho ảnh nhưng sẽ phá nát một file PDF. Đẩy thẳng file gốc lên.
+  const cvInputRef = useRef(null);
+  const [dangTaiCV, setDangTaiCV] = useState(false);
+  const [loiCV, setLoiCV] = useState('');
+
+  const taiCVLen = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setLoiCV('');
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      setLoiCV('Chỉ nhận file PDF');
+      if (cvInputRef.current) cvInputRef.current.value = '';
+      return;
+    }
+    if (file.size > 25 * 1024 * 1024) {
+      setLoiCV(`File nặng ${(file.size / 1048576).toFixed(1)} MB, tối đa 25 MB`);
+      if (cvInputRef.current) cvInputRef.current.value = '';
+      return;
+    }
+
+    setDangTaiCV(true);
+    try {
+      // Tên có mốc thời gian nên thay CV mới không bị trình duyệt giữ bản cũ
+      // trong bộ nhớ đệm.
+      const res = await uploadToR2(file, `profile/cv-${Date.now()}.pdf`, 'application/pdf');
+      if (!res?.url) throw new Error('Tải lên thất bại');
+      setFormData(prev => ({ ...prev, cvUrl: res.url }));
+    } catch (err) {
+      setLoiCV(err.message || 'Tải CV thất bại');
+    } finally {
+      setDangTaiCV(false);
+      if (cvInputRef.current) cvInputRef.current.value = '';
+    }
+  };
   const [isCropOpen, setIsCropOpen] = useState(false);
 
   // Drag & drop state for Experience list
@@ -843,15 +880,50 @@ export default function ProfileEditor({ profile, onSave }) {
 
             <div className="sm:col-span-7 space-y-1">
               <label className="text-xs font-mono text-white/70 uppercase block">
-                Link Tải CV / Resume (PDF / Google Drive / URL)
+                File CV (PDF)
               </label>
-              <input
-                type="text"
-                value={formData.cvUrl || ''}
-                placeholder="https://drive.google.com/... hoặc /cv.pdf"
-                onChange={(e) => setFormData({ ...formData, cvUrl: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm font-mono"
-              />
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="file"
+                  ref={cvInputRef}
+                  accept="application/pdf,.pdf"
+                  onChange={taiCVLen}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => cvInputRef.current?.click()}
+                  disabled={dangTaiCV}
+                  className="px-3.5 py-2 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black font-mono text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 shrink-0 disabled:opacity-50"
+                >
+                  {dangTaiCV
+                    ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /><span>Đang tải...</span></>
+                    : <><Upload className="w-3.5 h-3.5" /><span>{formData.cvUrl ? 'Đổi CV' : 'Tải CV Lên'}</span></>}
+                </button>
+
+                <input
+                  type="text"
+                  value={formData.cvUrl || ''}
+                  placeholder="Hoặc dán link Google Drive..."
+                  onChange={(e) => setFormData({ ...formData, cvUrl: e.target.value })}
+                  className="flex-1 min-w-0 px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm font-mono"
+                />
+
+                {formData.cvUrl && (
+                  <a
+                    href={formData.cvUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Mở CV hiện tại để xem"
+                    className="p-2 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-white/70 hover:text-white transition-colors shrink-0"
+                  >
+                    <FileText className="w-4 h-4" />
+                  </a>
+                )}
+              </div>
+
+              {loiCV && <p className="text-[11px] font-mono text-red-400">{loiCV}</p>}
             </div>
           </div>
         </div>

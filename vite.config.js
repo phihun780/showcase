@@ -234,6 +234,45 @@ function r2DevPlugin() {
           }
         }
 
+        // 4c. /api/tai-cv — tải CV về máy, đường CÔNG KHAI (khách không đăng nhập).
+        //
+        // Bấm thẳng vào địa chỉ PDF thì trình duyệt MỞ ra xem chứ không tải về;
+        // muốn tải thật phải có Content-Disposition: attachment, mà cái đó chỉ
+        // đặt được ở phía máy chủ. Bản chạy thật ở functions/api/tai-cv.js.
+        if (req.url && req.url.startsWith('/api/tai-cv') && req.method === 'GET') {
+          try {
+            const dl = await s3.send(new GetObjectCommand({ Bucket: bucket, Key: 'data/portfolio.json' }));
+            const chuoi = await dl.Body.transformToString();
+            const duLieu = JSON.parse(chuoi);
+            const cvUrl = (duLieu?.profile?.cvUrl || duLieu?.profile?.resumeUrl || '').trim();
+
+            let key = '';
+            if (cvUrl.includes('.r2.dev/')) key = cvUrl.split('.r2.dev/')[1];
+            key = key.split('?')[0].replace(/^\/+/, '');
+
+            if (!key || key.includes('..')) {
+              res.statusCode = 404;
+              res.setHeader('Content-Type', 'application/json');
+              return res.end(JSON.stringify({ error: 'CV không nằm trong kho' }));
+            }
+
+            const out = await s3.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
+            const ten = key.split('/').pop() || 'CV.pdf';
+            res.setHeader('Content-Type', out.ContentType || 'application/pdf');
+            res.setHeader(
+              'Content-Disposition',
+              `attachment; filename="${ten.replace(/"/g, '')}"; filename*=UTF-8''${encodeURIComponent(ten)}`
+            );
+            res.setHeader('Cache-Control', 'no-store');
+            return out.Body.pipe(res);
+          } catch (err) {
+            console.warn('R2 Dev CV download error:', err);
+            res.statusCode = 404;
+            res.setHeader('Content-Type', 'application/json');
+            return res.end(JSON.stringify({ error: 'Không tìm thấy file CV' }));
+          }
+        }
+
         // 5. /api/delete-folder
         if (req.url === '/api/delete-folder' && req.method === 'POST') {
           const buffers = [];

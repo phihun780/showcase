@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Download, ArrowUpRight, Check, Copy, Loader2, Sparkles } from 'lucide-react';
+import { taiCvVeMay, cvNamTrongKho } from '../utils/r2Storage';
 import { usePortfolioData } from '../context/PortfolioDataContext';
 import SmartImage from './SmartImage';
 
@@ -44,9 +45,20 @@ export default function AboutSection() {
         
         if (hasLink) {
           setDownloadStatus('success');
-          // Open/download file upon reaching 100%
           setTimeout(() => {
-            window.open(cvLink.trim(), '_blank', 'noopener,noreferrer');
+            // CV nằm trong kho của mình -> tải thẳng về máy. Mở địa chỉ PDF thì
+            // trình duyệt chỉ MỞ ra xem, phải đi qua endpoint mới có header bảo
+            // trình duyệt lưu lại.
+            //
+            // CV đặt bằng link ngoài (Google Drive...) thì không tải hộ được,
+            // mở link ra như cũ.
+            if (cvNamTrongKho(cvLink)) {
+              taiCvVeMay().catch(() => {
+                window.open(cvLink.trim(), '_blank', 'noopener,noreferrer');
+              });
+            } else {
+              window.open(cvLink.trim(), '_blank', 'noopener,noreferrer');
+            }
           }, 200);
 
           // Reset state after 3s

@@ -11,6 +11,8 @@ const ALLOWED_TYPES = [
   'image/gif',
   'image/avif',
   'image/svg+xml',
+  // CV để tải lên dạng PDF, không nén, giữ nguyên file gốc.
+  'application/pdf',
 ];
 
 const EXT_BY_TYPE = {
@@ -21,6 +23,7 @@ const EXT_BY_TYPE = {
   'image/gif': 'gif',
   'image/avif': 'avif',
   'image/svg+xml': 'svg',
+  'application/pdf': 'pdf',
 };
 
 // Làm sạch đường dẫn lưu trữ do CMS gửi lên. Trả về null nếu không hợp lệ.
