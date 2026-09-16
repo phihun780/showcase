@@ -73,3 +73,22 @@ export function buildSrcSet(url) {
   if (widths.length < 2) return undefined;
   return widths.map(w => `${variantUrl(url, w)} ${w}w`).join(', ');
 }
+
+/**
+ * Bản LỚN NHẤT mà trang chịu gửi xuống trình duyệt.
+ *
+ * Không có cách nào chặn được việc tải ảnh: muốn hiện lên màn hình thì trình
+ * duyệt phải có file trong tay, tab Network luôn nhìn thấy. Nhưng có thể quyết
+ * định gửi xuống bản NÀO — ô xem ảnh rộng nhất cũng chỉ chừng 1200px, nên không
+ * việc gì phải đưa bản gốc 2560px cho mọi người xem.
+ *
+ * Ảnh chưa có bản thu nhỏ (tải lên trước khi có tính năng này) thì đành dùng
+ * ảnh gốc, y như cũ.
+ */
+export function anhXemToiDa(url, tran = 1440) {
+  const co = availableWidths(url);
+  if (co.length === 0) return url;
+  const vua = co.filter(w => w <= tran);
+  if (vua.length === 0) return url;
+  return variantUrl(url, Math.max(...vua));
+}

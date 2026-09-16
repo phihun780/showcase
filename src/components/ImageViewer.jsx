@@ -2,6 +2,7 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { anhXemToiDa } from '../utils/responsiveImage';
 
 /**
  * Xem một tấm ảnh ở cỡ lớn nhất màn hình cho phép.
@@ -14,8 +15,9 @@ import { X, ChevronLeft, ChevronRight } from 'lucide-react';
  * phụ thuộc vào bên nào gắn trước — đóng ảnh xong đóng luôn cả bài viết. Cha
  * gọi `onClose` / `onPrev` / `onNext` là đủ.
  *
- * `src` để nguyên bản gốc chứ không dùng bản thu nhỏ: đây đúng là lúc người xem
- * muốn nhìn rõ chi tiết.
+ * Ảnh dùng bản 1440px chứ không phải bản gốc 2560px. Khung này rộng nhất cũng
+ * chỉ chừng 1200px nên nhìn không khác gì, mà bản gốc thì không bao giờ rời khỏi
+ * kho — ai mở tab Network ra lấy cũng chỉ lấy được bản 1440.
  */
 export default function ImageViewer({ src, alt, index, total, onClose, onPrev, onNext }) {
   if (!src) return null;
@@ -74,10 +76,15 @@ export default function ImageViewer({ src, alt, index, total, onClose, onPrev, o
         initial={{ opacity: 0, scale: 0.97 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-        src={src}
+        src={anhXemToiDa(src)}
         alt={alt}
         onClick={(e) => e.stopPropagation()}
         onContextMenu={(e) => e.preventDefault()}
+        /* `draggable={false}` chứ không chỉ dựa vào `onDragStart`: đây là
+           motion.img, mà framer-motion chiếm luôn prop `onDragStart` cho hệ cử
+           chỉ kéo của nó — hàm mình truyền vào không chạm tới sự kiện gốc, kéo
+           ảnh ra desktop vẫn được. Thuộc tính DOM thì framer không đụng tới. */
+        draggable={false}
         onDragStart={(e) => e.preventDefault()}
         decoding="async"
         className="max-w-[94vw] max-h-[92vh] w-auto h-auto object-contain select-none rounded-lg shadow-2xl"

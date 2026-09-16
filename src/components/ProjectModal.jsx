@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { projectUrl } from '../utils/projectUrl';
 import { chepVaoBoNhoTam } from '../utils/clipboard';
+import { anhXemToiDa } from '../utils/responsiveImage';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ArrowRight, ArrowLeft, ArrowUp, Layers, Share2, Check } from 'lucide-react';
 
@@ -29,7 +30,12 @@ export default function ProjectModal({ project, isOpen, onClose, onSelectNextPro
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') { onClose(); return; }
+      // Chặn Ctrl+S (lưu cả trang, kèm ảnh) và Ctrl+P (in ra PDF).
+      // Không chặn được người quyết tâm, nhưng bịt được đường dễ nhất.
+      if ((e.ctrlKey || e.metaKey) && ['s', 'p'].includes(e.key.toLowerCase())) {
+        e.preventDefault();
+      }
     };
 
     const handleGlobalWheel = (e) => {
@@ -208,9 +214,13 @@ export default function ProjectModal({ project, isOpen, onClose, onSelectNextPro
                   id={`project-gallery-${idx}`}
                   className="rounded-2xl overflow-hidden border border-white/10 bg-black shadow-xl relative group"
                 >
+                  {/* Bản 1440px chứ không phải bản gốc 2560px — khung này rộng
+                      nhất cũng chỉ chừng 880px. Xem không khác gì, mà bản gốc
+                      không bao giờ rời khỏi kho. */}
                   <img
-                    src={imgUrl}
+                    src={anhXemToiDa(imgUrl)}
                     alt={`${project.title} visual ${idx + 1}`}
+                    draggable={false}
                     onContextMenu={(e) => e.preventDefault()}
                     onDragStart={(e) => e.preventDefault()}
                     loading={idx === 0 ? 'eager' : 'lazy'}

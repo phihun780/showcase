@@ -130,6 +130,13 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
         return;
       }
 
+      // Chặn Ctrl+S (lưu cả trang, kèm ảnh) và Ctrl+P (in ra PDF).
+      // Không chặn được người quyết tâm, nhưng bịt được đường dễ nhất.
+      if ((e.ctrlKey || e.metaKey) && ['s', 'p'].includes(e.key.toLowerCase())) {
+        e.preventDefault();
+        return;
+      }
+
       if (!dangXemAnh) return;
       if (e.key === 'ArrowRight') doiAnh(1);
       if (e.key === 'ArrowLeft') doiAnh(-1);
@@ -300,6 +307,7 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
                             setTiLeAnh(t => (t[idx] != null ? t : { ...t, [idx]: ti }));
                           }}
                           onError={() => setTiLeAnh(t => (t[idx] != null ? t : { ...t, [idx]: 1 }))}
+                          draggable={false}
                           onContextMenu={(e) => e.preventDefault()}
                           onDragStart={(e) => e.preventDefault()}
                           loading={idx < 9 ? 'eager' : 'lazy'}
