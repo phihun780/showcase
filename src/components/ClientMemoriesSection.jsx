@@ -301,11 +301,11 @@ export default function ClientMemoriesSection() {
   // Phải lớn hơn nửa bề ngang / nửa chiều cao của một brand, không thì cái nằm
   // ngoài cùng bị mép khung cắt mất một góc.
   const leNgang = hepMH ? 50 : 95;
-  const leDoc = hepMH ? 46 : 70;
+  const leDoc = hepMH ? 40 : 70;
 
-  // Chiều cao khung = lề trên + lề dưới + mỗi hàng một khoảng.
-  const caoHang = hepMH ? 115 : 160;
-  const caoKhung = 2 * leDoc + soHang * caoHang;
+  // Chiều cao tối thiểu = lề trên + lề dưới + mỗi hàng một khoảng.
+  const caoHang = hepMH ? 85 : 160;
+  const caoToiThieu = 2 * leDoc + soHang * caoHang;
 
   const raiTheoChuot = useCallback((e) => {
     if (!co3D) return;
@@ -418,9 +418,14 @@ export default function ClientMemoriesSection() {
             onPointerLeave={thoiRai}
             style={{
               perspective: co3D ? '1200px' : undefined,
-              // Chiều cao chạy theo SỐ HÀNG. Để cứng thì thêm vài brand là các
-              // hàng bị ép sát rồi chồng lên nhau theo chiều dọc.
-              height: `${caoKhung}px`,
+              // Màn hẹp: khung VUÔNG cho gọn. Nhưng vuông chỉ đẹp khi vừa đủ chỗ
+              // — thêm brand là thêm hàng, nên kèm `minHeight`: đủ chỗ thì giữ
+              // vuông, không đủ thì cao thêm chứ không ép các hàng chồng nhau.
+              //
+              // Màn rộng: cao theo số hàng như cũ.
+              aspectRatio: hepMH ? '1 / 1' : undefined,
+              minHeight: hepMH ? `${caoToiThieu}px` : undefined,
+              height: hepMH ? undefined : `${caoToiThieu}px`,
             }}
             className="relative w-full rounded-3xl border border-white/10 bg-[#0B0B0E] overflow-hidden"
           >
