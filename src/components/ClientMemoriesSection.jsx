@@ -25,7 +25,7 @@ function soCotCua(tong, hep) {
   return tong <= 3 ? tong : tong <= 8 ? 3 : 4;
 }
 
-function viTriBrand(idx, tong, nhip = 0, hep = false) {
+function viTriBrand(idx, tong, hep = false) {
   const cot = soCotCua(tong, hep);
   const hang = Math.ceil(tong / cot);
   const c = idx % cot;
@@ -44,20 +44,18 @@ function viTriBrand(idx, tong, nhip = 0, hep = false) {
   const lechX = (ngauNhien(idx * 3 + 1) - 0.5) * rongO * bienDo;
   const lechY = (ngauNhien(idx * 7 + 2) - 0.5) * caoO * bienDo;
 
-  // Độ sâu 0 = xa nhất, 1 = gần nhất.
-  // Có `nhip` trong hạt nên cứ mỗi nhịp là mọi brand nhận một độ sâu mới —
-  // cái đang rõ lùi ra xa mờ đi, cái đang mờ tiến lại gần. Vẫn tất định: cùng
-  // idx và cùng nhịp thì luôn ra đúng một kết quả.
-  const sau = 0.25 + ngauNhien(idx * 11 + 5 + nhip * 97) * 0.75;
+  // Độ sâu 0 = xa nhất, 1 = gần nhất. CỐ ĐỊNH theo từng brand, không đổi theo
+  // thời gian nữa: việc "cái nào đang rõ" giờ do đèn rọi lo (xem `noiBat`).
+  // Ở đây độ sâu chỉ còn lo cỡ to nhỏ và tốc độ trôi khi rê chuột, để khung vẫn
+  // ra dáng một không gian có chiều sâu chứ không phải bảng logo phẳng.
+  const sau = 0.3 + ngauNhien(idx * 11 + 5) * 0.7;
 
   return {
-    // 0..1 — ghép vào calc() ở JSX
+    // 0..1 — ghép vào clamp() ở JSX
     fx: Math.min(1, Math.max(0, rongO * (c + 0.5) + lechX)),
     fy: Math.min(1, Math.max(0, caoO * (h + 0.5) + lechY)),
     sau,
-    tiLe: 0.58 + sau * 0.42,          // xa thì nhỏ, gần thì to
-    mo: 0.32 + sau * 0.68,            // xa thì mờ
-    nhoe: (1 - sau) * 1.6,            // xa thì nhoè nhẹ
+    tiLe: 0.6 + sau * 0.3,            // xa thì nhỏ, gần thì to
   };
 }
 
@@ -149,19 +147,33 @@ export default function ClientMemoriesSection() {
     return () => mq.removeEventListener('change', capNhat);
   }, []);
 
-  // Cứ vài giây lại xáo lại độ sâu của tất cả brand: cái đang rõ lùi xa mờ đi,
-  // cái đang mờ tiến lại gần. Cả khung như đang thở.
+  // ĐÈN RỌI: mọi brand đều mờ + trắng đen, mỗi lúc chỉ một cái được rõ nét và
+  // hiện đúng màu logo. Cứ vài giây lại đổi sang một cái khác, chọn ngẫu nhiên.
   //
   // Đổi theo NHỊP chứ không đổi từng khung hình: blur là thuộc tính vẽ lại, cho
-  // nó chạy liên tục 60 lần/giây thì máy yếu sẽ đuối. Đổi 3.5 giây một lần rồi
+  // nó chạy liên tục 60 lần/giây thì máy yếu sẽ đuối. Đổi vài giây một lần rồi
   // để CSS transition lo phần chuyển tiếp thì gần như không tốn gì.
-  const [nhip, setNhip] = useState(0);
+  const [noiBat, setNoiBat] = useState(0);
   useEffect(() => {
-    if (!co3D) return;                       // điện thoại giữ nguyên một tầng
+    const tong = clientList.length;
+    if (tong <= 1) return;                   // một mình thì rọi mãi cái đó
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const t = setInterval(() => setNhip(n => n + 1), 3500);
+
+    const t = setInterval(() => {
+      setNoiBat(hienTai => {
+        // Bốc trong (tong - 1) cái RỒI nhảy qua chính nó. Cách này luôn đổi sang
+        // brand khác; nếu bốc thẳng trong `tong` thì có lúc trúng lại chính nó,
+        // người xem thấy cả khung đứng im một nhịp tưởng bị treo.
+        let k = Math.floor(Math.random() * (tong - 1));
+        if (k >= hienTai) k += 1;
+        return k;
+      });
+    }, 2800);
     return () => clearInterval(t);
-  }, [co3D]);
+  }, [clientList.length]);
+
+  // Danh sách ngắn lại (xoá brand trong CMS) thì chỉ số cũ có thể trỏ ra ngoài.
+  const iNoiBat = noiBat < clientList.length ? noiBat : 0;
 
   // Rê chuột trong khung thì cả cảnh dịch theo, mỗi brand dịch một mức khác
   // nhau tuỳ độ sâu — cái ở gần chạy nhanh, cái ở xa chạy chậm. Đó là thứ tạo
@@ -255,17 +267,19 @@ export default function ClientMemoriesSection() {
             </p>
           </motion.div>
         ) : (
-          /* KHÔNG GIAN 3D RẢI THEO ĐỘ SÂU
+          /* KHÔNG GIAN 3D + ĐÈN RỌI
            *
            * Cố tình KHÔNG dùng lưới đều: lưới đều thì mọi brand cùng kích thước,
            * cùng khoảng cách — đọc ra là một bảng dữ liệu, không phải một không
-           * gian. Ở đây mỗi brand nằm ở một độ sâu khác nhau, nên có cái nổi rõ
-           * phía trước, có cái lùi xa mờ đi.
+           * gian. Ở đây mỗi brand nằm ở một độ sâu riêng nên cái to cái nhỏ, và
+           * khi rê chuột thì cái ở gần chạy nhanh hơn cái ở xa.
            *
-           * Ba thứ cùng đổi theo độ sâu mới ra cảm giác thật:
-           *   gần -> to hơn, rõ hơn, nét hơn
-           *   xa  -> nhỏ hơn, mờ hơn, nhoè nhẹ
-           * Chỉ đổi mỗi kích thước thì trông như phóng to thu nhỏ vô nghĩa.
+           * Còn việc "đang nhìn cái nào" thì do đèn rọi lo: tất cả nằm im trong
+           * trạng thái mờ và trắng đen, mỗi lúc chỉ MỘT brand được rõ nét và
+           * hiện đúng màu logo, vài giây lại đổi sang một cái khác.
+           *
+           * Bốn thứ cùng đổi mới ra cảm giác "được rọi": nét lại, sáng lên, to
+           * thêm, và lên màu. Chỉ bỏ blur thôi thì trông như lỗi hiển thị.
            */
           <motion.div
             initial={{ opacity: 0 }}
@@ -291,7 +305,8 @@ export default function ClientMemoriesSection() {
 
             {clientList.map((client, idx) => {
               const ten = client.clientName || 'Brand';
-              const v = viTriBrand(idx, clientList.length, nhip, hepMH);
+              const v = viTriBrand(idx, clientList.length, hepMH);
+              const roi = idx === iNoiBat;        // đang được đèn rọi
               return (
                 <div
                   key={client.id || idx}
@@ -312,7 +327,8 @@ export default function ClientMemoriesSection() {
                     // bám sát con trỏ.
                     transform: `translate(-50%, -50%) translate3d(var(--dx, 0px), var(--dy, 0px), 0)`,
                     transition: 'transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)',
-                    zIndex: Math.round(v.sau * 100),
+                    // Cái đang rọi luôn nằm trên cùng, không bị cái mờ che mất.
+                    zIndex: roi ? 100 : Math.round(v.sau * 50),
                   }}
                 >
                   {/* Lớp ĐỘ SÂU riêng, transition dài 1.4s cho việc đổi tầng diễn
@@ -321,7 +337,7 @@ export default function ClientMemoriesSection() {
                       trong 0.45s — hai việc cần hai tốc độ khác nhau. */}
                   <div
                     style={{
-                      transform: `scale(${v.tiLe})`,
+                      transform: `scale(${(v.tiLe * (roi ? 1.18 : 1)).toFixed(3)})`,
                       transition: 'transform 1.4s cubic-bezier(0.16, 1, 0.3, 1)',
                     }}
                   >
@@ -336,8 +352,8 @@ export default function ClientMemoriesSection() {
                       onClick={() => handleOpenLightbox(client, 0)}
                       aria-label={`Xem những gì đã làm cho ${ten}`}
                       style={{
-                        opacity: v.mo,
-                        filter: v.nhoe > 0.15 ? `blur(${v.nhoe}px)` : 'blur(0px)',
+                        opacity: roi ? 1 : 0.3,
+                        filter: roi ? 'blur(0px)' : 'blur(2.6px)',
                         transition: 'opacity 1.4s cubic-bezier(0.16,1,0.3,1), filter 1.4s cubic-bezier(0.16,1,0.3,1), transform 0.4s ease-out',
                       }}
                       className="group/o relative flex flex-col items-center gap-2 px-4 py-3 rounded-2xl cursor-pointer hover:!opacity-100 hover:!blur-none hover:scale-110 focus-visible:outline-none focus-visible:!opacity-100 focus-visible:!blur-none focus-visible:ring-2 focus-visible:ring-[#C3EA39]"
@@ -353,7 +369,9 @@ export default function ClientMemoriesSection() {
                             decoding="async"
                             onContextMenu={(e) => e.preventDefault()}
                             onDragStart={(e) => e.preventDefault()}
-                            className="max-h-16 sm:max-h-20 w-auto max-w-[30vw] sm:max-w-[150px] object-contain rounded-[8px] grayscale group-hover/o:grayscale-0 transition-[filter] duration-500 select-none"
+                            /* Chỉ cái đang rọi mới hiện đúng màu logo. Rê chuột
+                               vào cái nào thì cái đó cũng lên màu ngay. */
+                            className={`max-h-16 sm:max-h-20 w-auto max-w-[30vw] sm:max-w-[150px] object-contain rounded-[8px] group-hover/o:grayscale-0 transition-[filter] duration-700 select-none ${roi ? 'grayscale-0' : 'grayscale'}`}
                           />
                           {/* Tên ở đây là chú thích dưới logo nên để cỡ nhỏ, kiểu
                               mono như các nhãn khác trong trang — logo vẫn là thứ
@@ -363,7 +381,7 @@ export default function ClientMemoriesSection() {
                               KHÔNG `uppercase`: viết hoa ép sẽ phá cách viết riêng
                               của brand — "RomaFarm" thành "ROMAFARM". Gõ trong CMS
                               sao thì hiện ra vậy. */}
-                          <span className="font-mono text-[10px] sm:text-[11px] tracking-wide text-center leading-tight text-white/65 group-hover/o:text-[#C3EA39] transition-colors duration-300 max-w-[30vw] sm:max-w-[150px] select-none">
+                          <span className={`font-mono text-[10px] sm:text-[11px] tracking-wide text-center leading-tight group-hover/o:text-[#C3EA39] transition-colors duration-700 max-w-[30vw] sm:max-w-[150px] select-none ${roi ? 'text-white' : 'text-white/60'}`}>
                             {ten}
                           </span>
                         </>
