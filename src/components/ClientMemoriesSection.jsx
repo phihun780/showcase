@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { usePortfolioData } from '../context/PortfolioDataContext';
 import ClientMemoryModal from './ClientMemoryModal';
@@ -25,14 +25,23 @@ function soCotCua(tong, hep) {
   return tong <= 3 ? tong : tong <= 8 ? 3 : 4;
 }
 
-function viTriBrand(idx, tong, hep = false) {
-  const cot = soCotCua(tong, hep);
-  const hang = Math.ceil(tong / cot);
-  const c = idx % cot;
-  const h = Math.floor(idx / cot);
+// Luôn dư vài ô trống so với số brand. Đủ ô cho mỗi brand một chỗ là hết chỗ
+// mà nhảy — brand tan đi rồi hiện lại đúng chỗ cũ, coi như không có gì xảy ra.
+const O_DU_TRU = 2;
 
-  // Trả về vị trí dạng TỈ LỆ 0..1 của TRỌN bề ngang khung — đúng tâm mỗi ô.
-  // Việc giữ cho brand không lòi ra mép để CSS clamp() lo (xem chỗ dùng).
+function soHangCua(tong, cot) {
+  return Math.max(1, Math.ceil((tong + O_DU_TRU) / Math.max(1, cot)));
+}
+
+// Vị trí của một Ô (không phải của một brand).
+//
+// Brand nào ngồi ô nào là việc của `oCuaBrand` bên dưới, và nó đổi theo thời
+// gian. Tách ra như vậy thì lúc brand nhảy chỗ, nó nhận trọn bộ toạ độ + độ sâu
+// của ô mới — hiện ra ở nơi khác, cỡ khác, chứ không phải chỉ trượt đi một tí.
+function viTriO(o, cot, hang, hep) {
+  const c = o % cot;
+  const h = Math.floor(o / cot);
+
   const rongO = 1 / cot;
   const caoO = 1 / hang;
 
@@ -41,21 +50,19 @@ function viTriBrand(idx, tong, hep = false) {
   // Màn hẹp thì xê ít thôi: ô đã sát nhau sẵn, xê mạnh là hai brand cạnh nhau
   // chạy về phía nhau rồi chồng lên.
   const bienDo = hep ? 0.16 : 0.42;
-  const lechX = (ngauNhien(idx * 3 + 1) - 0.5) * rongO * bienDo;
-  const lechY = (ngauNhien(idx * 7 + 2) - 0.5) * caoO * bienDo;
+  const lechX = (ngauNhien(o * 3 + 1) - 0.5) * rongO * bienDo;
+  const lechY = (ngauNhien(o * 7 + 2) - 0.5) * caoO * bienDo;
 
-  // Độ sâu 0 = xa nhất, 1 = gần nhất. CỐ ĐỊNH theo từng brand, không đổi theo
-  // thời gian nữa: việc "cái nào đang rõ" giờ do đèn rọi lo (xem `noiBat`).
-  // Ở đây độ sâu chỉ còn lo cỡ to nhỏ và tốc độ trôi khi rê chuột, để khung vẫn
-  // ra dáng một không gian có chiều sâu chứ không phải bảng logo phẳng.
-  const sau = 0.3 + ngauNhien(idx * 11 + 5) * 0.7;
+  // Độ sâu 0 = xa nhất, 1 = gần nhất. Gắn với Ô nên brand nhảy sang ô khác là
+  // đổi luôn cỡ to nhỏ. Độ sâu chỉ lo cỡ và tốc độ trôi khi rê chuột; còn việc
+  // "đang nhìn cái nào" do đèn rọi lo.
+  const sau = 0.3 + ngauNhien(o * 11 + 5) * 0.7;
 
   return {
-    // 0..1 — ghép vào clamp() ở JSX
     fx: Math.min(1, Math.max(0, rongO * (c + 0.5) + lechX)),
     fy: Math.min(1, Math.max(0, caoO * (h + 0.5) + lechY)),
     sau,
-    tiLe: 0.6 + sau * 0.3,            // xa thì nhỏ, gần thì to
+    tiLe: 0.6 + sau * 0.3,
   };
 }
 
@@ -154,23 +161,100 @@ export default function ClientMemoriesSection() {
   // nó chạy liên tục 60 lần/giây thì máy yếu sẽ đuối. Đổi vài giây một lần rồi
   // để CSS transition lo phần chuyển tiếp thì gần như không tốn gì.
   const [noiBat, setNoiBat] = useState(0);
+  const noiBatRef = useRef(0);
+  const datNoiBat = useCallback((v) => { noiBatRef.current = v; setNoiBat(v); }, []);
+
+  // Brand đang tan đi để nhảy sang ô khác (null = không có cái nào).
+  const [dangAn, setDangAn] = useState(null);
+  const dangAnRef = useRef(null);
+
+  // Chuột có đang ở trong khung không. Còn ở trong thì ngưng nhảy chỗ: rê chuột
+  // vào brand nào là brand đó sáng lên và hết mờ, nhấc nó đi ngay dưới con trỏ
+  // thì vừa khó chịu vừa dễ bấm hụt.
+  const chuotTrongKhung = useRef(false);
+  const datDangAn = useCallback((v) => { dangAnRef.current = v; setDangAn(v); }, []);
+
+  const soCot = soCotCua(clientList.length, hepMH);
+  const soHang = soHangCua(clientList.length, soCot);
+  const soO = soCot * soHang;
+
+  // Brand thứ i đang ngồi ô nào. Ban đầu ngồi đúng thứ tự.
+  const [oCuaBrand, setOCuaBrand] = useState([]);
+  useEffect(() => {
+    setOCuaBrand(Array.from({ length: clientList.length }, (_, i) => i % Math.max(1, soO)));
+    datDangAn(null);
+  }, [clientList.length, soO, datDangAn]);
+
+  const giamChuyenDong = () =>
+    typeof window !== 'undefined' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
   useEffect(() => {
     const tong = clientList.length;
     if (tong <= 1) return;                   // một mình thì rọi mãi cái đó
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (giamChuyenDong()) return;
 
     const t = setInterval(() => {
-      setNoiBat(hienTai => {
-        // Bốc trong (tong - 1) cái RỒI nhảy qua chính nó. Cách này luôn đổi sang
-        // brand khác; nếu bốc thẳng trong `tong` thì có lúc trúng lại chính nó,
-        // người xem thấy cả khung đứng im một nhịp tưởng bị treo.
-        let k = Math.floor(Math.random() * (tong - 1));
-        if (k >= hienTai) k += 1;
-        return k;
-      });
+      // Bốc trong (tong - 1) cái RỒI nhảy qua chính nó. Cách này luôn đổi sang
+      // brand khác; nếu bốc thẳng trong `tong` thì có lúc trúng lại chính nó,
+      // người xem thấy cả khung đứng im một nhịp tưởng bị treo.
+      const hienTai = noiBatRef.current;
+      let k = Math.floor(Math.random() * (tong - 1));
+      if (k >= hienTai) k += 1;
+      // Đừng rọi vào cái đang tan đi: nó sắp biến mất, rọi vào chỉ thấy chớp một
+      // cái rồi tắt.
+      if (k === dangAnRef.current) return;
+      datNoiBat(k);
     }, 2800);
     return () => clearInterval(t);
-  }, [clientList.length]);
+  }, [clientList.length, datNoiBat]);
+
+  // NHẢY CHỖ: thỉnh thoảng nhặt một brand đang mờ, cho nó tan hẳn đi rồi hiện
+  // lại ở một ô còn trống.
+  //
+  // Đổi `left/top` đúng lúc opacity đang bằng 0 nên mắt không thấy nó trượt —
+  // chỉ thấy chỗ này mất đi, chỗ kia hiện ra. Không đặt transition cho left/top
+  // cũng vì vậy.
+  useEffect(() => {
+    const tong = clientList.length;
+    if (tong <= 1 || soO <= tong) return;    // không dư ô thì không có chỗ mà nhảy
+    if (giamChuyenDong()) return;
+
+    let hen = null;
+    const t = setInterval(() => {
+      if (dangAnRef.current !== null) return;      // đang có cái nhảy dở
+      if (chuotTrongKhung.current) return;         // người ta đang rê chuột trong khung
+
+      // Không đụng vào cái đang được rọi — người ta đang nhìn nó.
+      const ungVien = [];
+      for (let i = 0; i < tong; i++) if (i !== noiBatRef.current) ungVien.push(i);
+      if (ungVien.length === 0) return;
+
+      const idx = ungVien[Math.floor(Math.random() * ungVien.length)];
+      datDangAn(idx);
+
+      // Đợi đúng quãng mờ dần (0.9s ở CSS) rồi mới dời chỗ.
+      hen = setTimeout(() => {
+        setOCuaBrand(prev => {
+          if (!prev.length) return prev;
+          const dangDung = new Set(prev);
+          const oTrong = [];
+          for (let o = 0; o < soO; o++) if (!dangDung.has(o)) oTrong.push(o);
+          if (oTrong.length === 0) return prev;
+
+          const moi = [...prev];
+          moi[idx] = oTrong[Math.floor(Math.random() * oTrong.length)];
+          return moi;
+        });
+        datDangAn(null);
+      }, 950);
+    }, 2200);
+
+    return () => {
+      clearInterval(t);
+      if (hen) clearTimeout(hen);
+    };
+  }, [clientList.length, soO, datDangAn, datNoiBat]);
 
   // Danh sách ngắn lại (xoá brand trong CMS) thì chỉ số cũ có thể trỏ ra ngoài.
   const iNoiBat = noiBat < clientList.length ? noiBat : 0;
@@ -181,8 +265,8 @@ export default function ClientMemoriesSection() {
   //
   // Chỉ ghi hai biến CSS, còn việc ghép transform để cho CSS lo. Nhờ vậy phần
   // phóng to/thu nhỏ theo độ sâu không bị JS ghi đè mất.
-  const soHang = Math.ceil(clientList.length / Math.max(1, soCotCua(clientList.length, hepMH)));
-  const caoKhung = Math.max(380, soHang * 132);
+  // Màn hẹp: cao theo số hàng. Màn rộng: giữ 500px trừ khi có quá nhiều hàng.
+  const caoKhung = hepMH ? Math.max(380, soHang * 132) : Math.max(500, soHang * 150);
 
   // Nửa bề ngang / chiều cao tối đa của một brand — khoảng cách tối thiểu phải
   // chừa ra mép để nó không bị cắt.
@@ -203,7 +287,10 @@ export default function ClientMemoriesSection() {
     }
   }, [co3D]);
 
+  const vaoKhung = useCallback(() => { chuotTrongKhung.current = true; }, []);
+
   const thoiRai = useCallback((e) => {
+    chuotTrongKhung.current = false;
     for (const el of e.currentTarget.querySelectorAll('[data-sau]')) {
       el.style.setProperty('--dx', '0px');
       el.style.setProperty('--dy', '0px');
@@ -286,16 +373,16 @@ export default function ClientMemoriesSection() {
             whileInView={{ opacity: 1 }}
             viewport={{ once: true, margin: '-60px' }}
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            onPointerEnter={vaoKhung}
             onPointerMove={raiTheoChuot}
             onPointerLeave={thoiRai}
             style={{
               perspective: co3D ? '1200px' : undefined,
-              // Màn hẹp thì chiều cao chạy theo SỐ HÀNG. Để cứng 380px thì thêm
-              // vài brand là các hàng bị ép sát rồi chồng lên nhau theo chiều dọc.
-              // Chỉ đặt khi màn hẹp, để từ 640px trở lên các class sm:/lg: vẫn giữ.
-              height: hepMH ? `${caoKhung}px` : undefined,
+              // Chiều cao chạy theo SỐ HÀNG. Để cứng thì thêm vài brand là các
+              // hàng bị ép sát rồi chồng lên nhau theo chiều dọc.
+              height: `${caoKhung}px`,
             }}
-            className="relative w-full h-[380px] sm:h-[440px] lg:h-[500px] rounded-3xl border border-white/10 bg-[#0B0B0E] overflow-hidden"
+            className="relative w-full rounded-3xl border border-white/10 bg-[#0B0B0E] overflow-hidden"
           >
             {/* Vệt sáng nền để cảnh có không khí, không phẳng lì */}
             <div
@@ -305,8 +392,10 @@ export default function ClientMemoriesSection() {
 
             {clientList.map((client, idx) => {
               const ten = client.clientName || 'Brand';
-              const v = viTriBrand(idx, clientList.length, hepMH);
+              const o = oCuaBrand[idx] ?? (idx % Math.max(1, soO));
+              const v = viTriO(o, soCot, soHang, hepMH);
               const roi = idx === iNoiBat;        // đang được đèn rọi
+              const an = idx === dangAn;          // đang tan đi để nhảy chỗ
               return (
                 <div
                   key={client.id || idx}
@@ -352,9 +441,12 @@ export default function ClientMemoriesSection() {
                       onClick={() => handleOpenLightbox(client, 0)}
                       aria-label={`Xem những gì đã làm cho ${ten}`}
                       style={{
-                        opacity: roi ? 1 : 0.3,
+                        opacity: an ? 0 : roi ? 1 : 0.3,
                         filter: roi ? 'blur(0px)' : 'blur(2.6px)',
-                        transition: 'opacity 1.4s cubic-bezier(0.16,1,0.3,1), filter 1.4s cubic-bezier(0.16,1,0.3,1), transform 0.4s ease-out',
+                        // Đang tan đi thì đừng nhận chuột: nó vô hình, bấm trúng
+                        // sẽ mở ra một brand mà người ta không hề thấy.
+                        pointerEvents: an ? 'none' : undefined,
+                        transition: 'opacity 0.9s cubic-bezier(0.16,1,0.3,1), filter 1.4s cubic-bezier(0.16,1,0.3,1), transform 0.4s ease-out',
                       }}
                       className="group/o relative flex flex-col items-center gap-2 px-4 py-3 rounded-2xl cursor-pointer hover:!opacity-100 hover:!blur-none hover:scale-110 focus-visible:outline-none focus-visible:!opacity-100 focus-visible:!blur-none focus-visible:ring-2 focus-visible:ring-[#C3EA39]"
                     >
