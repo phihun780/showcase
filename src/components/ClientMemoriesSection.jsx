@@ -18,23 +18,31 @@ function ngauNhien(hat) {
 // Chia khung thành các ô rồi thả mỗi brand vào một ô kèm xê dịch nhẹ.
 // Rải tự do hoàn toàn thì với nhiều brand sẽ có cái chồng lên nhau; cách này
 // trông vẫn ngẫu nhiên mà chắc chắn không đè nhau.
-function viTriBrand(idx, tong, nhip = 0) {
-  const cot = tong <= 3 ? tong : tong <= 8 ? 3 : 4;
+// Màn hẹp thì tối đa 2 cột. Ba cột trên khung 335px là mỗi ô rộng 111px, mà
+// một brand đã chiếm tới 113px — chắc chắn đè nhau.
+function soCotCua(tong, hep) {
+  if (hep) return Math.max(1, Math.min(tong, 2));
+  return tong <= 3 ? tong : tong <= 8 ? 3 : 4;
+}
+
+function viTriBrand(idx, tong, nhip = 0, hep = false) {
+  const cot = soCotCua(tong, hep);
   const hang = Math.ceil(tong / cot);
   const c = idx % cot;
   const h = Math.floor(idx / cot);
 
-  // Trả về vị trí dạng TỈ LỆ 0..1, còn việc chừa lề để cho CSS calc() lo.
-  //
-  // Chừa lề bằng % thì màn rộng cũng chừa đúng ngần ấy % — đo ở 1280px thấy
-  // các brand dồn hết vào dải 34%-66%, hai bên trống hoác. Chừa bằng px thì
-  // lề luôn vừa đúng nửa bề ngang một brand, bất kể khung to hay nhỏ.
+  // Trả về vị trí dạng TỈ LỆ 0..1 của TRỌN bề ngang khung — đúng tâm mỗi ô.
+  // Việc giữ cho brand không lòi ra mép để CSS clamp() lo (xem chỗ dùng).
   const rongO = 1 / cot;
   const caoO = 1 / hang;
 
-  // Xê dịch trong lòng ô, chừa mép để không dính viền
-  const lechX = (ngauNhien(idx * 3 + 1) - 0.5) * rongO * 0.42;
-  const lechY = (ngauNhien(idx * 7 + 2) - 0.5) * caoO * 0.42;
+  // Xê dịch trong lòng ô cho đỡ đều tăm tắp.
+  //
+  // Màn hẹp thì xê ít thôi: ô đã sát nhau sẵn, xê mạnh là hai brand cạnh nhau
+  // chạy về phía nhau rồi chồng lên.
+  const bienDo = hep ? 0.16 : 0.42;
+  const lechX = (ngauNhien(idx * 3 + 1) - 0.5) * rongO * bienDo;
+  const lechY = (ngauNhien(idx * 7 + 2) - 0.5) * caoO * bienDo;
 
   // Độ sâu 0 = xa nhất, 1 = gần nhất.
   // Có `nhip` trong hạt nên cứ mỗi nhịp là mọi brand nhận một độ sâu mới —
@@ -131,6 +139,16 @@ export default function ClientMemoriesSection() {
     return () => mq.removeEventListener('change', capNhat);
   }, []);
 
+  // Màn hẹp: quyết định số cột, biên độ xê dịch và chiều cao khung.
+  const [hepMH, setHepMH] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 639px)');
+    const capNhat = () => setHepMH(mq.matches);
+    capNhat();
+    mq.addEventListener('change', capNhat);
+    return () => mq.removeEventListener('change', capNhat);
+  }, []);
+
   // Cứ vài giây lại xáo lại độ sâu của tất cả brand: cái đang rõ lùi xa mờ đi,
   // cái đang mờ tiến lại gần. Cả khung như đang thở.
   //
@@ -151,6 +169,14 @@ export default function ClientMemoriesSection() {
   //
   // Chỉ ghi hai biến CSS, còn việc ghép transform để cho CSS lo. Nhờ vậy phần
   // phóng to/thu nhỏ theo độ sâu không bị JS ghi đè mất.
+  const soHang = Math.ceil(clientList.length / Math.max(1, soCotCua(clientList.length, hepMH)));
+  const caoKhung = Math.max(380, soHang * 132);
+
+  // Nửa bề ngang / chiều cao tối đa của một brand — khoảng cách tối thiểu phải
+  // chừa ra mép để nó không bị cắt.
+  const leNgang = hepMH ? 58 : 82;
+  const leDoc = hepMH ? 54 : 58;
+
   const raiTheoChuot = useCallback((e) => {
     if (!co3D) return;
     const khung = e.currentTarget;
@@ -248,7 +274,13 @@ export default function ClientMemoriesSection() {
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
             onPointerMove={raiTheoChuot}
             onPointerLeave={thoiRai}
-            style={{ perspective: co3D ? '1200px' : undefined }}
+            style={{
+              perspective: co3D ? '1200px' : undefined,
+              // Màn hẹp thì chiều cao chạy theo SỐ HÀNG. Để cứng 380px thì thêm
+              // vài brand là các hàng bị ép sát rồi chồng lên nhau theo chiều dọc.
+              // Chỉ đặt khi màn hẹp, để từ 640px trở lên các class sm:/lg: vẫn giữ.
+              height: hepMH ? `${caoKhung}px` : undefined,
+            }}
             className="relative w-full h-[380px] sm:h-[440px] lg:h-[500px] rounded-3xl border border-white/10 bg-[#0B0B0E] overflow-hidden"
           >
             {/* Vệt sáng nền để cảnh có không khí, không phẳng lì */}
@@ -259,17 +291,23 @@ export default function ClientMemoriesSection() {
 
             {clientList.map((client, idx) => {
               const ten = client.clientName || 'Brand';
-              const v = viTriBrand(idx, clientList.length, nhip);
+              const v = viTriBrand(idx, clientList.length, nhip, hepMH);
               return (
                 <div
                   key={client.id || idx}
                   data-sau={v.sau}
                   className="absolute"
                   style={{
-                    // Lề 82px ngang / 58px dọc = quá nửa bề ngang & chiều cao
-                    // tối đa của một brand, nên không bao giờ lòi ra khỏi khung.
-                    left: `calc(82px + (100% - 164px) * ${v.fx})`,
-                    top: `calc(58px + (100% - 116px) * ${v.fy})`,
+                    // Đặt đúng tâm ô, rồi clamp() kéo lại nếu tấm nào sắp lòi ra mép.
+                    //
+                    // Bản trước là `calc(82px + (100% - 164px) * fx)`: nó không kéo
+                    // lại tấm bị lòi mà BÓP cả dải vào giữa. Trên khung 335px của
+                    // điện thoại, dải khả dụng chỉ còn 171px cho 3 cột — tâm hai ô
+                    // cạnh nhau cách nhau 57px trong khi một brand rộng tới 113px,
+                    // nên đè nhau là chắc chắn. Clamp thì mọi tấm nằm đúng tâm ô,
+                    // chỉ tấm nào thật sự chạm mép mới bị kéo vào.
+                    left: `clamp(${leNgang}px, ${(v.fx * 100).toFixed(3)}%, calc(100% - ${leNgang}px))`,
+                    top: `clamp(${leDoc}px, ${(v.fy * 100).toFixed(3)}%, calc(100% - ${leDoc}px))`,
                     // Lớp này CHỈ lo vị trí + parallax. Transition ngắn để ảnh
                     // bám sát con trỏ.
                     transform: `translate(-50%, -50%) translate3d(var(--dx, 0px), var(--dy, 0px), 0)`,
