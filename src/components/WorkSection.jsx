@@ -128,6 +128,13 @@ export default function WorkSection() {
               {profile?.section02Title || 'Dự án của tui'}
             </h2>
           </div>
+
+          {/* Mô tả phụ — để trống trong CMS thì ẩn luôn */}
+          {(profile?.section02Subtitle || '').trim() && (
+            <p className="text-sm sm:text-base text-white/70 font-light leading-relaxed max-w-2xl pt-2">
+              {profile.section02Subtitle}
+            </p>
+          )}
         </motion.div>
 
         {/* 1-SECTION INTERACTIVE STAGE OR EMPTY STATE */}

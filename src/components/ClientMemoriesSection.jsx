@@ -158,9 +158,12 @@ export default function ClientMemoriesSection() {
                 {profile?.sectionClientsTitle || 'Bạn đồng hành'}
               </h2>
             </div>
-            <p className="text-sm sm:text-base text-white/70 font-light leading-relaxed max-w-2xl pt-2">
-              {profile?.sectionClientsSubtitle || 'Những người bạn, đối tác dễ thương cùng mình tạo nên những sản phẩm đầy cảm hứng và đáng nhớ...'}
-            </p>
+            {/* Mô tả phụ — để trống trong CMS thì ẩn luôn */}
+            {(profile?.sectionClientsSubtitle || '').trim() && (
+              <p className="text-sm sm:text-base text-white/70 font-light leading-relaxed max-w-2xl pt-2">
+                {profile.sectionClientsSubtitle}
+              </p>
+            )}
           </div>
 
           <div className="flex items-center gap-2 font-mono text-xs text-white/50 shrink-0">

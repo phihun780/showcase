@@ -51,10 +51,12 @@ export default function RandomWorkSection() {
               </h2>
             </div>
 
-            {/* Subtitle */}
-            <p className="text-sm sm:text-base text-white/70 font-light leading-relaxed max-w-md pt-0.5">
-              {profile?.section01Subtitle || 'Những sản phẩm này được làm ra lúc rảnh rỗi và có hứng làm gì đó...'}
-            </p>
+            {/* Mô tả phụ — để trống trong CMS thì ẩn luôn, không đổ về chữ mặc định */}
+            {(profile?.section01Subtitle || '').trim() && (
+              <p className="text-sm sm:text-base text-white/70 font-light leading-relaxed max-w-md pt-0.5">
+                {profile.section01Subtitle}
+              </p>
+            )}
           </motion.div>
 
           {/* RIGHT COLUMN: Big Square Rotating Showcase (7 Cols) */}

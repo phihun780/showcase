@@ -34,10 +34,14 @@ export default function ProfileEditor({ profile, onSave }) {
     // Section Headings Customization
     section01Number: profile?.section01Number || '01',
     section01Title: profile?.section01Title || 'Tùm lum tà la',
-    section01Subtitle: profile?.section01Subtitle || 'Những sản phẩm này được làm ra lúc rảnh rỗi và có hứng làm gì đó...',
+    // ?? chứ không phải ||: để trống ('') là ý người dùng muốn ẩn, phải giữ
+    // nguyên. Dùng || thì chuỗi rỗng bị coi như "chưa có" và đổ lại chữ mặc
+    // định — xoá xong mở lại form là thấy chữ cũ quay về.
+    section01Subtitle: profile?.section01Subtitle ?? 'Những sản phẩm này được làm ra lúc rảnh rỗi và có hứng làm gì đó...',
 
     section02Number: profile?.section02Number || '02',
     section02Title: profile?.section02Title || 'Dự án của tui',
+    section02Subtitle: profile?.section02Subtitle ?? '',
 
     // Mục "Về tui" chuyển sang số 04 vì mục Brand chen vào vị trí 03.
     // Kế thừa giá trị cũ để tuỳ chỉnh của người dùng không mất.
@@ -46,7 +50,7 @@ export default function ProfileEditor({ profile, onSave }) {
     // Mục Brand đã làm việc cùng
     sectionClientsNumber: profile?.sectionClientsNumber || '03',
     sectionClientsTitle: profile?.sectionClientsTitle || 'Bạn đồng hành',
-    sectionClientsSubtitle: profile?.sectionClientsSubtitle || 'Những người bạn, đối tác dễ thương cùng mình tạo nên những sản phẩm đầy cảm hứng và đáng nhớ...',
+    sectionClientsSubtitle: profile?.sectionClientsSubtitle ?? 'Những người bạn, đối tác dễ thương cùng mình tạo nên những sản phẩm đầy cảm hứng và đáng nhớ...',
     cvButtonText: profile?.cvButtonText || 'TẢI CV / RESUME (PDF)',
 
     // Footer Customization
@@ -94,6 +98,7 @@ export default function ProfileEditor({ profile, onSave }) {
         section01Subtitle: profile.section01Subtitle ?? prev.section01Subtitle,
         section02Number: profile.section02Number ?? prev.section02Number,
         section02Title: profile.section02Title ?? prev.section02Title,
+        section02Subtitle: profile.section02Subtitle ?? prev.section02Subtitle,
         section04Number: profile.section04Number ?? prev.section04Number,
         section04Title: profile.section04Title ?? prev.section04Title,
         sectionClientsNumber: profile.sectionClientsNumber ?? prev.sectionClientsNumber,
@@ -704,7 +709,7 @@ export default function ProfileEditor({ profile, onSave }) {
               <input
                 type="text"
                 value={formData.section01Subtitle || ''}
-                placeholder="Những sản phẩm này được làm ra lúc rảnh rỗi..."
+                placeholder="Để trống thì ngoài trang sẽ ẩn dòng này"
                 onChange={(e) => setFormData({ ...formData, section01Subtitle: e.target.value })}
                 className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs"
               />
@@ -730,7 +735,7 @@ export default function ProfileEditor({ profile, onSave }) {
               />
             </div>
 
-            <div className="sm:col-span-10 space-y-1">
+            <div className="sm:col-span-4 space-y-1">
               <label className="text-xs font-mono text-white/70 uppercase block">Tiêu đề mục</label>
               <input
                 type="text"
@@ -738,6 +743,17 @@ export default function ProfileEditor({ profile, onSave }) {
                 placeholder="Dự án của tui"
                 onChange={(e) => setFormData({ ...formData, section02Title: e.target.value })}
                 className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white font-bold text-base sm:text-xs"
+              />
+            </div>
+
+            <div className="sm:col-span-6 space-y-1">
+              <label className="text-xs font-mono text-white/70 uppercase block">Mô tả phụ</label>
+              <input
+                type="text"
+                value={formData.section02Subtitle || ''}
+                placeholder="Để trống thì ngoài trang sẽ ẩn dòng này"
+                onChange={(e) => setFormData({ ...formData, section02Subtitle: e.target.value })}
+                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs"
               />
             </div>
           </div>
@@ -777,7 +793,7 @@ export default function ProfileEditor({ profile, onSave }) {
               <input
                 type="text"
                 value={formData.sectionClientsSubtitle || ''}
-                placeholder="Những người bạn, đối tác dễ thương cùng mình..."
+                placeholder="Để trống thì ngoài trang sẽ ẩn dòng này"
                 onChange={(e) => setFormData({ ...formData, sectionClientsSubtitle: e.target.value })}
                 className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs"
               />
