@@ -25,12 +25,39 @@ function soCotCua(tong, hep) {
   return tong <= 3 ? tong : tong <= 8 ? 3 : 4;
 }
 
-// Luôn dư vài ô trống so với số brand. Đủ ô cho mỗi brand một chỗ là hết chỗ
-// mà nhảy — brand tan đi rồi hiện lại đúng chỗ cũ, coi như không có gì xảy ra.
-const O_DU_TRU = 2;
+// Luôn dư ô trống so với số brand. Đủ ô cho mỗi brand một chỗ là hết chỗ mà
+// nhảy — brand tan đi rồi hiện lại đúng chỗ cũ, coi như không có gì xảy ra.
+//
+// Dư đúng 1 thôi: `hang = ceil((tong + 1) / cot)` nên số ô luôn > số brand, mà
+// không phải sinh thêm nguyên một hàng chỉ để bỏ trống. Dư 2 thì với 5 brand
+// trên 2 cột là lưới thành 4 hàng trong khi chỉ cần 3 — khung cao thêm cả trăm
+// pixel bỏ không, lề trên dưới lệch hẳn nhau.
+const O_DU_TRU = 1;
 
 function soHangCua(tong, cot) {
   return Math.max(1, Math.ceil((tong + O_DU_TRU) / Math.max(1, cot)));
+}
+
+// Ô nào gần tâm khung hơn. 0 = ngay giữa, càng lớn càng ra rìa.
+function xaTam(o, cot, hang) {
+  const c = o % cot;
+  const h = Math.floor(o / cot);
+  const dx = (c + 0.5) / cot - 0.5;
+  const dy = (h + 0.5) / hang - 0.5;
+  return Math.hypot(dx, dy);
+}
+
+// Danh sách ô xếp từ gần tâm ra ngoài rìa.
+//
+// Hai ô đối xứng qua tâm thì xa bằng nhau. Sắp xếp thường giữ nguyên thứ tự
+// gốc nên lúc nào cũng chọn ô phía TRÊN trước, khung thành nặng đầu nhẹ đuôi.
+// Xáo phần bằng điểm bằng một số tất định để nó không thiên vị bên nào.
+function oTheoTam(soO, cot, hang) {
+  return Array.from({ length: soO }, (_, o) => o)
+    .sort((a, b) =>
+      (xaTam(a, cot, hang) - xaTam(b, cot, hang)) ||
+      (ngauNhien(a * 31 + 7) - ngauNhien(b * 31 + 7))
+    );
 }
 
 // Vị trí của một Ô (không phải của một brand).
@@ -45,17 +72,14 @@ function viTriO(o, cot, hang, hep) {
   const rongO = 1 / cot;
   const caoO = 1 / hang;
 
-  // Xê dịch trong lòng ô cho đỡ đều tăm tắp.
-  //
-  // Màn hẹp thì xê ít thôi: ô đã sát nhau sẵn, xê mạnh là hai brand cạnh nhau
-  // chạy về phía nhau rồi chồng lên.
-  const bienDo = hep ? 0.16 : 0.42;
+  // Xê dịch trong lòng ô cho đỡ đều tăm tắp. Để nhỏ thôi: xê mạnh thì hai brand
+  // cạnh nhau chạy về phía nhau rồi chồng lên, mà cái ở rìa thì ăn hết lề.
+  const bienDo = hep ? 0.10 : 0.30;
   const lechX = (ngauNhien(o * 3 + 1) - 0.5) * rongO * bienDo;
   const lechY = (ngauNhien(o * 7 + 2) - 0.5) * caoO * bienDo;
 
   // Độ sâu 0 = xa nhất, 1 = gần nhất. Gắn với Ô nên brand nhảy sang ô khác là
-  // đổi luôn cỡ to nhỏ. Độ sâu chỉ lo cỡ và tốc độ trôi khi rê chuột; còn việc
-  // "đang nhìn cái nào" do đèn rọi lo.
+  // đổi luôn cỡ to nhỏ. Độ sâu chỉ lo cỡ và tốc độ trôi khi rê chuột.
   const sau = 0.3 + ngauNhien(o * 11 + 5) * 0.7;
 
   return {
@@ -169,10 +193,12 @@ export default function ClientMemoriesSection() {
   // Brand thứ i đang ngồi ô nào. Ban đầu ngồi đúng thứ tự.
   const [oCuaBrand, setOCuaBrand] = useState([]);
   useEffect(() => {
-    setOCuaBrand(Array.from({ length: clientList.length }, (_, i) => i % Math.max(1, soO)));
+    // Xếp vào các ô GẦN TÂM nhất trước, mấy ô rìa để trống.
+    const xepTheoTam = oTheoTam(soO, soCot, soHang);
+    setOCuaBrand(Array.from({ length: clientList.length }, (_, i) => xepTheoTam[i % Math.max(1, soO)]));
     datDangAn(null);
     setReVao(null);
-  }, [clientList.length, soO, datDangAn]);
+  }, [clientList.length, soO, soCot, soHang, datDangAn]);
 
   const giamChuyenDong = () =>
     typeof window !== 'undefined' &&
@@ -242,14 +268,21 @@ export default function ClientMemoriesSection() {
           for (let o = 0; o < soO; o++) if (!dangDung.has(o)) oTrong.push(o);
           if (oTrong.length === 0) return prev;
 
+          // Bốc hai ô trống rồi giữ cái gần tâm hơn. Vẫn ngẫu nhiên nên không
+          // đoán trước được, nhưng về lâu dài thì đám brand dồn về giữa khung
+          // chứ không tản dần ra bốn góc.
+          const a = oTrong[Math.floor(Math.random() * oTrong.length)];
+          const b = oTrong[Math.floor(Math.random() * oTrong.length)];
+          const chon = xaTam(a, soCot, soHang) <= xaTam(b, soCot, soHang) ? a : b;
+
           const moi = [...prev];
-          moi[idx] = oTrong[Math.floor(Math.random() * oTrong.length)];
+          moi[idx] = chon;
           return moi;
         });
         datDangAn(null);
       }, 950));
     }, 450));
-  }, [soO, clientList.length, huyHen, datDangAn]);
+  }, [soO, soCot, soHang, clientList.length, huyHen, datDangAn]);
 
   // Cái nào đang rõ: máy tính thì do chuột, cảm ứng thì do đèn rọi tự động.
   const iRo = co3D
@@ -262,13 +295,17 @@ export default function ClientMemoriesSection() {
   //
   // Chỉ ghi hai biến CSS, còn việc ghép transform để cho CSS lo. Nhờ vậy phần
   // phóng to/thu nhỏ theo độ sâu không bị JS ghi đè mất.
-  // Màn hẹp: cao theo số hàng. Màn rộng: giữ 500px trừ khi có quá nhiều hàng.
-  const caoKhung = hepMH ? Math.max(380, soHang * 132) : Math.max(500, soHang * 150);
 
-  // Nửa bề ngang / chiều cao tối đa của một brand — khoảng cách tối thiểu phải
-  // chừa ra mép để nó không bị cắt.
-  const leNgang = hepMH ? 58 : 82;
-  const leDoc = hepMH ? 54 : 58;
+  // LỀ AN TOÀN: vùng sát mép khung không brand nào được lấn vào.
+  //
+  // Phải lớn hơn nửa bề ngang / nửa chiều cao của một brand, không thì cái nằm
+  // ngoài cùng bị mép khung cắt mất một góc.
+  const leNgang = hepMH ? 50 : 95;
+  const leDoc = hepMH ? 46 : 70;
+
+  // Chiều cao khung = lề trên + lề dưới + mỗi hàng một khoảng.
+  const caoHang = hepMH ? 115 : 160;
+  const caoKhung = 2 * leDoc + soHang * caoHang;
 
   const raiTheoChuot = useCallback((e) => {
     if (!co3D) return;
@@ -408,16 +445,10 @@ export default function ClientMemoriesSection() {
                   data-re={roi ? '1' : undefined}
                   className="absolute"
                   style={{
-                    // Đặt đúng tâm ô, rồi clamp() kéo lại nếu tấm nào sắp lòi ra mép.
-                    //
-                    // Bản trước là `calc(82px + (100% - 164px) * fx)`: nó không kéo
-                    // lại tấm bị lòi mà BÓP cả dải vào giữa. Trên khung 335px của
-                    // điện thoại, dải khả dụng chỉ còn 171px cho 3 cột — tâm hai ô
-                    // cạnh nhau cách nhau 57px trong khi một brand rộng tới 113px,
-                    // nên đè nhau là chắc chắn. Clamp thì mọi tấm nằm đúng tâm ô,
-                    // chỉ tấm nào thật sự chạm mép mới bị kéo vào.
-                    left: `clamp(${leNgang}px, ${(v.fx * 100).toFixed(3)}%, calc(100% - ${leNgang}px))`,
-                    top: `clamp(${leDoc}px, ${(v.fy * 100).toFixed(3)}%, calc(100% - ${leDoc}px))`,
+                    // Rải trong vùng ĐÃ CHỪA LỀ, không phải trọn bề ngang khung.
+                    // Nhờ vậy không brand nào lấn vào dải sát mép.
+                    left: `calc(${leNgang}px + (100% - ${leNgang * 2}px) * ${v.fx.toFixed(4)})`,
+                    top: `calc(${leDoc}px + (100% - ${leDoc * 2}px) * ${v.fy.toFixed(4)})`,
                     // Lớp này CHỈ lo vị trí + parallax. Transition ngắn để ảnh
                     // bám sát con trỏ.
                     transform: `translate(-50%, -50%) translate3d(var(--dx, 0px), var(--dy, 0px), 0)`,
@@ -463,7 +494,7 @@ export default function ClientMemoriesSection() {
                       /* Không dùng `hover:` của CSS nữa — trạng thái rõ/mờ do JS
                          nắm, để nó còn biết lúc nào phải cho brand tan đi. Hai
                          bên cùng chỉnh một thứ thì sẽ đá nhau. */
-                      className="group/o relative flex flex-col items-center gap-2 px-4 py-3 rounded-2xl cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C3EA39]"
+                      className="group/o relative flex flex-col items-center gap-1.5 sm:gap-2 px-2 py-2 sm:px-4 sm:py-3 rounded-2xl cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C3EA39]"
                     >
                       {/* Ngoài trang chủ chỉ có logo + tên. Làm gì, năm nào, kể
                           chi tiết ra sao — để dành hết cho bài viết bên trong. */}
@@ -477,7 +508,7 @@ export default function ClientMemoriesSection() {
                             onContextMenu={(e) => e.preventDefault()}
                             onDragStart={(e) => e.preventDefault()}
                             /* Chỉ cái đang rõ mới hiện đúng màu logo */
-                            className={`max-h-16 sm:max-h-20 w-auto max-w-[30vw] sm:max-w-[150px] object-contain rounded-[8px] transition-[filter] duration-500 select-none ${roi ? 'grayscale-0' : 'grayscale'}`}
+                            className={`max-h-12 sm:max-h-20 w-auto max-w-[22vw] sm:max-w-[150px] object-contain rounded-[8px] transition-[filter] duration-500 select-none ${roi ? 'grayscale-0' : 'grayscale'}`}
                           />
                           {/* Tên ở đây là chú thích dưới logo nên để cỡ nhỏ, kiểu
                               mono như các nhãn khác trong trang — logo vẫn là thứ
@@ -487,13 +518,13 @@ export default function ClientMemoriesSection() {
                               KHÔNG `uppercase`: viết hoa ép sẽ phá cách viết riêng
                               của brand — "RomaFarm" thành "ROMAFARM". Gõ trong CMS
                               sao thì hiện ra vậy. */}
-                          <span className={`font-mono text-[10px] sm:text-[11px] tracking-wide text-center leading-tight transition-colors duration-500 max-w-[30vw] sm:max-w-[150px] select-none ${roi ? 'text-[#C3EA39]' : 'text-white/60'}`}>
+                          <span className={`font-mono text-[10px] sm:text-[11px] tracking-wide text-center leading-tight transition-colors duration-500 max-w-[22vw] sm:max-w-[150px] select-none ${roi ? 'text-[#C3EA39]' : 'text-white/60'}`}>
                             {ten}
                           </span>
                         </>
                       ) : (
                         /* Chưa có logo thì tên đứng một mình, cho to lên thay chỗ */
-                        <span className="font-display font-extrabold text-center text-white text-sm sm:text-lg leading-tight max-w-[30vw] sm:max-w-[150px] select-none">
+                        <span className="font-display font-extrabold text-center text-white text-xs sm:text-lg leading-tight max-w-[22vw] sm:max-w-[150px] select-none">
                           {ten}
                         </span>
                       )}
