@@ -147,31 +147,25 @@ export default function ClientMemoriesSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-60px' }}
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          /* Không kẻ đường dưới tiêu đề: hai mục 01 và 02 đều không có, và khi
-             mô tả phụ bị ẩn thì đường này nằm sát ngay dưới tiêu đề trông thừa. */
-          className="flex flex-col md:flex-row md:items-end justify-between gap-4"
+          /* Dựng giống hệt đầu mục 01 và 02: số + tiêu đề, rồi mô tả phụ nếu có.
+             Bỏ bố cục hai cột cũ — nó vốn để đẩy dòng đếm brand sang phải, mà
+             dòng đó đã gỡ. */
         >
-          <div>
-            <div className="flex items-baseline gap-3 sm:gap-4">
-              <span className="text-3xl sm:text-4xl md:text-5xl font-mono font-extrabold text-[#C3EA39]">
-                {profile?.sectionClientsNumber || '03'}
-              </span>
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight">
-                {profile?.sectionClientsTitle || 'Bạn đồng hành'}
-              </h2>
-            </div>
-            {/* Mô tả phụ — để trống trong CMS thì ẩn luôn */}
-            {(profile?.sectionClientsSubtitle || '').trim() && (
-              <p className="text-sm sm:text-base text-white/70 font-light leading-relaxed max-w-2xl pt-2">
-                {profile.sectionClientsSubtitle}
-              </p>
-            )}
+          <div className="flex items-baseline gap-3 sm:gap-4">
+            <span className="text-3xl sm:text-4xl md:text-5xl font-mono font-extrabold text-[#C3EA39]">
+              {profile?.sectionClientsNumber || '03'}
+            </span>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight">
+              {profile?.sectionClientsTitle || 'Bạn đồng hành'}
+            </h2>
           </div>
 
-          <div className="flex items-center gap-2 font-mono text-xs text-white/50 shrink-0">
-            <span className="w-2 h-2 rounded-full bg-[#C3EA39] animate-pulse" />
-            <span>Triển lãm cùng [{clientList.length}] bạn đồng hành</span>
-          </div>
+          {/* Mô tả phụ — để trống trong CMS thì ẩn luôn */}
+          {(profile?.sectionClientsSubtitle || '').trim() && (
+            <p className="text-sm sm:text-base text-white/70 font-light leading-relaxed max-w-2xl pt-2">
+              {profile.sectionClientsSubtitle}
+            </p>
+          )}
         </motion.div>
 
         {/* Empty State */}
