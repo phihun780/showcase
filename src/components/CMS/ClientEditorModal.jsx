@@ -67,6 +67,10 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
   const [dangKeo, setDangKeo] = useState(false);
   const doSauKeo = useRef(0);
 
+  // Kéo một tấm sang chỗ khác. `gocKeo` giữ trạng thái thật, `keo` chỉ để vẽ.
+  const gocKeo = useRef(null);
+  const [keo, setKeo] = useState(null);
+
   const logoInputRef = useRef(null);
   const galleryInputRef = useRef(null);
 
@@ -184,15 +188,78 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
     });
   };
 
-  // Đổi chỗ hai ảnh. Thứ tự này quyết định ảnh nào nằm trước trong bài viết.
-  const handleMoveGalleryItem = (index, huong) => {
+  // Nhấc tấm ở `tu` ra rồi thả vào vị trí `dich`. Thứ tự này quyết định ảnh nào
+  // nằm trước trong bài viết.
+  //
+  // Đặt lại `coverImage` theo tấm đầu: ảnh bìa vẫn luôn là tấm đứng đầu danh
+  // sách, không thì lưu xong thứ tự lại lệch đi một nhịp.
+  const doiChoAnh = (tu, dich) => {
     setFormData(prev => {
       const ds = [...(prev.gallery || [])];
-      const dich = huong === 'left' ? index - 1 : index + 1;
-      if (dich < 0 || dich >= ds.length) return prev;
-      [ds[index], ds[dich]] = [ds[dich], ds[index]];
-      return { ...prev, gallery: ds };
+      if (tu < 0 || tu >= ds.length || dich < 0 || dich >= ds.length || tu === dich) return prev;
+      const [nhac] = ds.splice(tu, 1);
+      ds.splice(dich, 0, nhac);
+      return { ...prev, gallery: ds, coverImage: ds[0] || prev.coverImage };
     });
+  };
+
+  const handleMoveGalleryItem = (index, huong) => {
+    doiChoAnh(index, huong === 'left' ? index - 1 : index + 1);
+  };
+
+  // Kéo tay để đổi chỗ — nhanh hơn bấm mũi tên từng nấc.
+  //
+  // Dùng pointer event chứ không dùng drag-and-drop của HTML: khối ảnh này đã
+  // là vùng thả FILE rồi, hai hệ sự kiện lồng nhau thì rất dễ đá nhau. Pointer
+  // event cũng chạy được cả chuột lẫn cảm ứng.
+  const dangKeoTay = (e) => {
+    const g = gocKeo.current;
+    if (!g) return;
+
+    const dx = e.clientX - g.x0;
+    const dy = e.clientY - g.y0;
+
+    // Chưa đi đủ xa thì vẫn coi là một cú bấm, chưa phải kéo.
+    if (!g.daKeo) {
+      if (Math.hypot(dx, dy) < 6) return;
+      g.daKeo = true;
+    }
+
+    // Tấm đang kéo được đặt `pointer-events: none` nên chỗ này nhìn xuyên qua
+    // nó, thấy đúng tấm nằm dưới con trỏ.
+    const duoi = document.elementFromPoint(e.clientX, e.clientY);
+    const o = duoi && duoi.closest ? duoi.closest('[data-anh-idx]') : null;
+    g.dich = o ? Number(o.dataset.anhIdx) : null;
+
+    setKeo({ tu: g.tu, dich: g.dich, dx, dy });
+  };
+
+  const thaTay = () => {
+    const g = gocKeo.current;
+    gocKeo.current = null;
+    setKeo(null);
+
+    // Gỡ ĐÚNG hai hàm đã gắn lúc bấm xuống. Mỗi lần vẽ lại là một bộ hàm mới,
+    // mà kéo thì vẽ lại liên tục — gỡ bằng hàm của lần vẽ hiện tại thì trật,
+    // listener cũ nằm lại trên window mãi.
+    if (g) {
+      window.removeEventListener('pointermove', g.move);
+      window.removeEventListener('pointerup', g.up);
+      window.removeEventListener('pointercancel', g.up);
+    }
+
+    if (g && g.daKeo && g.dich != null) doiChoAnh(g.tu, g.dich);
+  };
+
+  const batDauKeo = (e, idx) => {
+    if (e.button != null && e.button !== 0) return;          // chỉ chuột trái
+    if (e.target.closest('[data-khong-keo]')) return;        // bấm nút thì thôi
+    const move = dangKeoTay, up = thaTay;
+    gocKeo.current = { tu: idx, x0: e.clientX, y0: e.clientY, daKeo: false, dich: null, move, up };
+    // Nghe trên window để kéo ra ngoài khối ảnh vẫn theo dõi được.
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
   };
 
   const handleSubmit = (e) => {
@@ -221,9 +288,12 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
     onClose();
   };
 
+  // Thứ tự lấy theo `gallery`; `coverImage` chỉ chèn thêm nếu nó chưa nằm trong
+  // đó. Đặt cover lên trước như bản cũ thì xếp lại kiểu gì tấm đó cũng bị kéo
+  // về đầu — nhấc tấm số 1 đi chỗ khác xong nó nhảy lại chỗ cũ.
   const galleryList = Array.from(new Set([
-    formData.coverImage,
     ...(Array.isArray(formData.gallery) ? formData.gallery : []),
+    formData.coverImage,
   ].filter(Boolean)));
 
   const oNhap = 'w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 text-xs sm:text-sm focus:border-[#C3EA39] focus:outline-none transition-colors';
@@ -375,6 +445,7 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
               <label className={nhan}>
                 <Layers className="w-3.5 h-3.5 text-[#C3EA39]" />
                 <span>Hình ({galleryList.length}) <span className="text-[#C3EA39]">*</span></span>
+              <span className="text-[10px] text-white/35 font-mono">— kéo để đổi chỗ</span>
               </label>
 
               <input
@@ -422,19 +493,40 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                {galleryList.map((img, idx) => (
+                {galleryList.map((img, idx) => {
+                  const dangNhac = keo?.tu === idx;
+                  const laDich = keo && keo.dich === idx && keo.tu !== idx;
+                  return (
                   <div
                     key={idx}
-                    className="relative rounded-xl overflow-hidden bg-black border border-white/15 flex flex-col"
+                    data-anh-idx={idx}
+                    onPointerDown={(e) => batDauKeo(e, idx)}
+                    /* `pan-y` để trên điện thoại vuốt dọc vẫn cuộn được form,
+                       còn kéo ngang thì bắt đầu đổi chỗ. Chuột không bị ảnh
+                       hưởng bởi thuộc tính này. */
+                    style={{
+                      touchAction: 'pan-y',
+                      transform: dangNhac ? `translate(${keo.dx}px, ${keo.dy}px) scale(1.04)` : undefined,
+                      transition: dangNhac ? 'none' : 'transform 0.18s ease-out',
+                    }}
+                    title="Kéo để đổi chỗ"
+                    className={`relative rounded-xl overflow-hidden bg-black border flex flex-col cursor-grab active:cursor-grabbing ${
+                      dangNhac
+                        ? 'z-30 opacity-90 shadow-2xl border-[#C3EA39] pointer-events-none'
+                        : laDich
+                          ? 'border-[#C3EA39] ring-2 ring-[#C3EA39]/60'
+                          : 'border-white/15'
+                    }`}
                   >
                     <div className="aspect-[16/10] w-full overflow-hidden bg-black">
-                      <img src={img} alt="" className="w-full h-full object-cover" />
+                      <img src={img} alt="" draggable={false} className="w-full h-full object-cover select-none" />
                     </div>
 
                     <div className="p-1.5 bg-[#141419] border-t border-white/10 flex items-center justify-between gap-1">
                       <div className="flex items-center gap-0.5">
                         <button
                           type="button"
+                          data-khong-keo
                           onClick={() => handleMoveGalleryItem(idx, 'left')}
                           disabled={idx === 0}
                           className="p-1 rounded bg-white/5 hover:bg-white/20 text-white/70 disabled:opacity-20 cursor-pointer"
@@ -444,6 +536,7 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
                         </button>
                         <button
                           type="button"
+                          data-khong-keo
                           onClick={() => handleMoveGalleryItem(idx, 'right')}
                           disabled={idx === galleryList.length - 1}
                           className="p-1 rounded bg-white/5 hover:bg-white/20 text-white/70 disabled:opacity-20 cursor-pointer"
@@ -455,6 +548,7 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
 
                       <button
                         type="button"
+                        data-khong-keo
                         onClick={() => handleRemoveGalleryItem(idx)}
                         className="p-1 rounded bg-red-500/10 hover:bg-red-500 text-red-300 hover:text-white transition-colors cursor-pointer"
                         title="Xoá hình này"
@@ -463,7 +557,8 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
                       </button>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
