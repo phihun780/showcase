@@ -154,24 +154,12 @@ export default function ClientMemoriesSection() {
     return () => mq.removeEventListener('change', capNhat);
   }, []);
 
-  // ĐÈN RỌI: mọi brand đều mờ + trắng đen, mỗi lúc chỉ một cái được rõ nét và
-  // hiện đúng màu logo. Cứ vài giây lại đổi sang một cái khác, chọn ngẫu nhiên.
-  //
-  // Đổi theo NHỊP chứ không đổi từng khung hình: blur là thuộc tính vẽ lại, cho
-  // nó chạy liên tục 60 lần/giây thì máy yếu sẽ đuối. Đổi vài giây một lần rồi
-  // để CSS transition lo phần chuyển tiếp thì gần như không tốn gì.
-  const [noiBat, setNoiBat] = useState(0);
-  const noiBatRef = useRef(0);
-  const datNoiBat = useCallback((v) => { noiBatRef.current = v; setNoiBat(v); }, []);
+  // Brand đang được rê chuột / đang giữ bàn phím (null = không có cái nào).
+  const [reVao, setReVao] = useState(null);
 
-  // Brand đang tan đi để nhảy sang ô khác (null = không có cái nào).
+  // Brand đang tan đi để mọc lên chỗ khác (null = không có cái nào).
   const [dangAn, setDangAn] = useState(null);
   const dangAnRef = useRef(null);
-
-  // Chuột có đang ở trong khung không. Còn ở trong thì ngưng nhảy chỗ: rê chuột
-  // vào brand nào là brand đó sáng lên và hết mờ, nhấc nó đi ngay dưới con trỏ
-  // thì vừa khó chịu vừa dễ bấm hụt.
-  const chuotTrongKhung = useRef(false);
   const datDangAn = useCallback((v) => { dangAnRef.current = v; setDangAn(v); }, []);
 
   const soCot = soCotCua(clientList.length, hepMH);
@@ -183,58 +171,70 @@ export default function ClientMemoriesSection() {
   useEffect(() => {
     setOCuaBrand(Array.from({ length: clientList.length }, (_, i) => i % Math.max(1, soO)));
     datDangAn(null);
+    setReVao(null);
   }, [clientList.length, soO, datDangAn]);
 
   const giamChuyenDong = () =>
     typeof window !== 'undefined' &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  // ĐÈN RỌI TỰ ĐỘNG — CHỈ CHO MÀN CẢM ỨNG.
+  //
+  // Máy tính thì con chuột lo hết: rê vào cái nào là cái đó rõ. Nhưng điện thoại
+  // không có "rê chuột", nên nếu không có cái này thì cả khung là một mảng mờ
+  // trắng đen, tên brand nhoè không đọc nổi, chẳng biết bấm vào đâu. Ở đó cho
+  // các brand thay phiên nhau rõ lên.
+  const [noiBat, setNoiBat] = useState(0);
   useEffect(() => {
+    if (co3D) return;                        // có chuột thì thôi, để chuột lo
     const tong = clientList.length;
-    if (tong <= 1) return;                   // một mình thì rọi mãi cái đó
+    if (tong <= 1) return;
     if (giamChuyenDong()) return;
 
     const t = setInterval(() => {
-      // Bốc trong (tong - 1) cái RỒI nhảy qua chính nó. Cách này luôn đổi sang
-      // brand khác; nếu bốc thẳng trong `tong` thì có lúc trúng lại chính nó,
-      // người xem thấy cả khung đứng im một nhịp tưởng bị treo.
-      const hienTai = noiBatRef.current;
-      let k = Math.floor(Math.random() * (tong - 1));
-      if (k >= hienTai) k += 1;
-      // Đừng rọi vào cái đang tan đi: nó sắp biến mất, rọi vào chỉ thấy chớp một
-      // cái rồi tắt.
-      if (k === dangAnRef.current) return;
-      datNoiBat(k);
+      setNoiBat(hienTai => {
+        // Bốc trong (tong - 1) cái RỒI nhảy qua chính nó, để luôn đổi sang brand
+        // khác. Bốc thẳng trong `tong` thì có lúc trúng lại chính nó, người xem
+        // thấy cả khung đứng im một nhịp tưởng bị treo.
+        let k = Math.floor(Math.random() * (tong - 1));
+        if (k >= hienTai) k += 1;
+        return k;
+      });
     }, 2800);
     return () => clearInterval(t);
-  }, [clientList.length, datNoiBat]);
+  }, [co3D, clientList.length]);
 
-  // NHẢY CHỖ: thỉnh thoảng nhặt một brand đang mờ, cho nó tan hẳn đi rồi hiện
-  // lại ở một ô còn trống.
+  // MỌC LÊN CHỖ KHÁC: rê chuột ra khỏi một brand thì nó mờ trắng đen trở lại,
+  // tan hẳn đi, rồi hiện lên ở một ô còn trống.
   //
-  // Đổi `left/top` đúng lúc opacity đang bằng 0 nên mắt không thấy nó trượt —
-  // chỉ thấy chỗ này mất đi, chỗ kia hiện ra. Không đặt transition cho left/top
-  // cũng vì vậy.
-  useEffect(() => {
-    const tong = clientList.length;
-    if (tong <= 1 || soO <= tong) return;    // không dư ô thì không có chỗ mà nhảy
+  // Đổi `left/top` đúng lúc opacity đang bằng 0 (mờ dần 0.9s ở CSS, dời chỗ ở
+  // mốc 0.95s) nên mắt không thấy nó trượt — chỉ thấy chỗ này mất đi, chỗ kia
+  // mọc lên. Cũng vì vậy mà không đặt transition cho left/top.
+  const henRef = useRef([]);
+  const huyHen = useCallback(() => {
+    henRef.current.forEach(clearTimeout);
+    henRef.current = [];
+  }, []);
+  useEffect(() => huyHen, [huyHen]);
+
+  const vaoBrand = useCallback((idx) => {
+    // Đang chờ tan mà quay lại rê tiếp thì huỷ, giữ nó ở nguyên chỗ cũ.
+    huyHen();
+    if (dangAnRef.current !== null) datDangAn(null);
+    setReVao(idx);
+  }, [huyHen, datDangAn]);
+
+  const roiBrand = useCallback((idx) => {
+    setReVao(prev => (prev === idx ? null : prev));
     if (giamChuyenDong()) return;
+    if (soO <= clientList.length) return;    // không dư ô thì không có chỗ mà mọc
 
-    let hen = null;
-    const t = setInterval(() => {
-      if (dangAnRef.current !== null) return;      // đang có cái nhảy dở
-      if (chuotTrongKhung.current) return;         // người ta đang rê chuột trong khung
-
-      // Không đụng vào cái đang được rọi — người ta đang nhìn nó.
-      const ungVien = [];
-      for (let i = 0; i < tong; i++) if (i !== noiBatRef.current) ungVien.push(i);
-      if (ungVien.length === 0) return;
-
-      const idx = ungVien[Math.floor(Math.random() * ungVien.length)];
+    huyHen();
+    // Chờ một nhịp ngắn cho nó mờ trắng đen trở lại đã, rồi mới tan. Tan ngay
+    // lúc vừa rời chuột thì trông như bấm nhầm làm nó biến mất.
+    henRef.current.push(setTimeout(() => {
       datDangAn(idx);
-
-      // Đợi đúng quãng mờ dần (0.9s ở CSS) rồi mới dời chỗ.
-      hen = setTimeout(() => {
+      henRef.current.push(setTimeout(() => {
         setOCuaBrand(prev => {
           if (!prev.length) return prev;
           const dangDung = new Set(prev);
@@ -247,17 +247,14 @@ export default function ClientMemoriesSection() {
           return moi;
         });
         datDangAn(null);
-      }, 950);
-    }, 2200);
+      }, 950));
+    }, 450));
+  }, [soO, clientList.length, huyHen, datDangAn]);
 
-    return () => {
-      clearInterval(t);
-      if (hen) clearTimeout(hen);
-    };
-  }, [clientList.length, soO, datDangAn, datNoiBat]);
-
-  // Danh sách ngắn lại (xoá brand trong CMS) thì chỉ số cũ có thể trỏ ra ngoài.
-  const iNoiBat = noiBat < clientList.length ? noiBat : 0;
+  // Cái nào đang rõ: máy tính thì do chuột, cảm ứng thì do đèn rọi tự động.
+  const iRo = co3D
+    ? reVao
+    : (noiBat < clientList.length ? noiBat : 0);
 
   // Rê chuột trong khung thì cả cảnh dịch theo, mỗi brand dịch một mức khác
   // nhau tuỳ độ sâu — cái ở gần chạy nhanh, cái ở xa chạy chậm. Đó là thứ tạo
@@ -287,10 +284,7 @@ export default function ClientMemoriesSection() {
     }
   }, [co3D]);
 
-  const vaoKhung = useCallback(() => { chuotTrongKhung.current = true; }, []);
-
   const thoiRai = useCallback((e) => {
-    chuotTrongKhung.current = false;
     for (const el of e.currentTarget.querySelectorAll('[data-sau]')) {
       el.style.setProperty('--dx', '0px');
       el.style.setProperty('--dy', '0px');
@@ -354,18 +348,18 @@ export default function ClientMemoriesSection() {
             </p>
           </motion.div>
         ) : (
-          /* KHÔNG GIAN 3D + ĐÈN RỌI
+          /* KHÔNG GIAN 3D — CHẠM VÀO THÌ HIỆN RA, BỎ ĐI THÌ TAN
            *
            * Cố tình KHÔNG dùng lưới đều: lưới đều thì mọi brand cùng kích thước,
            * cùng khoảng cách — đọc ra là một bảng dữ liệu, không phải một không
            * gian. Ở đây mỗi brand nằm ở một độ sâu riêng nên cái to cái nhỏ, và
            * khi rê chuột thì cái ở gần chạy nhanh hơn cái ở xa.
            *
-           * Còn việc "đang nhìn cái nào" thì do đèn rọi lo: tất cả nằm im trong
-           * trạng thái mờ và trắng đen, mỗi lúc chỉ MỘT brand được rõ nét và
-           * hiện đúng màu logo, vài giây lại đổi sang một cái khác.
+           * Mặc định TẤT CẢ đều mờ và trắng đen. Rê chuột vào cái nào thì cái đó
+           * to lên, hết mờ, hiện đúng màu logo và tên. Rời chuột đi thì nó mờ
+           * trắng đen trở lại, tan hẳn, rồi mọc lên ở một ô khác.
            *
-           * Bốn thứ cùng đổi mới ra cảm giác "được rọi": nét lại, sáng lên, to
+           * Bốn thứ cùng đổi mới ra cảm giác "chạm tới": nét lại, sáng lên, to
            * thêm, và lên màu. Chỉ bỏ blur thôi thì trông như lỗi hiển thị.
            */
           <motion.div
@@ -373,7 +367,6 @@ export default function ClientMemoriesSection() {
             whileInView={{ opacity: 1 }}
             viewport={{ once: true, margin: '-60px' }}
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            onPointerEnter={vaoKhung}
             onPointerMove={raiTheoChuot}
             onPointerLeave={thoiRai}
             style={{
@@ -394,8 +387,8 @@ export default function ClientMemoriesSection() {
               const ten = client.clientName || 'Brand';
               const o = oCuaBrand[idx] ?? (idx % Math.max(1, soO));
               const v = viTriO(o, soCot, soHang, hepMH);
-              const roi = idx === iNoiBat;        // đang được đèn rọi
-              const an = idx === dangAn;          // đang tan đi để nhảy chỗ
+              const roi = idx === iRo;            // đang rõ nét + có màu
+              const an = idx === dangAn;          // đang tan đi để mọc chỗ khác
               return (
                 <div
                   key={client.id || idx}
@@ -426,8 +419,8 @@ export default function ClientMemoriesSection() {
                       trong 0.45s — hai việc cần hai tốc độ khác nhau. */}
                   <div
                     style={{
-                      transform: `scale(${(v.tiLe * (roi ? 1.18 : 1)).toFixed(3)})`,
-                      transition: 'transform 1.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                      transform: `scale(${(v.tiLe * (roi ? 1.3 : 1)).toFixed(3)})`,
+                      transition: 'transform 0.55s cubic-bezier(0.16, 1, 0.3, 1)',
                     }}
                   >
                   {/* Lớp trôi riêng: nó cũng ghi vào transform nên phải tách khỏi
@@ -439,6 +432,12 @@ export default function ClientMemoriesSection() {
                     <button
                       type="button"
                       onClick={() => handleOpenLightbox(client, 0)}
+                      /* Rê chuột và bàn phím đi cùng một đường: người dùng bàn
+                         phím Tab tới đâu cũng phải thấy rõ tới đó. */
+                      onPointerEnter={() => vaoBrand(idx)}
+                      onPointerLeave={() => roiBrand(idx)}
+                      onFocus={() => vaoBrand(idx)}
+                      onBlur={() => roiBrand(idx)}
                       aria-label={`Xem những gì đã làm cho ${ten}`}
                       style={{
                         opacity: an ? 0 : roi ? 1 : 0.3,
@@ -446,9 +445,12 @@ export default function ClientMemoriesSection() {
                         // Đang tan đi thì đừng nhận chuột: nó vô hình, bấm trúng
                         // sẽ mở ra một brand mà người ta không hề thấy.
                         pointerEvents: an ? 'none' : undefined,
-                        transition: 'opacity 0.9s cubic-bezier(0.16,1,0.3,1), filter 1.4s cubic-bezier(0.16,1,0.3,1), transform 0.4s ease-out',
+                        transition: 'opacity 0.9s cubic-bezier(0.16,1,0.3,1), filter 0.6s cubic-bezier(0.16,1,0.3,1), transform 0.4s ease-out',
                       }}
-                      className="group/o relative flex flex-col items-center gap-2 px-4 py-3 rounded-2xl cursor-pointer hover:!opacity-100 hover:!blur-none hover:scale-110 focus-visible:outline-none focus-visible:!opacity-100 focus-visible:!blur-none focus-visible:ring-2 focus-visible:ring-[#C3EA39]"
+                      /* Không dùng `hover:` của CSS nữa — trạng thái rõ/mờ do JS
+                         nắm, để nó còn biết lúc nào phải cho brand tan đi. Hai
+                         bên cùng chỉnh một thứ thì sẽ đá nhau. */
+                      className="group/o relative flex flex-col items-center gap-2 px-4 py-3 rounded-2xl cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C3EA39]"
                     >
                       {/* Ngoài trang chủ chỉ có logo + tên. Làm gì, năm nào, kể
                           chi tiết ra sao — để dành hết cho bài viết bên trong. */}
@@ -461,9 +463,8 @@ export default function ClientMemoriesSection() {
                             decoding="async"
                             onContextMenu={(e) => e.preventDefault()}
                             onDragStart={(e) => e.preventDefault()}
-                            /* Chỉ cái đang rọi mới hiện đúng màu logo. Rê chuột
-                               vào cái nào thì cái đó cũng lên màu ngay. */
-                            className={`max-h-16 sm:max-h-20 w-auto max-w-[30vw] sm:max-w-[150px] object-contain rounded-[8px] group-hover/o:grayscale-0 transition-[filter] duration-700 select-none ${roi ? 'grayscale-0' : 'grayscale'}`}
+                            /* Chỉ cái đang rõ mới hiện đúng màu logo */
+                            className={`max-h-16 sm:max-h-20 w-auto max-w-[30vw] sm:max-w-[150px] object-contain rounded-[8px] transition-[filter] duration-500 select-none ${roi ? 'grayscale-0' : 'grayscale'}`}
                           />
                           {/* Tên ở đây là chú thích dưới logo nên để cỡ nhỏ, kiểu
                               mono như các nhãn khác trong trang — logo vẫn là thứ
@@ -473,7 +474,7 @@ export default function ClientMemoriesSection() {
                               KHÔNG `uppercase`: viết hoa ép sẽ phá cách viết riêng
                               của brand — "RomaFarm" thành "ROMAFARM". Gõ trong CMS
                               sao thì hiện ra vậy. */}
-                          <span className={`font-mono text-[10px] sm:text-[11px] tracking-wide text-center leading-tight group-hover/o:text-[#C3EA39] transition-colors duration-700 max-w-[30vw] sm:max-w-[150px] select-none ${roi ? 'text-white' : 'text-white/60'}`}>
+                          <span className={`font-mono text-[10px] sm:text-[11px] tracking-wide text-center leading-tight transition-colors duration-500 max-w-[30vw] sm:max-w-[150px] select-none ${roi ? 'text-[#C3EA39]' : 'text-white/60'}`}>
                             {ten}
                           </span>
                         </>
