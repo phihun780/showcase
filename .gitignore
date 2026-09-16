@@ -30,3 +30,6 @@ THONG_TIN_CAI_DAT_R2.txt
 
 # Cloudflare Wrangler local state
 .wrangler
+
+# Ban sao luu noi dung (anh + portfolio.json) — nang, khong day len git
+sao-luu
