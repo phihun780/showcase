@@ -1,38 +1,60 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { X, ArrowLeft, ArrowUp, ExternalLink } from 'lucide-react';
 
 /**
  * Chi tiết một brand đã làm việc cùng.
  *
- * Dùng ĐÚNG bố cục của modal dự án: tiêu đề -> các ảnh xếp dọc -> nút cuối.
- * Bản trước là kiểu xem ảnh hai cột (ảnh lớn + nút qua lại + dải thumbnail) —
- * xem được một ảnh tại một thời điểm, phải bấm qua từng cái, và trông lạc hẳn
- * so với phần còn lại của trang. Cuộn dọc đọc được liền mạch hơn nhiều.
+ * Dựng theo ĐÚNG khung của ProjectModal — cùng hộp, cùng vạch tiến độ, cùng nút
+ * đóng, cùng lề trong, cùng cách xếp ảnh dọc, cùng chân trang. Khác đúng phần
+ * ruột: tiêu đề là tên brand + dịch vụ/năm, và nút phải là "XEM THÊM" thay cho
+ * "DỰ ÁN TIẾP THEO".
  */
 export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, onClose }) {
   const containerRef = useRef(null);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [showBackToTop, setShowBackToTop] = useState(false);
 
+  // Đưa về đầu bài mỗi khi MỞ hoặc khi đổi brand.
+  //
+  // Tách riêng khỏi effect gắn sự kiện bên dưới, và chỉ phụ thuộc vào hai giá
+  // trị nguyên thuỷ. Trước đây việc đặt lại nằm chung với effect có `onClose`
+  // trong danh sách phụ thuộc, nên mỗi lần thẻ cha vẽ lại là bài viết bị kéo
+  // về đầu — mà thẻ cha thì tự vẽ lại mỗi 3.5 giây.
   useEffect(() => {
     if (!isOpen) return;
-
-    document.body.style.overflow = 'hidden';
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-
     if (containerRef.current) containerRef.current.scrollTop = 0;
     setScrollProgress(0);
     setShowBackToTop(false);
+  }, [isOpen, client?.id]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+
+    // Lăn chuột ở vùng nền tối bên ngoài hộp thì vẫn cuộn được bài viết.
+    // Giống modal dự án: không có cái này thì lăn ra ngoài mép là đứng im.
+    const handleGlobalWheel = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        e.preventDefault();
+        containerRef.current.scrollTop += e.deltaY;
+      }
+    };
+
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('wheel', handleGlobalWheel, { passive: false });
 
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = 'unset';
       window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('wheel', handleGlobalWheel);
     };
-  }, [isOpen, onClose, client?.id]);
+  }, [isOpen, onClose]);
 
   // Mở từ một ảnh cụ thể thì cuộn tới đúng ảnh đó.
   useEffect(() => {
@@ -65,10 +87,20 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
     <div className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-6 md:p-8 bg-black/85 backdrop-blur-xl overflow-hidden animate-fadeIn">
 
       {/* Nền bấm để đóng */}
-      <div className="fixed inset-0" onClick={onClose} />
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0"
+        onClick={onClose}
+      />
 
-      <div
+      <motion.div
         ref={containerRef}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
         onScroll={handleScroll}
         className="relative w-full max-w-6xl max-h-[90vh] bg-[#0E0E12] text-white rounded-3xl overflow-y-auto shadow-2xl border border-white/15 flex flex-col z-10 no-scrollbar [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none]"
       >
@@ -86,7 +118,7 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
             type="button"
             onClick={(e) => { e.stopPropagation(); onClose(); }}
             className="pointer-events-auto w-11 h-11 sm:w-10 sm:h-10 rounded-full flex items-center justify-center bg-[#181820]/95 hover:bg-[#C3EA39] text-white hover:text-black backdrop-blur-xl transition-all border border-white/25 hover:border-[#C3EA39] shadow-2xl cursor-pointer active:scale-90 hover:scale-105 touch-manipulation"
-            aria-label="Đóng"
+            aria-label="Đóng popup"
           >
             <X className="w-5 h-5 stroke-[2.5]" />
           </button>
@@ -95,7 +127,7 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
         <div className="p-5 sm:p-10 md:p-14 space-y-6 sm:space-y-10">
 
           {/* Tên brand + dịch vụ + ghi chú */}
-          <div className="pr-14 sm:pr-16 space-y-2 sm:space-y-3">
+          <div className="pr-14 sm:pr-16 space-y-1.5 sm:space-y-2">
             <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-bold uppercase text-white tracking-tight leading-snug">
               {ten}
             </h2>
@@ -109,7 +141,7 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
             )}
 
             {client.note && (
-              <p className="text-xs sm:text-sm md:text-base text-white/70 font-light leading-relaxed max-w-3xl pt-1">
+              <p className="text-xs sm:text-sm md:text-base text-white/70 font-light leading-relaxed max-w-3xl">
                 {client.note}
               </p>
             )}
@@ -138,7 +170,7 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
             </div>
           )}
 
-          {/* Nút cuối */}
+          {/* Chân trang */}
           <div className="pt-6 sm:pt-8 border-t border-white/10 flex items-center justify-between gap-4">
             <button
               type="button"
@@ -146,7 +178,7 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
               className="text-xs font-mono text-white/50 hover:text-[#C3EA39] transition-colors flex items-center gap-1.5 cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>QUAY LẠI</span>
+              <span>QUAY LẠI DANH SÁCH</span>
             </button>
 
             {client.link && (
@@ -164,20 +196,28 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
 
         </div>
 
-        {/* Nút lên đầu */}
-        {showBackToTop && (
-          <button
-            type="button"
-            onClick={scrollToTop}
-            className="sticky bottom-5 left-[calc(100%-5.5rem)] z-[100] px-3.5 py-2 rounded-full bg-[#181820]/95 hover:bg-[#C3EA39] text-white hover:text-black backdrop-blur-xl border border-white/25 shadow-2xl text-xs font-mono flex items-center gap-1.5 cursor-pointer transition-colors"
-            aria-label="Lên đầu"
-          >
-            <ArrowUp className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Lên đầu</span>
-          </button>
-        )}
+        {/* Nút lên đầu.
+            `self-end mr-6 -mt-12` giống hệt modal dự án. Bản trước dùng
+            `left-[calc(100%-5.5rem)]`: vô dụng với thẻ nằm trong luồng, mà lại
+            bị flex kéo giãn thành một thanh dài hết chiều ngang hộp. */}
+        <AnimatePresence>
+          {showBackToTop && (
+            <motion.button
+              type="button"
+              initial={{ opacity: 0, scale: 0.8, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.8, y: 10 }}
+              onClick={scrollToTop}
+              className="sticky bottom-5 self-end mr-6 z-30 px-3.5 py-2 rounded-full bg-[#121216]/90 hover:bg-[#C3EA39] text-white hover:text-black border border-white/20 hover:border-[#C3EA39] backdrop-blur-xl shadow-2xl flex items-center gap-1.5 text-xs font-mono font-bold transition-all cursor-pointer hover:scale-105 -mt-12"
+              title="Cuộn lên đầu trang"
+            >
+              <ArrowUp className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Lên đầu</span>
+            </motion.button>
+          )}
+        </AnimatePresence>
 
-      </div>
+      </motion.div>
     </div>
   );
 

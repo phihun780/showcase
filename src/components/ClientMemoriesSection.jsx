@@ -63,17 +63,22 @@ export default function ClientMemoriesSection() {
     initialIndex: 0,
   });
 
-  const handleOpenLightbox = (client, index = 0) => {
+  // Bọc useCallback để hai hàm này giữ NGUYÊN danh tính qua mỗi lần vẽ lại.
+  //
+  // Mục này tự vẽ lại mỗi 3.5 giây (nhịp đổi độ sâu bên dưới). Nếu onClose là
+  // hàm mới mỗi lần thì useEffect trong modal thấy phụ thuộc đổi, chạy lại, và
+  // kéo bài viết về đầu trang — cứ 3.5 giây một lần trong lúc đang đọc.
+  const handleOpenLightbox = useCallback((client, index = 0) => {
     setModalConfig({
       isOpen: true,
       client,
       initialIndex: index,
     });
-  };
+  }, []);
 
-  const handleCloseLightbox = () => {
+  const handleCloseLightbox = useCallback(() => {
     setModalConfig(prev => ({ ...prev, isOpen: false }));
-  };
+  }, []);
 
   // Chỉ bật nghiêng 3D trên máy có chuột thật.
   // Điện thoại không rê được nên hiệu ứng vô nghĩa, mà lại tốn GPU — cùng lý do
