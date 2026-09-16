@@ -189,6 +189,51 @@ function r2DevPlugin() {
           return res.end(JSON.stringify({ success: true }));
         }
 
+        // 4b. /api/tai-anh — tải một tấm ảnh trong kho về máy.
+        //
+        // Kho R2 không gửi kèm header CORS nên trang không đọc được file bằng
+        // fetch. Đọc hộ ở đây rồi trả về kèm Content-Disposition: attachment.
+        // Bản chạy thật nằm ở functions/api/tai-anh.js.
+        if (req.url && req.url.startsWith('/api/tai-anh') && req.method === 'GET') {
+          const key = (new URL(req.url, 'http://localhost').searchParams.get('key') || '')
+            .trim()
+            .replace(/^\/+/, '');
+
+          // Cùng bộ luật với bản chạy thật (functions/api/tai-anh.js): chỉ các
+          // thư mục của CMS. Để dev dễ dãi hơn thì có lỗi chỉ lộ ra khi đã lên
+          // trang thật.
+          const thuMucChoPhep = ['projects', 'cover_banners', 'random_works', 'profile', 'clients', 'uploads'];
+          const hopLe =
+            key &&
+            !key.includes('..') &&
+            /^[a-zA-Z0-9._/-]+$/.test(key) &&
+            key.split('/').length >= 2 &&
+            thuMucChoPhep.includes(key.split('/')[0]);
+
+          if (!s3 || !hopLe) {
+            res.statusCode = 400;
+            res.setHeader('Content-Type', 'application/json');
+            return res.end(JSON.stringify({ error: 'Đường dẫn ảnh không hợp lệ' }));
+          }
+
+          try {
+            const out = await s3.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
+            const ten = key.split('/').pop() || 'anh';
+            res.setHeader('Content-Type', out.ContentType || 'application/octet-stream');
+            res.setHeader(
+              'Content-Disposition',
+              `attachment; filename="${ten.replace(/"/g, '')}"; filename*=UTF-8''${encodeURIComponent(ten)}`
+            );
+            res.setHeader('Cache-Control', 'no-store');
+            return out.Body.pipe(res);
+          } catch (err) {
+            console.warn('R2 Dev Download error:', err);
+            res.statusCode = 404;
+            res.setHeader('Content-Type', 'application/json');
+            return res.end(JSON.stringify({ error: 'Không tìm thấy ảnh' }));
+          }
+        }
+
         // 5. /api/delete-folder
         if (req.url === '/api/delete-folder' && req.method === 'POST') {
           const buffers = [];

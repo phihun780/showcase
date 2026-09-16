@@ -206,3 +206,48 @@ export async function fetchPortfolioDataFromR2() {
 }
 
 
+
+/**
+ * Tải một tấm ảnh trong kho về máy.
+ *
+ * Phải đi vòng qua /api/tai-anh chứ không trỏ thẳng vào địa chỉ R2 được:
+ *  - `fetch` thẳng sang R2 bị chặn vì kho không gửi kèm header CORS, không đọc
+ *    được nội dung thì không tạo được file để lưu.
+ *  - Thẻ <a download> trỏ sang tên miền khác thì trình duyệt bỏ qua thuộc tính
+ *    `download`, bấm vào chỉ mở ảnh ra xem.
+ * Endpoint kia nằm cùng tên miền nên không vướng cả hai chuyện đó.
+ */
+export async function taiAnhVeMay(urlOrKey) {
+  const key = keyFromUrl(urlOrKey);
+  if (!key) throw new Error('Không đọc được đường dẫn ảnh');
+
+  const res = await fetch(`/api/tai-anh?key=${encodeURIComponent(key)}`, {
+    headers: authHeaders(),
+    cache: 'no-store',
+  });
+  if (!res.ok) {
+    const data = await readJson(res);
+    throw new Error(data.error || `Tải ảnh thất bại (${res.status})`);
+  }
+
+  const blob = await res.blob();
+  const tam = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = tam;
+  a.download = key.split('/').pop() || 'anh';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  // Thu hồi muộn một nhịp: thu hồi ngay thì có trình duyệt huỷ luôn cú tải.
+  setTimeout(() => URL.revokeObjectURL(tam), 60000);
+}
+
+// Cắt phần tên miền ra khỏi địa chỉ ảnh, lấy đường dẫn trong kho.
+function keyFromUrl(value) {
+  if (!value || typeof value !== 'string') return '';
+  if (value.startsWith('data:') || value.startsWith('blob:')) return '';
+  let key = value;
+  if (key.includes('.r2.dev/')) key = key.split('.r2.dev/')[1];
+  else if (key.includes(R2_CONFIG.publicUrl)) key = key.replace(R2_CONFIG.publicUrl, '');
+  return key.split('?')[0].replace(/^\/+/, '');
+}

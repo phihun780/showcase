@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, Upload, Check, Loader2, Building2, Calendar, MessageSquareQuote, Layers, Trash2, ArrowLeft, ArrowRight } from 'lucide-react';
 import { optimizeAndUploadToR2 } from '../../utils/imageOptimizer';
 import SmartImage from '../SmartImage';
+import NutTaiAnh from './NutTaiAnh';
 
 /**
  * Form một brand. Chỉ có tên, năm, mô tả, logo và ảnh — phần còn lại là để
@@ -71,6 +72,7 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
   // Kéo một tấm sang chỗ khác. `gocKeo` giữ trạng thái thật, `keo` chỉ để vẽ.
   const gocKeo = useRef(null);
   const [keo, setKeo] = useState(null);
+
 
   const logoInputRef = useRef(null);
   const galleryInputRef = useRef(null);
@@ -441,7 +443,14 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-black border border-white/15 overflow-hidden flex items-center justify-center shrink-0">
+              <div className="group/logo relative w-12 h-12 rounded-xl bg-black border border-white/15 overflow-hidden flex items-center justify-center shrink-0">
+                {formData.logo && (
+                  <NutTaiAnh
+                    src={formData.logo}
+                    onLoi={setUploadError}
+                    className="absolute top-0.5 right-0.5 z-10 !p-1 opacity-0 group-hover/logo:opacity-100"
+                  />
+                )}
                 {formData.logo ? (
                   <SmartImage src={formData.logo} alt="" sizes="48px" decoding="async" className="w-full h-full object-cover" />
                 ) : (
@@ -546,7 +555,7 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
                        nó ghi đè, ảnh giật về chỗ cũ. */
                     style={{ touchAction: 'pan-y' }}
                     title="Kéo để đổi chỗ"
-                    className={`relative rounded-xl overflow-hidden bg-black border flex flex-col cursor-grab active:cursor-grabbing ${
+                    className={`group/o relative rounded-xl overflow-hidden bg-black border flex flex-col cursor-grab active:cursor-grabbing ${
                       dangNhac
                         ? 'z-30 opacity-90 shadow-2xl border-[#C3EA39] pointer-events-none'
                         : laDich
@@ -554,6 +563,13 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
                           : 'border-white/15'
                     }`}
                   >
+                    {/* Nút tải nằm góc phải trên, chỉ hiện khi rê vào tấm ảnh */}
+                    <NutTaiAnh
+                      src={img}
+                      onLoi={setUploadError}
+                      className="absolute top-1.5 right-1.5 z-20 opacity-0 group-hover/o:opacity-100 focus-visible:opacity-100 disabled:opacity-100"
+                    />
+
                     <div className="aspect-[16/10] w-full overflow-hidden bg-black">
                       {/* Bản THU NHỎ, không phải ảnh gốc.
                           Ô này chỉ rộng chừng 180px mà trước đây nạp nguyên tấm

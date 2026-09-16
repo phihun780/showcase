@@ -14,6 +14,7 @@ import {
   Image as ImageIcon,
   FolderOpen
 } from 'lucide-react';
+import NutTaiAnh from './NutTaiAnh';
 import { optimizeAndUploadToR2, getProjectFolderPath } from '../../utils/imageOptimizer';
 import { deleteFromR2 } from '../../utils/r2Storage';
 import ImageCropModal from './ImageCropModal';
@@ -392,6 +393,12 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
                     {isCoverGif ? 'GIF' : '16:10'}
                   </div>
 
+                  {/* Nút tải ảnh bìa */}
+                  <NutTaiAnh
+                    src={formData.coverImage}
+                    className="absolute top-2 right-2 z-30 opacity-0 group-hover:opacity-100"
+                  />
+
                   {/* Hover Actions Toolbar */}
                   <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 p-2 backdrop-blur-xs">
                     {!isCoverGif && (
@@ -542,11 +549,18 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
                           #{idx + 1}
                         </span>
 
+                        {/* Nhãn GIF dời sang trái để chừa góc phải cho nút tải */}
                         {isGif && (
-                          <span className="absolute top-1 right-1 px-1 py-0.2 rounded bg-black/80 text-[#C3EA39] text-[8px] font-mono font-bold z-10 pointer-events-none">
+                          <span className="absolute top-1 left-7 px-1 py-0.2 rounded bg-black/80 text-[#C3EA39] text-[8px] font-mono font-bold z-10 pointer-events-none">
                             GIF
                           </span>
                         )}
+
+                        {/* Nút tải, góc phải trên, hiện khi rê vào */}
+                        <NutTaiAnh
+                          src={img}
+                          className="absolute top-1 right-1 z-30 !p-1 opacity-0 group-hover:opacity-100"
+                        />
 
                         {/* Action Hover Controls */}
                         <div className="absolute inset-0 bg-black/75 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1 z-20 backdrop-blur-xs">

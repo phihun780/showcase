@@ -11,6 +11,7 @@ import {
   Sliders,
   Maximize2
 } from 'lucide-react';
+import NutTaiAnh from './NutTaiAnh';
 import ImageCropModal from './ImageCropModal';
 
 export default function MediaItemEditorModal({
@@ -162,6 +163,12 @@ export default function MediaItemEditorModal({
                       src={image}
                       alt={title || 'Preview'}
                       className="w-full h-full object-cover"
+                    />
+
+                    {/* Nút tải, góc phải trên */}
+                    <NutTaiAnh
+                      src={image}
+                      className="absolute top-2 right-2 z-30 opacity-0 group-hover:opacity-100"
                     />
                     
                     {/* Hover Overlay with Action Buttons */}
