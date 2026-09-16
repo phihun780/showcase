@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ArrowLeft, ArrowUp } from 'lucide-react';
+import { X, ArrowLeft, ArrowUp, Share2, Check } from 'lucide-react';
+import { clientUrl } from '../utils/clientUrl';
+import { chepVaoBoNhoTam } from '../utils/clipboard';
 import SmartImage from './SmartImage';
 import ImageViewer from './ImageViewer';
 
@@ -18,6 +20,7 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
   const [scrollProgress, setScrollProgress] = useState(0);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [footerTrongTam, setFooterTrongTam] = useState(false);
+  const [shareState, setShareState] = useState('idle');   // 'idle' | 'copied' | 'failed'
 
   // Ảnh đang xem to. Giữ thêm một bản trong ref vì bộ bắt phím bên dưới nằm
   // trong effect chỉ phụ thuộc [isOpen, onClose] — đọc state trực tiếp thì nó
@@ -176,6 +179,18 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
     }
   };
 
+  // Bấm là chép link brand vào bộ nhớ tạm. Cố tình KHÔNG gọi bảng chia sẻ của
+  // hệ điều hành (navigator.share) — y như nút bên dự án, một hành vi duy nhất.
+  const handleShare = async () => {
+    if (await chepVaoBoNhoTam(clientUrl(client))) {
+      setShareState('copied');
+      setTimeout(() => setShareState('idle'), 2200);
+    } else {
+      setShareState('failed');
+      setTimeout(() => setShareState('idle'), 4000);
+    }
+  };
+
   const scrollToTop = () => {
     containerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -308,6 +323,27 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
                 <span>LÊN ĐẦU</span>
               </button>
             </div>
+
+            <button
+              type="button"
+              onClick={handleShare}
+              aria-label={`Chia sẻ brand ${ten}`}
+              className="px-4 py-2.5 rounded-full border border-white/20 hover:border-[#C3EA39] bg-white/5 hover:bg-[#C3EA39]/10 text-white hover:text-[#C3EA39] font-display font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shrink-0"
+            >
+              {shareState === 'copied' ? (
+                <>
+                  <Check className="w-3.5 h-3.5" />
+                  <span>ĐÃ CHÉP LINK</span>
+                </>
+              ) : shareState === 'failed' ? (
+                <span className="normal-case tracking-normal">Chép không được — bấm giữ thanh địa chỉ để copy</span>
+              ) : (
+                <>
+                  <Share2 className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">CHIA SẺ</span>
+                </>
+              )}
+            </button>
 
           </div>
 

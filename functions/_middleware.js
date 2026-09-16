@@ -52,11 +52,13 @@ function buildSeo(profile, origin) {
   return { title, description, image, imageType: imageTypeOf(image), favicon, origin, url: `${origin}/` };
 }
 
-// Đường dẫn riêng của dự án: /du-an/<slug>
+// Đường dẫn riêng của dự án và của brand.
 const PROJECT_ROUTE = '/du-an';
+const CLIENT_ROUTE = '/brand';
 
-// PHẢI khớp từng ký tự với slugifyTitle trong src/utils/projectUrl.js.
-// Lệch một chút là link chia sẻ không tìm ra dự án và rơi về thẻ mặc định.
+// PHẢI khớp từng ký tự với slugifyTitle trong src/utils/projectUrl.js (brand
+// cũng dùng chung hàm đó). Lệch một chút là link chia sẻ không tìm ra và rơi về
+// thẻ mặc định.
 function slugifyTitle(text) {
   if (!text) return '';
   return text
@@ -75,11 +77,16 @@ function projectSlug(project) {
   return slugifyTitle(project.title) || String(project.id || '');
 }
 
-// Lấy slug từ đường dẫn, trả null nếu không phải trang dự án.
-function slugFromPath(pathname) {
+function clientSlug(client) {
+  if (!client) return '';
+  return slugifyTitle(client.clientName) || String(client.id || '');
+}
+
+// Lấy slug từ đường dẫn theo một tiền tố cho trước, trả null nếu không khớp.
+function slugFromPath(pathname, route) {
   const clean = (pathname || '').replace(/\/+$/, '');
-  if (!clean.toLowerCase().startsWith(`${PROJECT_ROUTE}/`)) return null;
-  const slug = clean.slice(PROJECT_ROUTE.length + 1);
+  if (!clean.toLowerCase().startsWith(`${route}/`)) return null;
+  const slug = clean.slice(route.length + 1);
   return slug ? decodeURIComponent(slug).toLowerCase() : null;
 }
 
@@ -100,6 +107,26 @@ function buildProjectSeo(project, profile, origin) {
     image,
     imageType: imageTypeOf(image),
     url: `${origin}${PROJECT_ROUTE}/${projectSlug(project)}`,
+  };
+}
+
+// Thẻ preview riêng cho một brand. Brand không có ô mô tả ngắn riêng nên mô tả
+// lấy từ ghi chú; ảnh lấy tấm đầu trong bộ ảnh (cũng là tấm mới nhất).
+function buildClientSeo(client, profile, origin) {
+  const nen = buildSeo(profile, origin);
+  const ten = (client.clientName || '').trim();
+  const title = ten ? `${ten} — ${(profile.name || 'Phi Hùng').trim()}` : nen.title;
+  const description = (client.note || '').trim() || nen.description;
+  const anhDau = Array.isArray(client.gallery) ? client.gallery[0] : null;
+  const image = usableImage(client.coverImage) || usableImage(anhDau) || nen.image;
+
+  return {
+    ...nen,
+    title,
+    description,
+    image,
+    imageType: imageTypeOf(image),
+    url: `${origin}${CLIENT_ROUTE}/${clientSlug(client)}`,
   };
 }
 
@@ -197,13 +224,23 @@ export async function onRequest(context) {
   if (!data) return response;
 
   const profile = data.profile || {};
-  const slug = slugFromPath(pathname);
-  const duAn = slug && Array.isArray(data.projects)
-    ? data.projects.find(p => projectSlug(p) === slug)
+
+  const slugDuAn = slugFromPath(pathname, PROJECT_ROUTE);
+  const duAn = slugDuAn && Array.isArray(data.projects)
+    ? data.projects.find(p => projectSlug(p) === slugDuAn)
     : null;
 
-  // Link dự án -> thẻ preview của chính dự án đó. Còn lại dùng thẻ chung.
-  const seo = duAn ? buildProjectSeo(duAn, profile, origin) : buildSeo(profile, origin);
+  const slugBrand = slugFromPath(pathname, CLIENT_ROUTE);
+  const brand = slugBrand && Array.isArray(data.clients)
+    ? data.clients.find(c => clientSlug(c) === slugBrand)
+    : null;
+
+  // Link dự án / link brand -> thẻ preview của chính nó. Còn lại dùng thẻ chung.
+  const seo = duAn
+    ? buildProjectSeo(duAn, profile, origin)
+    : brand
+      ? buildClientSeo(brand, profile, origin)
+      : buildSeo(profile, origin);
 
   const values = {
     'og:title': seo.title,

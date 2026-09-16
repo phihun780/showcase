@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { usePortfolioData } from '../context/PortfolioDataContext';
 import ClientMemoryModal from './ClientMemoryModal';
+import { clientPath, slugFromLocation, findClientBySlug } from '../utils/clientUrl';
 import { HeartHandshake } from 'lucide-react';
 
 
@@ -54,7 +55,11 @@ function viTriBrand(idx, tong, nhip = 0) {
 
 export default function ClientMemoriesSection() {
   const { clients, profile } = usePortfolioData();
-  const clientList = clients || [];
+  // useMemo để mảng giữ nguyên danh tính giữa các lần vẽ. Mục này tự vẽ lại
+  // mỗi 3.5 giây; `clients || []` tạo mảng mới mỗi lần, effect đồng bộ URL bên
+  // dưới sẽ coi đó là phụ thuộc đã đổi và chạy lại — mà nó có gọi setState, nên
+  // thành vòng lặp vô tận.
+  const clientList = useMemo(() => clients || [], [clients]);
 
   // Cinema Lightbox Modal config
   const [modalConfig, setModalConfig] = useState({
@@ -74,11 +79,45 @@ export default function ClientMemoriesSection() {
       client,
       initialIndex: index,
     });
+    // Đẩy URL riêng lên thanh địa chỉ -> copy link gửi được, và nút Back đóng modal.
+    window.history.pushState({ brand: client.id }, '', clientPath(client));
   }, []);
 
   const handleCloseLightbox = useCallback(() => {
     setModalConfig(prev => ({ ...prev, isOpen: false }));
+    // Lùi lại đúng một bước thay vì đẩy thêm "/" mới, để bấm Back nhiều lần
+    // không phải đi ngược qua một chuỗi dài các lần mở modal.
+    if (window.history.state?.brand) window.history.back();
+    else window.history.replaceState({}, '', '/');
   }, []);
+
+  // Đồng bộ hai chiều giữa URL và modal.
+  useEffect(() => {
+    if (clientList.length === 0) return;
+
+    const dongBo = () => {
+      const slug = slugFromLocation();
+      const brand = findClientBySlug(clientList, slug);
+      if (brand) {
+        // Chỉ đổi khi thật sự khác, không thì mỗi lần chạy lại là một object mới
+        // -> vẽ lại -> chạy lại.
+        setModalConfig(prev =>
+          prev.isOpen && prev.client?.id === brand.id
+            ? prev
+            : { isOpen: true, client: brand, initialIndex: 0 }
+        );
+      } else {
+        setModalConfig(prev => (prev.isOpen ? { ...prev, isOpen: false } : prev));
+        // Link tới brand đã bị xoá/đổi tên: đưa về trang chủ thay vì để lại một
+        // đường dẫn rác trên thanh địa chỉ.
+        if (slug) window.history.replaceState({}, '', '/');
+      }
+    };
+
+    dongBo();                                     // lúc tải trang: /brand/<slug> -> mở luôn
+    window.addEventListener('popstate', dongBo);  // Back/Forward -> đóng/mở theo
+    return () => window.removeEventListener('popstate', dongBo);
+  }, [clientList]);
 
   // Chỉ bật nghiêng 3D trên máy có chuột thật.
   // Điện thoại không rê được nên hiệu ứng vô nghĩa, mà lại tốn GPU — cùng lý do
