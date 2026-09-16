@@ -1,7 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ArrowLeft, ArrowUp, ExternalLink } from 'lucide-react';
+import SmartImage from './SmartImage';
+import ImageViewer from './ImageViewer';
 
 /**
  * Chi tiết một brand đã làm việc cùng.
@@ -18,6 +20,40 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [footerTrongTam, setFooterTrongTam] = useState(false);
 
+  // Ảnh đang xem to. Giữ thêm một bản trong ref vì bộ bắt phím bên dưới nằm
+  // trong effect chỉ phụ thuộc [isOpen, onClose] — đọc state trực tiếp thì nó
+  // đọc phải giá trị cũ của lần dựng đầu.
+  const [anhDangXem, setAnhDangXem] = useState(null);   // số thứ tự, hoặc null
+  const anhDangXemRef = useRef(null);
+  const datAnhDangXem = (i) => { anhDangXemRef.current = i; setAnhDangXem(i); };
+
+  // Số ảnh cũng để trong ref vì cùng lý do: hàm này bị bộ bắt phím giữ lại từ
+  // lần dựng cũ, đọc biến thường thì đọc phải số của brand trước.
+  const soAnhRef = useRef(0);
+  const doiAnh = (buoc) => {
+    const tong = soAnhRef.current;
+    const hienTai = anhDangXemRef.current;
+    if (!tong || hienTai === null) return;
+    datAnhDangXem((hienTai + buoc + tong) % tong);   // qua hết thì quay vòng
+  };
+
+  // Đã tải xong tấm nào — dùng để bỏ khung giữ chỗ, xem chú thích ở lưới ảnh.
+  const [daTai, setDaTai] = useState({});
+
+  const ten = client?.clientName || 'Brand';
+
+  // Tính trước mọi lần return sớm: hook phải chạy đủ và đúng thứ tự ở mọi lần
+  // dựng. useMemo để mảng giữ nguyên danh tính, không thì effect bên dưới chạy
+  // lại mỗi lần vẽ.
+  const images = useMemo(() => Array.from(new Set([
+    client?.coverImage,
+    ...(Array.isArray(client?.gallery) ? client.gallery : []),
+  ].filter(Boolean))), [client]);
+
+  // Ghi vào ref trong effect chứ không ghi thẳng lúc dựng — ghi lúc dựng là
+  // việc phụ ngoài luồng, React có thể dựng thử rồi bỏ.
+  useEffect(() => { soAnhRef.current = images.length; }, [images.length]);
+
   // Đưa về đầu bài mỗi khi MỞ hoặc khi đổi brand.
   //
   // Tách riêng khỏi effect gắn sự kiện bên dưới, và chỉ phụ thuộc vào hai giá
@@ -29,18 +65,37 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
     if (containerRef.current) containerRef.current.scrollTop = 0;
     setScrollProgress(0);
     setShowBackToTop(false);
+    setDaTai({});
+    anhDangXemRef.current = null;
+    setAnhDangXem(null);
   }, [isOpen, client?.id]);
 
   useEffect(() => {
     if (!isOpen) return;
 
+    // Một bộ bắt phím duy nhất cho cả bài viết lẫn ô xem ảnh.
+    //
+    // Gộp vào một chỗ là có chủ đích: nếu ô xem ảnh tự gắn thêm một bộ nữa trên
+    // `window` thì cả hai cùng nghe Esc, bên nào chạy trước là chuyện của thứ tự
+    // gắn — rất dễ thành bấm Esc một cái đóng luôn cả hai.
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') onClose();
+      const dangXemAnh = anhDangXemRef.current !== null;
+
+      if (e.key === 'Escape') {
+        if (dangXemAnh) datAnhDangXem(null);   // đóng ảnh trước, bài viết ở lại
+        else onClose();
+        return;
+      }
+
+      if (!dangXemAnh) return;
+      if (e.key === 'ArrowRight') doiAnh(1);
+      if (e.key === 'ArrowLeft') doiAnh(-1);
     };
 
     // Lăn chuột ở vùng nền tối bên ngoài hộp thì vẫn cuộn được bài viết.
     // Giống modal dự án: không có cái này thì lăn ra ngoài mép là đứng im.
     const handleGlobalWheel = (e) => {
+      if (anhDangXemRef.current !== null) return;   // đang xem ảnh thì đứng yên
       if (containerRef.current && !containerRef.current.contains(e.target)) {
         e.preventDefault();
         containerRef.current.scrollTop += e.deltaY;
@@ -82,12 +137,6 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
   }, [isOpen, initialIndex, client?.id]);
 
   if (!isOpen || !client) return null;
-
-  const ten = client.clientName || 'Brand';
-  const images = Array.from(new Set([
-    client.coverImage,
-    ...(Array.isArray(client.gallery) ? client.gallery : []),
-  ].filter(Boolean)));
 
   const handleScroll = (e) => {
     const { scrollTop, scrollHeight, clientHeight } = e.target;
@@ -165,26 +214,48 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
             )}
           </div>
 
-          {/* Các ảnh đã làm, xếp dọc */}
+          {/* Lưới ảnh kiểu Pinterest.
+              Dùng `columns-*` của CSS: mỗi tấm giữ đúng tỉ lệ gốc của nó, cao
+              thấp khác nhau, rồi tự xếp khít vào các cột — không cắt xén ảnh
+              tấm nào. Đổi lại thứ tự đọc là xuống hết cột này mới sang cột kia,
+              đúng như Pinterest. Lưới CSS thì xếp theo hàng nên phải ép mọi ô
+              cao bằng nhau, tức là phải cắt ảnh — không hợp ở đây. */}
           {images.length > 0 && (
-            <div className="space-y-6 sm:space-y-8">
-              {images.map((url, idx) => (
-                <div
-                  key={idx}
-                  id={`client-anh-${idx}`}
-                  className="rounded-2xl overflow-hidden border border-white/10 bg-black shadow-xl relative group"
-                >
-                  <img
-                    src={url}
-                    alt={`${ten} — ấn phẩm ${idx + 1}`}
-                    onContextMenu={(e) => e.preventDefault()}
-                    onDragStart={(e) => e.preventDefault()}
-                    loading={idx === 0 ? 'eager' : 'lazy'}
-                    decoding="async"
-                    className="w-full h-auto object-cover select-none group-hover:scale-[1.01] transition-transform duration-500"
-                  />
-                </div>
-              ))}
+            <div className="columns-2 md:columns-3 gap-4 sm:gap-5">
+              {images.map((url, idx) => {
+                const xong = !!daTai[idx];
+                return (
+                  <button
+                    key={idx}
+                    id={`client-anh-${idx}`}
+                    type="button"
+                    onClick={() => datAnhDangXem(idx)}
+                    aria-label={`Xem lớn ấn phẩm ${idx + 1} của ${ten}`}
+                    /* `break-inside-avoid` để một tấm không bị cắt đôi giữa hai
+                       cột. Chưa tải xong thì giữ sẵn một khung 3/4 cho có chỗ,
+                       không thì mọi tấm đều cao 0 và dồn hết vào cột đầu, tải
+                       xong lại nhảy loạn lên. */
+                    className={`group/a block w-full mb-4 sm:mb-5 break-inside-avoid relative overflow-hidden rounded-xl border border-white/10 bg-white/[0.04] cursor-zoom-in transition-all duration-300 hover:border-[#C3EA39]/50 focus-visible:outline-none focus-visible:border-[#C3EA39] focus-visible:ring-2 focus-visible:ring-[#C3EA39]/60 ${xong ? '' : 'aspect-[3/4]'}`}
+                  >
+                    <SmartImage
+                      src={url}
+                      alt={`${ten} — ấn phẩm ${idx + 1}`}
+                      /* Ô lưới hẹp hơn nhiều so với bài viết: 3 cột trong hộp
+                         rộng ~880px là khoảng 280px mỗi ô. */
+                      sizes="(min-width: 768px) 290px, 45vw"
+                      onLoad={() => setDaTai(t => (t[idx] ? t : { ...t, [idx]: true }))}
+                      onError={() => setDaTai(t => (t[idx] ? t : { ...t, [idx]: true }))}
+                      onContextMenu={(e) => e.preventDefault()}
+                      onDragStart={(e) => e.preventDefault()}
+                      loading={idx < 6 ? 'eager' : 'lazy'}
+                      decoding="async"
+                      className={`select-none transition-[opacity,transform] duration-500 group-hover/a:scale-[1.03] ${
+                        xong ? 'w-full h-auto opacity-100' : 'absolute inset-0 w-full h-full object-cover opacity-0'
+                      }`}
+                    />
+                  </button>
+                );
+              })}
             </div>
           )}
 
@@ -251,6 +322,20 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
         </AnimatePresence>
 
       </motion.div>
+
+      <AnimatePresence>
+        {anhDangXem !== null && images[anhDangXem] && (
+          <ImageViewer
+            src={images[anhDangXem]}
+            alt={`${ten} — ấn phẩm ${anhDangXem + 1}`}
+            index={anhDangXem}
+            total={images.length}
+            onClose={() => datAnhDangXem(null)}
+            onPrev={() => doiAnh(-1)}
+            onNext={() => doiAnh(1)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 
