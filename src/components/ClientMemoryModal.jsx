@@ -13,8 +13,10 @@ import { X, ArrowLeft, ArrowUp, ExternalLink } from 'lucide-react';
  */
 export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, onClose }) {
   const containerRef = useRef(null);
+  const footerRef = useRef(null);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [footerTrongTam, setFooterTrongTam] = useState(false);
 
   // Đưa về đầu bài mỗi khi MỞ hoặc khi đổi brand.
   //
@@ -55,6 +57,22 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
       window.removeEventListener('wheel', handleGlobalWheel);
     };
   }, [isOpen, onClose]);
+
+  // Chân trang lọt vào tầm nhìn thì cho nút "Lên đầu" rút lui — xem chú thích
+  // đầy đủ ở ProjectModal. Hai modal giữ y hệt một cách hành xử.
+  useEffect(() => {
+    if (!isOpen) return;
+    const moc = footerRef.current;
+    const khung = containerRef.current;
+    if (!moc || !khung) return;
+
+    const ob = new IntersectionObserver(
+      ([muc]) => setFooterTrongTam(muc.isIntersecting),
+      { root: khung, threshold: 0 }
+    );
+    ob.observe(moc);
+    return () => ob.disconnect();
+  }, [isOpen, client?.id]);
 
   // Mở từ một ảnh cụ thể thì cuộn tới đúng ảnh đó.
   useEffect(() => {
@@ -171,15 +189,28 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
           )}
 
           {/* Chân trang */}
-          <div className="pt-6 sm:pt-8 border-t border-white/10 flex items-center justify-between gap-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="text-xs font-mono text-white/50 hover:text-[#C3EA39] transition-colors flex items-center gap-1.5 cursor-pointer"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>QUAY LẠI DANH SÁCH</span>
-            </button>
+          <div ref={footerRef} className="pt-6 sm:pt-8 border-t border-white/10 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+              <button
+                type="button"
+                onClick={onClose}
+                className="text-xs font-mono text-white/50 hover:text-[#C3EA39] transition-colors flex items-center gap-1.5 cursor-pointer shrink-0"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">QUAY LẠI DANH SÁCH</span>
+                <span className="sm:hidden">QUAY LẠI</span>
+              </button>
+
+              <span className="hidden sm:block w-px h-3 bg-white/15 shrink-0" />
+              <button
+                type="button"
+                onClick={scrollToTop}
+                className="hidden sm:flex text-xs font-mono text-white/50 hover:text-[#C3EA39] transition-colors items-center gap-1.5 cursor-pointer shrink-0"
+              >
+                <ArrowUp className="w-3.5 h-3.5" />
+                <span>LÊN ĐẦU</span>
+              </button>
+            </div>
 
             {client.link && (
               <a
@@ -201,7 +232,7 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
             `left-[calc(100%-5.5rem)]`: vô dụng với thẻ nằm trong luồng, mà lại
             bị flex kéo giãn thành một thanh dài hết chiều ngang hộp. */}
         <AnimatePresence>
-          {showBackToTop && (
+          {showBackToTop && !footerTrongTam && (
             <motion.button
               type="button"
               initial={{ opacity: 0, scale: 0.8, y: 10 }}

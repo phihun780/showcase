@@ -40,7 +40,9 @@ export default function ProjectModal({ project, isOpen, onClose, onSelectNextPro
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [shareState, setShareState] = useState('idle'); // 'idle' | 'copied' | 'failed'
+  const [footerTrongTam, setFooterTrongTam] = useState(false);
   const containerRef = useRef(null);
+  const footerRef = useRef(null);
 
   const gallery = project?.gallery || [];
   const galleryCount = gallery.length;
@@ -84,6 +86,28 @@ export default function ProjectModal({ project, isOpen, onClose, onSelectNextPro
       window.removeEventListener('wheel', handleGlobalWheel);
     };
   }, [isOpen, onClose]);
+
+  // Chân trang lọt vào tầm nhìn thì cho nút "Lên đầu" rút lui.
+  //
+  // Nút đó là thẻ cuối trong luồng của khung cuộn, nên cuộn hết bài là nó đáp
+  // xuống ngay hàng nút chân trang — ba nút chen nhau, nhìn rối. Mà đúng lúc đó
+  // thì cũng chẳng cần nó nữa: chân trang đã có sẵn "LÊN ĐẦU" và "QUAY LẠI".
+  //
+  // Dùng IntersectionObserver thay vì đoán theo phần trăm đã cuộn: chân trang
+  // cao bao nhiêu, bài dài bao nhiêu thì nó đo đúng bấy nhiêu.
+  useEffect(() => {
+    if (!isOpen) return;
+    const moc = footerRef.current;
+    const khung = containerRef.current;
+    if (!moc || !khung) return;
+
+    const ob = new IntersectionObserver(
+      ([muc]) => setFooterTrongTam(muc.isIntersecting),
+      { root: khung, threshold: 0 }
+    );
+    ob.observe(moc);
+    return () => ob.disconnect();
+  }, [isOpen, project?.id]);
 
   const handleScroll = (e) => {
     const { scrollTop, scrollHeight, clientHeight } = e.target;
@@ -229,14 +253,28 @@ export default function ProjectModal({ project, isOpen, onClose, onSelectNextPro
           )}
 
           {/* Footer Actions */}
-          <div className="pt-6 sm:pt-8 border-t border-white/10 flex items-center justify-between gap-4">
-            <button
-              onClick={onClose}
-              className="text-xs font-mono text-white/50 hover:text-[#C3EA39] transition-colors flex items-center gap-1.5 cursor-pointer"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>QUAY LẠI DANH SÁCH</span>
-            </button>
+          <div ref={footerRef} className="pt-6 sm:pt-8 border-t border-white/10 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+              <button
+                onClick={onClose}
+                className="text-xs font-mono text-white/50 hover:text-[#C3EA39] transition-colors flex items-center gap-1.5 cursor-pointer shrink-0"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">QUAY LẠI DANH SÁCH</span>
+                <span className="sm:hidden">QUAY LẠI</span>
+              </button>
+
+              {/* Nút nổi đã rút lui ở đây, nên đặt lối lên đầu ngay trong hàng này */}
+              <span className="hidden sm:block w-px h-3 bg-white/15 shrink-0" />
+              <button
+                type="button"
+                onClick={scrollToTop}
+                className="hidden sm:flex text-xs font-mono text-white/50 hover:text-[#C3EA39] transition-colors items-center gap-1.5 cursor-pointer shrink-0"
+              >
+                <ArrowUp className="w-3.5 h-3.5" />
+                <span>LÊN ĐẦU</span>
+              </button>
+            </div>
 
             <div className="flex items-center gap-2 sm:gap-3">
               <button
@@ -276,7 +314,7 @@ export default function ProjectModal({ project, isOpen, onClose, onSelectNextPro
 
         {/* Floating Quick Action: Back to Top */}
         <AnimatePresence>
-          {showBackToTop && (
+          {showBackToTop && !footerTrongTam && (
             <motion.button
               initial={{ opacity: 0, scale: 0.8, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
