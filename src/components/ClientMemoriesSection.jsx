@@ -277,6 +277,16 @@ export default function ClientMemoriesSection() {
     const x = ((e.clientX - r.left) / r.width) * 2 - 1;   // -1..1
     const y = ((e.clientY - r.top) / r.height) * 2 - 1;
     for (const el of khung.querySelectorAll('[data-sau]')) {
+      // Cái đang rê thì đứng yên.
+      //
+      // Cả cảnh trôi theo chuột tới 26px, mà một brand chỉ rộng chừng 80px. Nhích
+      // chuột một cái là nó trượt ra khỏi con trỏ, tính là "bỏ chuột ra" rồi tan
+      // đi — đang muốn xem thì nó biến mất.
+      if (el.dataset.re === '1') {
+        el.style.setProperty('--dx', '0px');
+        el.style.setProperty('--dy', '0px');
+        continue;
+      }
       const sau = parseFloat(el.dataset.sau) || 0;
       const bien = 26 * sau;
       el.style.setProperty('--dx', `${-x * bien}px`);
@@ -393,6 +403,9 @@ export default function ClientMemoriesSection() {
                 <div
                   key={client.id || idx}
                   data-sau={v.sau}
+                  /* Đánh dấu cái đang rê để lớp trôi theo chuột chừa nó ra —
+                     xem `raiTheoChuot`. */
+                  data-re={roi ? '1' : undefined}
                   className="absolute"
                   style={{
                     // Đặt đúng tâm ô, rồi clamp() kéo lại nếu tấm nào sắp lòi ra mép.
@@ -419,7 +432,7 @@ export default function ClientMemoriesSection() {
                       trong 0.45s — hai việc cần hai tốc độ khác nhau. */}
                   <div
                     style={{
-                      transform: `scale(${(v.tiLe * (roi ? 1.3 : 1)).toFixed(3)})`,
+                      transform: `scale(${(v.tiLe * (roi ? 1.18 : 1)).toFixed(3)})`,
                       transition: 'transform 0.55s cubic-bezier(0.16, 1, 0.3, 1)',
                     }}
                   >
