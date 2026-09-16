@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ArrowLeft, ArrowUp, ExternalLink } from 'lucide-react';
+import { X, ArrowLeft, ArrowUp } from 'lucide-react';
 import SmartImage from './SmartImage';
 import ImageViewer from './ImageViewer';
 
@@ -10,8 +10,7 @@ import ImageViewer from './ImageViewer';
  *
  * Dựng theo ĐÚNG khung của ProjectModal — cùng hộp, cùng vạch tiến độ, cùng nút
  * đóng, cùng lề trong, cùng cách xếp ảnh dọc, cùng chân trang. Khác đúng phần
- * ruột: tiêu đề là tên brand + dịch vụ/năm, và nút phải là "Xem thêm" thay cho
- * "DỰ ÁN TIẾP THEO".
+ * ruột: tiêu đề là tên brand + năm, rồi tới lưới ảnh kiểu Pinterest.
  */
 export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, onClose }) {
   const containerRef = useRef(null);
@@ -199,15 +198,12 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
               {ten}
             </h2>
 
-            {(client.service || client.year) && (
-              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 font-mono text-xs sm:text-sm text-[#C3EA39]">
-                {client.service && <span>{client.service}</span>}
-                {client.service && client.year && <span className="text-white/25">·</span>}
-                {client.year && <span>{client.year}</span>}
-              </div>
+            {(client.year || '').trim() && (
+              <div className="font-mono text-xs sm:text-sm text-[#C3EA39]">{client.year}</div>
             )}
 
-            {client.note && (
+            {/* Mô tả — để trống trong CMS thì ẩn hẳn dòng này */}
+            {(client.note || '').trim() && (
               <p className="text-xs sm:text-sm md:text-base text-white/70 font-light leading-relaxed max-w-3xl">
                 {client.note}
               </p>
@@ -283,19 +279,6 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
               </button>
             </div>
 
-            {client.link && (
-              <a
-                href={client.link.startsWith('http') ? client.link : `https://${client.link}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                /* Không `uppercase`: chữ để thường theo ý anh. Bỏ luôn tracking-wider
-                   vì giãn chữ rộng vốn để cứu chữ hoa, đặt lên chữ thường thì rời rạc. */
-                className="px-5 py-2.5 rounded-full bg-[#C3EA39] hover:bg-[#d4f854] text-black font-display font-bold text-xs flex items-center gap-2 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-[1.02] cursor-pointer"
-              >
-                <span>Xem thêm</span>
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-            )}
           </div>
 
         </div>
