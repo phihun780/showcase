@@ -17,7 +17,7 @@ function ngauNhien(hat) {
 // Chia khung thành các ô rồi thả mỗi brand vào một ô kèm xê dịch nhẹ.
 // Rải tự do hoàn toàn thì với nhiều brand sẽ có cái chồng lên nhau; cách này
 // trông vẫn ngẫu nhiên mà chắc chắn không đè nhau.
-function viTriBrand(idx, tong) {
+function viTriBrand(idx, tong, nhip = 0) {
   const cot = tong <= 3 ? tong : tong <= 8 ? 3 : 4;
   const hang = Math.ceil(tong / cot);
   const c = idx % cot;
@@ -35,8 +35,11 @@ function viTriBrand(idx, tong) {
   const lechX = (ngauNhien(idx * 3 + 1) - 0.5) * rongO * 0.42;
   const lechY = (ngauNhien(idx * 7 + 2) - 0.5) * caoO * 0.42;
 
-  // Độ sâu 0 = xa nhất, 1 = gần nhất
-  const sau = 0.25 + ngauNhien(idx * 11 + 5) * 0.75;
+  // Độ sâu 0 = xa nhất, 1 = gần nhất.
+  // Có `nhip` trong hạt nên cứ mỗi nhịp là mọi brand nhận một độ sâu mới —
+  // cái đang rõ lùi ra xa mờ đi, cái đang mờ tiến lại gần. Vẫn tất định: cùng
+  // idx và cùng nhịp thì luôn ra đúng một kết quả.
+  const sau = 0.25 + ngauNhien(idx * 11 + 5 + nhip * 97) * 0.75;
 
   return {
     // 0..1 — ghép vào calc() ở JSX
@@ -83,6 +86,20 @@ export default function ClientMemoriesSection() {
     mq.addEventListener('change', capNhat);
     return () => mq.removeEventListener('change', capNhat);
   }, []);
+
+  // Cứ vài giây lại xáo lại độ sâu của tất cả brand: cái đang rõ lùi xa mờ đi,
+  // cái đang mờ tiến lại gần. Cả khung như đang thở.
+  //
+  // Đổi theo NHỊP chứ không đổi từng khung hình: blur là thuộc tính vẽ lại, cho
+  // nó chạy liên tục 60 lần/giây thì máy yếu sẽ đuối. Đổi 3.5 giây một lần rồi
+  // để CSS transition lo phần chuyển tiếp thì gần như không tốn gì.
+  const [nhip, setNhip] = useState(0);
+  useEffect(() => {
+    if (!co3D) return;                       // điện thoại giữ nguyên một tầng
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const t = setInterval(() => setNhip(n => n + 1), 3500);
+    return () => clearInterval(t);
+  }, [co3D]);
 
   // Rê chuột trong khung thì cả cảnh dịch theo, mỗi brand dịch một mức khác
   // nhau tuỳ độ sâu — cái ở gần chạy nhanh, cái ở xa chạy chậm. Đó là thứ tạo
@@ -199,7 +216,7 @@ export default function ClientMemoriesSection() {
 
             {clientList.map((client, idx) => {
               const ten = client.clientName || 'Brand';
-              const v = viTriBrand(idx, clientList.length);
+              const v = viTriBrand(idx, clientList.length, nhip);
               return (
                 <div
                   key={client.id || idx}
@@ -210,14 +227,25 @@ export default function ClientMemoriesSection() {
                     // tối đa của một brand, nên không bao giờ lòi ra khỏi khung.
                     left: `calc(82px + (100% - 164px) * ${v.fx})`,
                     top: `calc(58px + (100% - 116px) * ${v.fy})`,
-                    // Ghép sẵn ở CSS: parallax (--dx/--dy do JS ghi) + căn giữa + tỉ lệ theo độ sâu.
-                    transform: `translate(-50%, -50%) translate3d(var(--dx, 0px), var(--dy, 0px), 0) scale(${v.tiLe})`,
+                    // Lớp này CHỈ lo vị trí + parallax. Transition ngắn để ảnh
+                    // bám sát con trỏ.
+                    transform: `translate(-50%, -50%) translate3d(var(--dx, 0px), var(--dy, 0px), 0)`,
                     transition: 'transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)',
                     zIndex: Math.round(v.sau * 100),
                   }}
                 >
+                  {/* Lớp ĐỘ SÂU riêng, transition dài 1.4s cho việc đổi tầng diễn
+                      ra từ tốn. Không gộp vào lớp parallax ở trên được: gộp thì
+                      một là parallax chậm ì theo 1.4s, hai là đổi tầng giật cục
+                      trong 0.45s — hai việc cần hai tốc độ khác nhau. */}
+                  <div
+                    style={{
+                      transform: `scale(${v.tiLe})`,
+                      transition: 'transform 1.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                    }}
+                  >
                   {/* Lớp trôi riêng: nó cũng ghi vào transform nên phải tách khỏi
-                      lớp parallax ở trên, không thì hai bên đè mất nhau. */}
+                      hai lớp trên, không thì đè mất nhau. */}
                   <div
                     className={co3D ? 'o-troi' : undefined}
                     style={co3D ? { animationDelay: `${(idx % 5) * 0.8}s`, animationDuration: `${7 + (idx % 3)}s` } : undefined}
@@ -226,8 +254,12 @@ export default function ClientMemoriesSection() {
                       type="button"
                       onClick={() => handleOpenLightbox(client, 0)}
                       aria-label={`Xem những gì đã làm cho ${ten}`}
-                      style={{ opacity: v.mo, filter: v.nhoe > 0.15 ? `blur(${v.nhoe}px)` : undefined }}
-                      className="group/o relative flex flex-col items-center gap-2 px-4 py-3 rounded-2xl cursor-pointer transition-[opacity,filter,transform] duration-500 hover:!opacity-100 hover:!blur-none hover:scale-110 focus-visible:outline-none focus-visible:!opacity-100 focus-visible:!blur-none focus-visible:ring-2 focus-visible:ring-[#C3EA39]"
+                      style={{
+                        opacity: v.mo,
+                        filter: v.nhoe > 0.15 ? `blur(${v.nhoe}px)` : 'blur(0px)',
+                        transition: 'opacity 1.4s cubic-bezier(0.16,1,0.3,1), filter 1.4s cubic-bezier(0.16,1,0.3,1), transform 0.4s ease-out',
+                      }}
+                      className="group/o relative flex flex-col items-center gap-2 px-4 py-3 rounded-2xl cursor-pointer hover:!opacity-100 hover:!blur-none hover:scale-110 focus-visible:outline-none focus-visible:!opacity-100 focus-visible:!blur-none focus-visible:ring-2 focus-visible:ring-[#C3EA39]"
                     >
                       {client.logo ? (
                         <img
@@ -250,6 +282,7 @@ export default function ClientMemoriesSection() {
                         {client.service || 'Xem chi tiết'}{client.year ? ` · ${client.year}` : ''}
                       </span>
                     </button>
+                  </div>
                   </div>
                 </div>
               );
