@@ -147,7 +147,9 @@ export default function ClientMemoriesSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-60px' }}
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-white/10"
+          /* Không kẻ đường dưới tiêu đề: hai mục 01 và 02 đều không có, và khi
+             mô tả phụ bị ẩn thì đường này nằm sát ngay dưới tiêu đề trông thừa. */
+          className="flex flex-col md:flex-row md:items-end justify-between gap-4"
         >
           <div>
             <div className="flex items-baseline gap-3 sm:gap-4">
