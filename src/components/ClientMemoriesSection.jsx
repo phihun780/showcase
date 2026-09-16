@@ -269,7 +269,7 @@ export default function ClientMemoriesSection() {
                           decoding="async"
                           onContextMenu={(e) => e.preventDefault()}
                           onDragStart={(e) => e.preventDefault()}
-                          className="max-h-16 sm:max-h-20 w-auto max-w-[30vw] sm:max-w-[150px] object-contain rounded-[15px] grayscale group-hover/o:grayscale-0 transition-[filter] duration-500 select-none"
+                          className="max-h-16 sm:max-h-20 w-auto max-w-[30vw] sm:max-w-[150px] object-contain rounded-[8px] grayscale group-hover/o:grayscale-0 transition-[filter] duration-500 select-none"
                         />
                       ) : (
                         <span className="font-display font-extrabold text-center text-white text-sm sm:text-lg leading-tight max-w-[30vw] sm:max-w-[150px] select-none">
