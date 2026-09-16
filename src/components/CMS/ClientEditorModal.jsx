@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Upload, Check, Loader2, Building2, Calendar, MessageSquareQuote, Layers, Trash2, ArrowLeft, ArrowRight } from 'lucide-react';
 import { optimizeAndUploadToR2 } from '../../utils/imageOptimizer';
+import SmartImage from '../SmartImage';
 
 /**
  * Form một brand. Chỉ có tên, năm, mô tả, logo và ảnh — phần còn lại là để
@@ -212,26 +213,52 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
   // Dùng pointer event chứ không dùng drag-and-drop của HTML: khối ảnh này đã
   // là vùng thả FILE rồi, hai hệ sự kiện lồng nhau thì rất dễ đá nhau. Pointer
   // event cũng chạy được cả chuột lẫn cảm ứng.
+  // Ghi transform THẲNG vào DOM, không qua state.
+  //
+  // Bản trước gọi setKeo mỗi lần nhích chuột, mà một lần nhích là React vẽ lại
+  // cả form kèm toàn bộ ô ảnh — kéo thì giật. Giờ vị trí do tay viết vào
+  // `style.transform` (chỉ động tới compositor, không tính lại layout), còn
+  // state chỉ đổi khi ô ĐÍCH đổi, tức là vài lần một cú kéo.
+  const veKeo = () => {
+    const g = gocKeo.current;
+    if (!g) return;
+    g.rafId = 0;
+
+    const dx = g.x - g.x0;
+    const dy = g.y - g.y0;
+
+    if (!g.daKeo) {
+      // Chưa đi đủ xa thì vẫn coi là một cú bấm, chưa phải kéo.
+      if (Math.hypot(dx, dy) < 6) return;
+      g.daKeo = true;
+      if (g.el) {
+        g.el.style.transition = 'none';
+        g.el.style.willChange = 'transform';
+      }
+      setKeo({ tu: g.tu, dich: null });
+    }
+
+    if (g.el) g.el.style.transform = `translate(${dx}px, ${dy}px) scale(1.04)`;
+
+    // Tấm đang nhấc được đặt `pointer-events: none` nên chỗ này nhìn xuyên qua
+    // nó, thấy đúng tấm nằm dưới con trỏ.
+    const duoi = document.elementFromPoint(g.x, g.y);
+    const o = duoi && duoi.closest ? duoi.closest('[data-anh-idx]') : null;
+    const dich = o ? Number(o.dataset.anhIdx) : null;
+
+    if (dich !== g.dich) {
+      g.dich = dich;
+      setKeo({ tu: g.tu, dich });      // chỉ vẽ lại khi đích đổi
+    }
+  };
+
   const dangKeoTay = (e) => {
     const g = gocKeo.current;
     if (!g) return;
-
-    const dx = e.clientX - g.x0;
-    const dy = e.clientY - g.y0;
-
-    // Chưa đi đủ xa thì vẫn coi là một cú bấm, chưa phải kéo.
-    if (!g.daKeo) {
-      if (Math.hypot(dx, dy) < 6) return;
-      g.daKeo = true;
-    }
-
-    // Tấm đang kéo được đặt `pointer-events: none` nên chỗ này nhìn xuyên qua
-    // nó, thấy đúng tấm nằm dưới con trỏ.
-    const duoi = document.elementFromPoint(e.clientX, e.clientY);
-    const o = duoi && duoi.closest ? duoi.closest('[data-anh-idx]') : null;
-    g.dich = o ? Number(o.dataset.anhIdx) : null;
-
-    setKeo({ tu: g.tu, dich: g.dich, dx, dy });
+    g.x = e.clientX;
+    g.y = e.clientY;
+    // Gộp nhiều lần nhích vào một khung hình.
+    if (!g.rafId) g.rafId = requestAnimationFrame(veKeo);
   };
 
   const thaTay = () => {
@@ -243,9 +270,15 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
     // mà kéo thì vẽ lại liên tục — gỡ bằng hàm của lần vẽ hiện tại thì trật,
     // listener cũ nằm lại trên window mãi.
     if (g) {
+      if (g.rafId) cancelAnimationFrame(g.rafId);
       window.removeEventListener('pointermove', g.move);
       window.removeEventListener('pointerup', g.up);
       window.removeEventListener('pointercancel', g.up);
+      if (g.el) {
+        g.el.style.transform = '';
+        g.el.style.transition = '';
+        g.el.style.willChange = '';
+      }
     }
 
     if (g && g.daKeo && g.dich != null) doiChoAnh(g.tu, g.dich);
@@ -254,8 +287,12 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
   const batDauKeo = (e, idx) => {
     if (e.button != null && e.button !== 0) return;          // chỉ chuột trái
     if (e.target.closest('[data-khong-keo]')) return;        // bấm nút thì thôi
+
     const move = dangKeoTay, up = thaTay;
-    gocKeo.current = { tu: idx, x0: e.clientX, y0: e.clientY, daKeo: false, dich: null, move, up };
+    gocKeo.current = {
+      tu: idx, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY,
+      daKeo: false, dich: null, rafId: 0, el: e.currentTarget, move, up,
+    };
     // Nghe trên window để kéo ra ngoài khối ảnh vẫn theo dõi được.
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
@@ -406,7 +443,7 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-black border border-white/15 overflow-hidden flex items-center justify-center shrink-0">
                 {formData.logo ? (
-                  <img src={formData.logo} alt="" className="w-full h-full object-cover" />
+                  <SmartImage src={formData.logo} alt="" sizes="48px" decoding="async" className="w-full h-full object-cover" />
                 ) : (
                   <Building2 className="w-5 h-5 text-white/20" />
                 )}
@@ -504,11 +541,10 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
                     /* `pan-y` để trên điện thoại vuốt dọc vẫn cuộn được form,
                        còn kéo ngang thì bắt đầu đổi chỗ. Chuột không bị ảnh
                        hưởng bởi thuộc tính này. */
-                    style={{
-                      touchAction: 'pan-y',
-                      transform: dangNhac ? `translate(${keo.dx}px, ${keo.dy}px) scale(1.04)` : undefined,
-                      transition: dangNhac ? 'none' : 'transform 0.18s ease-out',
-                    }}
+                    /* KHÔNG đặt `transform` ở đây: lúc kéo nó do tay ghi thẳng
+                       vào DOM. Để React cũng quản một phần thì mỗi lần vẽ lại là
+                       nó ghi đè, ảnh giật về chỗ cũ. */
+                    style={{ touchAction: 'pan-y' }}
                     title="Kéo để đổi chỗ"
                     className={`relative rounded-xl overflow-hidden bg-black border flex flex-col cursor-grab active:cursor-grabbing ${
                       dangNhac
@@ -519,7 +555,19 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
                     }`}
                   >
                     <div className="aspect-[16/10] w-full overflow-hidden bg-black">
-                      <img src={img} alt="" draggable={false} className="w-full h-full object-cover select-none" />
+                      {/* Bản THU NHỎ, không phải ảnh gốc.
+                          Ô này chỉ rộng chừng 180px mà trước đây nạp nguyên tấm
+                          2560px — một brand 45 ảnh là 45 tấm cỡ đó nằm trong bộ
+                          nhớ, kéo thả giật là phải. */}
+                      <SmartImage
+                        src={img}
+                        alt=""
+                        sizes="180px"
+                        draggable={false}
+                        loading={idx < 12 ? 'eager' : 'lazy'}
+                        decoding="async"
+                        className="w-full h-full object-cover select-none"
+                      />
                     </div>
 
                     <div className="p-1.5 bg-[#141419] border-t border-white/10 flex items-center justify-between gap-1">
