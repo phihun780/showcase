@@ -265,26 +265,37 @@ export default function ClientMemoriesSection() {
                       }}
                       className="group/o relative flex flex-col items-center gap-2 px-4 py-3 rounded-2xl cursor-pointer hover:!opacity-100 hover:!blur-none hover:scale-110 focus-visible:outline-none focus-visible:!opacity-100 focus-visible:!blur-none focus-visible:ring-2 focus-visible:ring-[#C3EA39]"
                     >
+                      {/* Ngoài trang chủ chỉ có logo + tên. Làm gì, năm nào, kể
+                          chi tiết ra sao — để dành hết cho bài viết bên trong. */}
                       {client.logo ? (
-                        <img
-                          src={client.logo}
-                          alt={ten}
-                          loading="lazy"
-                          decoding="async"
-                          onContextMenu={(e) => e.preventDefault()}
-                          onDragStart={(e) => e.preventDefault()}
-                          className="max-h-16 sm:max-h-20 w-auto max-w-[30vw] sm:max-w-[150px] object-contain rounded-[8px] grayscale group-hover/o:grayscale-0 transition-[filter] duration-500 select-none"
-                        />
+                        <>
+                          <img
+                            src={client.logo}
+                            alt=""
+                            loading="lazy"
+                            decoding="async"
+                            onContextMenu={(e) => e.preventDefault()}
+                            onDragStart={(e) => e.preventDefault()}
+                            className="max-h-16 sm:max-h-20 w-auto max-w-[30vw] sm:max-w-[150px] object-contain rounded-[8px] grayscale group-hover/o:grayscale-0 transition-[filter] duration-500 select-none"
+                          />
+                          {/* Tên ở đây là chú thích dưới logo nên để cỡ nhỏ, kiểu
+                              mono như các nhãn khác trong trang — logo vẫn là thứ
+                              bắt mắt trước. alt của ảnh để rỗng cho khỏi đọc tên
+                              hai lần.
+
+                              KHÔNG `uppercase`: viết hoa ép sẽ phá cách viết riêng
+                              của brand — "RomaFarm" thành "ROMAFARM". Gõ trong CMS
+                              sao thì hiện ra vậy. */}
+                          <span className="font-mono text-[10px] sm:text-[11px] tracking-wide text-center leading-tight text-white/65 group-hover/o:text-[#C3EA39] transition-colors duration-300 max-w-[30vw] sm:max-w-[150px] select-none">
+                            {ten}
+                          </span>
+                        </>
                       ) : (
+                        /* Chưa có logo thì tên đứng một mình, cho to lên thay chỗ */
                         <span className="font-display font-extrabold text-center text-white text-sm sm:text-lg leading-tight max-w-[30vw] sm:max-w-[150px] select-none">
                           {ten}
                         </span>
                       )}
-
-                      {/* Dịch vụ chỉ hiện khi để ý tới brand đó */}
-                      <span className="font-mono text-[10px] text-[#C3EA39] opacity-0 group-hover/o:opacity-100 focus-visible:opacity-100 transition-opacity duration-300 whitespace-nowrap">
-                        {client.service || 'Xem chi tiết'}{client.year ? ` · ${client.year}` : ''}
-                      </span>
                     </button>
                   </div>
                   </div>
