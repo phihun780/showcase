@@ -39,8 +39,9 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
     datAnhDangXem((hienTai + buoc + tong) % tong);   // qua hết thì quay vòng
   };
 
-  // Đã tải xong tấm nào — dùng để bỏ khung giữ chỗ, xem chú thích ở lưới ảnh.
-  const [daTai, setDaTai] = useState({});
+  // Tỉ lệ cao/rộng của từng tấm, biết được sau khi ảnh tải xong. Vừa để bỏ
+  // khung giữ chỗ, vừa để xếp cột (xem `cacCot`).
+  const [tiLeAnh, setTiLeAnh] = useState({});
 
   const ten = client?.clientName || 'Brand';
 
@@ -70,22 +71,31 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
     return () => mq.removeEventListener('change', capNhat);
   }, []);
 
-  // Chia ảnh vào cột theo kiểu xoay vòng: tấm 1 cột 1, tấm 2 cột 2, tấm 3 cột 3,
-  // tấm 4 lại về cột 1...
+  // Chia ảnh vào cột kiểu Pinterest: tấm tiếp theo rơi vào cột ĐANG THẤP NHẤT.
   //
-  // Đây là lý do bỏ `columns-*` của CSS. CSS đổ đầy hết cột này mới sang cột
-  // kia, nên với danh sách mới-trước thì mấy tấm CŨ NHẤT lại nằm ngay đỉnh cột
-  // cuối — nhìn vào là thấy ảnh cũ ở trên cùng bên phải. Xoay vòng thì cả hàng
-  // trên cùng đúng là mấy tấm mới nhất.
+  // Bản trước chia xoay vòng cứng (tấm 1 cột 1, tấm 2 cột 2, tấm 3 cột 3, tấm 4
+  // lại về cột 1). Cách đó giữ đúng thứ tự nhưng cột nào vớ phải mấy tấm ngắn là
+  // chạy vọt lên trước, đọc ngang ra so le chứ không khít, mà đáy các cột thì
+  // lệch nhau cả màn hình.
   //
-  // Cố tình KHÔNG xếp theo cột nào đang thấp nhất: muốn vậy phải biết ảnh cao
-  // bao nhiêu, mà chiều cao chỉ biết sau khi tải xong — ảnh sẽ nhảy cột loạn
-  // lên trong lúc trang đang tải.
+  // Hoà nhau thì lấy cột TRÁI NHẤT, nên hàng đầu luôn là các tấm mới nhất xếp
+  // từ trái qua. Thiếu thì cột phải trống phần đuôi, đúng như vậy là được.
+  //
+  // Chiều cao tính bằng tỉ lệ cao/rộng — các cột rộng bằng nhau nên so trực tiếp
+  // được, không cần biết pixel. Tấm chưa tải xong tạm coi là vuông.
   const cacCot = useMemo(() => {
-    const c = Array.from({ length: soCot }, () => []);
-    images.forEach((url, idx) => c[idx % soCot].push({ url, idx }));
-    return c;
-  }, [images, soCot]);
+    const cot = Array.from({ length: soCot }, () => []);
+    const cao = new Array(soCot).fill(0);
+
+    images.forEach((url, idx) => {
+      let thap = 0;
+      for (let k = 1; k < soCot; k++) if (cao[k] < cao[thap] - 0.001) thap = k;
+      cot[thap].push({ url, idx });
+      cao[thap] += (tiLeAnh[idx] || 1) + 0.06;   // 0.06 ~ khoảng cách giữa hai tấm
+    });
+
+    return cot;
+  }, [images, soCot, tiLeAnh]);
 
   // Đưa về đầu bài mỗi khi MỞ hoặc khi đổi brand.
   //
@@ -98,7 +108,7 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
     if (containerRef.current) containerRef.current.scrollTop = 0;
     setScrollProgress(0);
     setShowBackToTop(false);
-    setDaTai({});
+    setTiLeAnh({});
     anhDangXemRef.current = null;
     setAnhDangXem(null);
   }, [isOpen, client?.id]);
@@ -264,7 +274,7 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
               {cacCot.map((oCot, iCot) => (
                 <div key={iCot} className="flex-1 min-w-0 space-y-4 sm:space-y-5">
                   {oCot.map(({ url, idx }) => {
-                    const xong = !!daTai[idx];
+                    const xong = tiLeAnh[idx] != null;
                     return (
                       <button
                         key={idx}
@@ -272,9 +282,11 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
                         type="button"
                         onClick={() => datAnhDangXem(idx)}
                         aria-label={`Xem lớn ấn phẩm ${idx + 1} của ${ten}`}
-                        /* Chưa tải xong thì giữ sẵn một khung 3/4 cho có chỗ,
-                           không thì tấm nào cũng cao 0 rồi tải xong nhảy loạn. */
-                        className={`group/a block w-full relative overflow-hidden rounded-xl border border-white/10 bg-white/[0.04] cursor-zoom-in transition-all duration-300 hover:border-[#C3EA39]/50 focus-visible:outline-none focus-visible:border-[#C3EA39] focus-visible:ring-2 focus-visible:ring-[#C3EA39]/60 ${xong ? '' : 'aspect-[3/4]'}`}
+                        /* Chưa tải xong thì giữ sẵn một khung VUÔNG cho có chỗ,
+                           không thì tấm nào cũng cao 0 rồi tải xong nhảy loạn.
+                           Vuông chứ không phải 3/4 như trước: đoán sai tỉ lệ bao
+                           nhiêu thì lúc ảnh về, lưới xô lệch bấy nhiêu. */
+                        className={`group/a block w-full relative overflow-hidden rounded-xl border border-white/10 bg-white/[0.04] cursor-zoom-in transition-all duration-300 hover:border-[#C3EA39]/50 focus-visible:outline-none focus-visible:border-[#C3EA39] focus-visible:ring-2 focus-visible:ring-[#C3EA39]/60 ${xong ? '' : 'aspect-square'}`}
                       >
                         <SmartImage
                           src={url}
@@ -282,11 +294,15 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
                           /* Ô lưới hẹp hơn nhiều so với bài viết: 3 cột trong
                              hộp rộng ~880px là khoảng 280px mỗi ô. */
                           sizes="(min-width: 768px) 290px, 45vw"
-                          onLoad={() => setDaTai(t => (t[idx] ? t : { ...t, [idx]: true }))}
-                          onError={() => setDaTai(t => (t[idx] ? t : { ...t, [idx]: true }))}
+                          onLoad={(e) => {
+                            const im = e.currentTarget;
+                            const ti = im.naturalWidth ? im.naturalHeight / im.naturalWidth : 1;
+                            setTiLeAnh(t => (t[idx] != null ? t : { ...t, [idx]: ti }));
+                          }}
+                          onError={() => setTiLeAnh(t => (t[idx] != null ? t : { ...t, [idx]: 1 }))}
                           onContextMenu={(e) => e.preventDefault()}
                           onDragStart={(e) => e.preventDefault()}
-                          loading={idx < 6 ? 'eager' : 'lazy'}
+                          loading={idx < 9 ? 'eager' : 'lazy'}
                           decoding="async"
                           className={`select-none transition-[opacity,transform] duration-500 group-hover/a:scale-[1.03] ${
                             xong ? 'w-full h-auto opacity-100' : 'absolute inset-0 w-full h-full object-cover opacity-0'
