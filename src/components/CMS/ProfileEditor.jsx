@@ -46,6 +46,7 @@ export default function ProfileEditor({ profile, onSave }) {
     // Mục Brand đã làm việc cùng
     sectionClientsNumber: profile?.sectionClientsNumber || '03',
     sectionClientsTitle: profile?.sectionClientsTitle || 'Bạn đồng hành',
+    sectionClientsSubtitle: profile?.sectionClientsSubtitle || 'Những người bạn, đối tác dễ thương cùng mình tạo nên những sản phẩm đầy cảm hứng và đáng nhớ...',
     cvButtonText: profile?.cvButtonText || 'TẢI CV / RESUME (PDF)',
 
     // Footer Customization
@@ -97,6 +98,7 @@ export default function ProfileEditor({ profile, onSave }) {
         section04Title: profile.section04Title ?? prev.section04Title,
         sectionClientsNumber: profile.sectionClientsNumber ?? prev.sectionClientsNumber,
         sectionClientsTitle: profile.sectionClientsTitle ?? prev.sectionClientsTitle,
+        sectionClientsSubtitle: profile.sectionClientsSubtitle ?? prev.sectionClientsSubtitle,
         cvButtonText: profile.cvButtonText ?? prev.cvButtonText,
         footerCopyright: profile.footerCopyright ?? prev.footerCopyright,
         footerTagline: profile.footerTagline ?? prev.footerTagline,
@@ -741,10 +743,52 @@ export default function ProfileEditor({ profile, onSave }) {
           </div>
         </div>
 
-        {/* Section 03: Về Tui */}
+        {/* Section 03: Bạn Đồng Hành */}
         <div className="p-3.5 sm:p-4 rounded-xl bg-black/40 border border-white/10 space-y-3">
           <span className="font-mono font-bold text-xs text-[#C3EA39] uppercase block">
-            Mục 03 (Về Tui & Hồ Sơ / About)
+            Mục 03 (Bạn đồng hành / Thương hiệu đã hợp tác)
+          </span>
+
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 sm:gap-4 items-start">
+            <div className="sm:col-span-2 space-y-1">
+              <label className="text-xs font-mono text-white/70 uppercase block">Số mục</label>
+              <input
+                type="text"
+                value={formData.sectionClientsNumber || ''}
+                placeholder="03"
+                onChange={(e) => setFormData({ ...formData, sectionClientsNumber: e.target.value })}
+                className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-[#C3EA39] font-mono font-bold text-center text-base sm:text-xs"
+              />
+            </div>
+
+            <div className="sm:col-span-4 space-y-1">
+              <label className="text-xs font-mono text-white/70 uppercase block">Tiêu đề mục</label>
+              <input
+                type="text"
+                value={formData.sectionClientsTitle || ''}
+                placeholder="Bạn đồng hành"
+                onChange={(e) => setFormData({ ...formData, sectionClientsTitle: e.target.value })}
+                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white font-bold text-base sm:text-xs"
+              />
+            </div>
+
+            <div className="sm:col-span-6 space-y-1">
+              <label className="text-xs font-mono text-white/70 uppercase block">Mô tả phụ</label>
+              <input
+                type="text"
+                value={formData.sectionClientsSubtitle || ''}
+                placeholder="Những người bạn, đối tác dễ thương cùng mình..."
+                onChange={(e) => setFormData({ ...formData, sectionClientsSubtitle: e.target.value })}
+                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Section 04: Về Tui */}
+        <div className="p-3.5 sm:p-4 rounded-xl bg-black/40 border border-white/10 space-y-3">
+          <span className="font-mono font-bold text-xs text-[#C3EA39] uppercase block">
+            Mục 04 (Về Tui & Hồ Sơ / About)
           </span>
 
           <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 sm:gap-4 items-start">
