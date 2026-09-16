@@ -46,16 +46,14 @@ export default function AboutSection() {
         if (hasLink) {
           setDownloadStatus('success');
           setTimeout(() => {
-            // CV nằm trong kho của mình -> tải thẳng về máy. Mở địa chỉ PDF thì
-            // trình duyệt chỉ MỞ ra xem, phải đi qua endpoint mới có header bảo
-            // trình duyệt lưu lại.
+            // CV nằm trong kho của mình -> tải thẳng về máy. Trỏ vào địa chỉ
+            // PDF trên R2 thì trình duyệt chỉ MỞ ra xem: R2 là tên miền khác nên
+            // thuộc tính `download` bị bỏ qua. Phải đi qua endpoint cùng gốc.
             //
             // CV đặt bằng link ngoài (Google Drive...) thì không tải hộ được,
             // mở link ra như cũ.
             if (cvNamTrongKho(cvLink)) {
-              taiCvVeMay().catch(() => {
-                window.open(cvLink.trim(), '_blank', 'noopener,noreferrer');
-              });
+              taiCvVeMay();
             } else {
               window.open(cvLink.trim(), '_blank', 'noopener,noreferrer');
             }

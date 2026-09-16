@@ -255,32 +255,24 @@ function keyFromUrl(value) {
 /**
  * Tải CV về máy. Đường công khai, khách không cần đăng nhập.
  *
- * Không mở thẳng địa chỉ PDF vì trình duyệt sẽ MỞ nó ra xem chứ không tải về.
- * Endpoint /api/tai-cv tự tra CV hiện tại trong dữ liệu rồi trả kèm
- * Content-Disposition: attachment.
+ * Trỏ THẲNG vào /api/tai-cv chứ không tải nội dung về rồi dựng file trong trình
+ * duyệt. Cách dựng file chạy tốt trên máy tính nhưng iOS Safari không tải được
+ * file kiểu đó — nó mở ra xem kèm một nút tải, phải bấm thêm lần nữa. Trỏ thẳng
+ * vào một địa chỉ CÙNG GỐC có sẵn header `Content-Disposition: attachment` thì
+ * máy tính lẫn điện thoại đều tải luôn.
+ *
+ * Cùng gốc là điều kiện bắt buộc: thuộc tính `download` trỏ sang tên miền khác
+ * sẽ bị trình duyệt bỏ qua. Địa chỉ R2 là tên miền khác, nên không trỏ thẳng vào
+ * đó được — đây chính là lý do có endpoint này.
  */
-export async function taiCvVeMay() {
-  const res = await fetch('/api/tai-cv', { cache: 'no-store' });
-  if (!res.ok) {
-    const data = await readJson(res);
-    throw new Error(data.error || `Tải CV thất bại (${res.status})`);
-  }
-
-  const blob = await res.blob();
-
-  // Lấy tên file từ header máy chủ gửi về, không có thì đặt tạm.
-  const cd = res.headers.get('content-disposition') || '';
-  const m = cd.match(/filename\*=UTF-8''([^;]+)/i) || cd.match(/filename="([^"]+)"/i);
-  const ten = m ? decodeURIComponent(m[1]) : 'CV.pdf';
-
-  const tam = URL.createObjectURL(blob);
+export function taiCvVeMay() {
   const a = document.createElement('a');
-  a.href = tam;
-  a.download = ten;
+  a.href = '/api/tai-cv';
+  a.download = '';          // tên thật lấy từ header máy chủ gửi về
+  a.rel = 'noopener';
   document.body.appendChild(a);
   a.click();
   a.remove();
-  setTimeout(() => URL.revokeObjectURL(tam), 60000);
 }
 
 // CV có nằm trong kho của mình không? Link ngoài (Google Drive...) thì trang mở
