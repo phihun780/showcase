@@ -44,14 +44,45 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
   // Tính trước mọi lần return sớm: hook phải chạy đủ và đúng thứ tự ở mọi lần
   // dựng. useMemo để mảng giữ nguyên danh tính, không thì effect bên dưới chạy
   // lại mỗi lần vẽ.
+  // Thứ tự lấy THEO `gallery`, cover chỉ chèn thêm nếu nó chưa nằm trong đó.
+  // Trước đây cover luôn bị đẩy lên đầu, nên dù CMS có xếp lại thế nào thì tấm
+  // cũ vẫn dính ở vị trí số 1.
   const images = useMemo(() => Array.from(new Set([
-    client?.coverImage,
     ...(Array.isArray(client?.gallery) ? client.gallery : []),
+    client?.coverImage,
   ].filter(Boolean))), [client]);
 
   // Ghi vào ref trong effect chứ không ghi thẳng lúc dựng — ghi lúc dựng là
   // việc phụ ngoài luồng, React có thể dựng thử rồi bỏ.
   useEffect(() => { soAnhRef.current = images.length; }, [images.length]);
+
+  // Số cột của lưới. Phải biết trong JS chứ không giao hết cho CSS được, vì
+  // việc chia ảnh vào cột nào là do mình quyết (xem ngay dưới).
+  const [soCot, setSoCot] = useState(2);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)');
+    const capNhat = () => setSoCot(mq.matches ? 3 : 2);
+    capNhat();
+    mq.addEventListener('change', capNhat);
+    return () => mq.removeEventListener('change', capNhat);
+  }, []);
+
+  // Chia ảnh vào cột theo kiểu xoay vòng: tấm 1 cột 1, tấm 2 cột 2, tấm 3 cột 3,
+  // tấm 4 lại về cột 1...
+  //
+  // Đây là lý do bỏ `columns-*` của CSS. CSS đổ đầy hết cột này mới sang cột
+  // kia, nên với danh sách mới-trước thì mấy tấm CŨ NHẤT lại nằm ngay đỉnh cột
+  // cuối — nhìn vào là thấy ảnh cũ ở trên cùng bên phải. Xoay vòng thì cả hàng
+  // trên cùng đúng là mấy tấm mới nhất.
+  //
+  // Cố tình KHÔNG xếp theo cột nào đang thấp nhất: muốn vậy phải biết ảnh cao
+  // bao nhiêu, mà chiều cao chỉ biết sau khi tải xong — ảnh sẽ nhảy cột loạn
+  // lên trong lúc trang đang tải.
+  const cacCot = useMemo(() => {
+    const c = Array.from({ length: soCot }, () => []);
+    images.forEach((url, idx) => c[idx % soCot].push({ url, idx }));
+    return c;
+  }, [images, soCot]);
 
   // Đưa về đầu bài mỗi khi MỞ hoặc khi đổi brand.
   //
@@ -210,48 +241,47 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
             )}
           </div>
 
-          {/* Lưới ảnh kiểu Pinterest.
-              Dùng `columns-*` của CSS: mỗi tấm giữ đúng tỉ lệ gốc của nó, cao
-              thấp khác nhau, rồi tự xếp khít vào các cột — không cắt xén ảnh
-              tấm nào. Đổi lại thứ tự đọc là xuống hết cột này mới sang cột kia,
-              đúng như Pinterest. Lưới CSS thì xếp theo hàng nên phải ép mọi ô
-              cao bằng nhau, tức là phải cắt ảnh — không hợp ở đây. */}
+          {/* Lưới ảnh kiểu Pinterest: mỗi tấm giữ đúng tỉ lệ gốc, cao thấp
+              khác nhau, không cắt xén tấm nào. Cách chia vào cột xem chú thích
+              ở `cacCot` phía trên. */}
           {images.length > 0 && (
-            <div className="columns-2 md:columns-3 gap-4 sm:gap-5">
-              {images.map((url, idx) => {
-                const xong = !!daTai[idx];
-                return (
-                  <button
-                    key={idx}
-                    id={`client-anh-${idx}`}
-                    type="button"
-                    onClick={() => datAnhDangXem(idx)}
-                    aria-label={`Xem lớn ấn phẩm ${idx + 1} của ${ten}`}
-                    /* `break-inside-avoid` để một tấm không bị cắt đôi giữa hai
-                       cột. Chưa tải xong thì giữ sẵn một khung 3/4 cho có chỗ,
-                       không thì mọi tấm đều cao 0 và dồn hết vào cột đầu, tải
-                       xong lại nhảy loạn lên. */
-                    className={`group/a block w-full mb-4 sm:mb-5 break-inside-avoid relative overflow-hidden rounded-xl border border-white/10 bg-white/[0.04] cursor-zoom-in transition-all duration-300 hover:border-[#C3EA39]/50 focus-visible:outline-none focus-visible:border-[#C3EA39] focus-visible:ring-2 focus-visible:ring-[#C3EA39]/60 ${xong ? '' : 'aspect-[3/4]'}`}
-                  >
-                    <SmartImage
-                      src={url}
-                      alt={`${ten} — ấn phẩm ${idx + 1}`}
-                      /* Ô lưới hẹp hơn nhiều so với bài viết: 3 cột trong hộp
-                         rộng ~880px là khoảng 280px mỗi ô. */
-                      sizes="(min-width: 768px) 290px, 45vw"
-                      onLoad={() => setDaTai(t => (t[idx] ? t : { ...t, [idx]: true }))}
-                      onError={() => setDaTai(t => (t[idx] ? t : { ...t, [idx]: true }))}
-                      onContextMenu={(e) => e.preventDefault()}
-                      onDragStart={(e) => e.preventDefault()}
-                      loading={idx < 6 ? 'eager' : 'lazy'}
-                      decoding="async"
-                      className={`select-none transition-[opacity,transform] duration-500 group-hover/a:scale-[1.03] ${
-                        xong ? 'w-full h-auto opacity-100' : 'absolute inset-0 w-full h-full object-cover opacity-0'
-                      }`}
-                    />
-                  </button>
-                );
-              })}
+            <div className="flex items-start gap-4 sm:gap-5">
+              {cacCot.map((oCot, iCot) => (
+                <div key={iCot} className="flex-1 min-w-0 space-y-4 sm:space-y-5">
+                  {oCot.map(({ url, idx }) => {
+                    const xong = !!daTai[idx];
+                    return (
+                      <button
+                        key={idx}
+                        id={`client-anh-${idx}`}
+                        type="button"
+                        onClick={() => datAnhDangXem(idx)}
+                        aria-label={`Xem lớn ấn phẩm ${idx + 1} của ${ten}`}
+                        /* Chưa tải xong thì giữ sẵn một khung 3/4 cho có chỗ,
+                           không thì tấm nào cũng cao 0 rồi tải xong nhảy loạn. */
+                        className={`group/a block w-full relative overflow-hidden rounded-xl border border-white/10 bg-white/[0.04] cursor-zoom-in transition-all duration-300 hover:border-[#C3EA39]/50 focus-visible:outline-none focus-visible:border-[#C3EA39] focus-visible:ring-2 focus-visible:ring-[#C3EA39]/60 ${xong ? '' : 'aspect-[3/4]'}`}
+                      >
+                        <SmartImage
+                          src={url}
+                          alt={`${ten} — ấn phẩm ${idx + 1}`}
+                          /* Ô lưới hẹp hơn nhiều so với bài viết: 3 cột trong
+                             hộp rộng ~880px là khoảng 280px mỗi ô. */
+                          sizes="(min-width: 768px) 290px, 45vw"
+                          onLoad={() => setDaTai(t => (t[idx] ? t : { ...t, [idx]: true }))}
+                          onError={() => setDaTai(t => (t[idx] ? t : { ...t, [idx]: true }))}
+                          onContextMenu={(e) => e.preventDefault()}
+                          onDragStart={(e) => e.preventDefault()}
+                          loading={idx < 6 ? 'eager' : 'lazy'}
+                          decoding="async"
+                          className={`select-none transition-[opacity,transform] duration-500 group-hover/a:scale-[1.03] ${
+                            xong ? 'w-full h-auto opacity-100' : 'absolute inset-0 w-full h-full object-cover opacity-0'
+                          }`}
+                        />
+                      </button>
+                    );
+                  })}
+                </div>
+              ))}
             </div>
           )}
 

@@ -112,10 +112,12 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
       const newUrls = results.filter(r => r && r.url).map(r => r.url);
 
       if (newUrls.length > 0) {
+        // Ảnh mới lên ĐẦU danh sách, không nối vào đuôi: mới up thì phải thấy
+        // ngay, cả trong form lẫn ngoài bài viết.
         setFormData(prev => ({
           ...prev,
-          coverImage: prev.coverImage || newUrls[0],
-          gallery: [...(prev.gallery || []), ...newUrls],
+          coverImage: newUrls[0],
+          gallery: [...newUrls, ...(prev.gallery || [])],
         }));
       }
     } catch (err) {
