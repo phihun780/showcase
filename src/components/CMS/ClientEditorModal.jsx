@@ -48,9 +48,24 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, client?.id]);
 
+  // Thả trượt tay ra ngoài khung thì trình duyệt mở thẳng file đó, rời khỏi
+  // trang, mất sạch những gì đang gõ dở. Chặn lại khi form đang mở.
+  useEffect(() => {
+    if (!isOpen) return;
+    const chan = (e) => e.preventDefault();
+    window.addEventListener('dragover', chan);
+    window.addEventListener('drop', chan);
+    return () => {
+      window.removeEventListener('dragover', chan);
+      window.removeEventListener('drop', chan);
+    };
+  }, [isOpen]);
+
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [isUploadingGallery, setIsUploadingGallery] = useState(false);
   const [uploadError, setUploadError] = useState('');
+  const [dangKeo, setDangKeo] = useState(false);
+  const doSauKeo = useRef(0);
 
   const logoInputRef = useRef(null);
   const galleryInputRef = useRef(null);
@@ -84,14 +99,16 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
     }
   };
 
-  const handleUploadGalleryFiles = async (e) => {
-    const files = Array.from(e.target.files || []);
-    if (!files.length) return;
+  // Dùng chung cho cả bấm nút chọn file lẫn kéo thả.
+  const themAnh = async (files) => {
+    const anh = files.filter(f => f.type.startsWith('image/'));
+    if (!anh.length) return;
+
     setUploadError('');
     setIsUploadingGallery(true);
 
     try {
-      const results = await Promise.all(files.map(f => optimizeAndUploadToR2(f, 'clients/gallery')));
+      const results = await Promise.all(anh.map(f => optimizeAndUploadToR2(f, 'clients/gallery')));
       const newUrls = results.filter(r => r && r.url).map(r => r.url);
 
       if (newUrls.length > 0) {
@@ -106,8 +123,50 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
       setUploadError('Tải ảnh thất bại: ' + err.message);
     } finally {
       setIsUploadingGallery(false);
-      if (galleryInputRef.current) galleryInputRef.current.value = '';
     }
+  };
+
+  const handleUploadGalleryFiles = async (e) => {
+    const files = Array.from(e.target.files || []);
+    await themAnh(files);
+    if (galleryInputRef.current) galleryInputRef.current.value = '';
+  };
+
+  // Chỉ sáng lên khi thứ đang kéo là FILE. Kéo một đoạn chữ hay một tấm ảnh từ
+  // tab khác thì khung không nháy vô ích.
+  const laFile = (e) => Array.from(e.dataTransfer?.types || []).includes('Files');
+
+  const vaoVungTha = (e) => {
+    if (!laFile(e)) return;
+    e.preventDefault();
+    // Đếm vào/ra thay vì bật tắt thẳng: rê qua mấy tấm ảnh con bên trong là
+    // trình duyệt bắn dragleave, không đếm thì khung nhấp nháy liên tục.
+    doSauKeo.current += 1;
+    setDangKeo(true);
+  };
+
+  const trenVungTha = (e) => {
+    if (!laFile(e)) return;
+    e.preventDefault();          // không chặn thì trình duyệt từ chối cho thả
+    e.dataTransfer.dropEffect = 'copy';
+  };
+
+  const roiVungTha = (e) => {
+    if (!laFile(e)) return;
+    e.preventDefault();
+    doSauKeo.current -= 1;
+    if (doSauKeo.current <= 0) {
+      doSauKeo.current = 0;
+      setDangKeo(false);
+    }
+  };
+
+  const thaVao = (e) => {
+    if (!laFile(e)) return;
+    e.preventDefault();
+    doSauKeo.current = 0;
+    setDangKeo(false);
+    themAnh(Array.from(e.dataTransfer.files || []));
   };
 
   const handleRemoveGalleryItem = (index) => {
@@ -300,8 +359,16 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
             </div>
           </div>
 
-          {/* Hình */}
-          <div className="space-y-3">
+          {/* Hình — cả khối này là vùng thả file */}
+          <div
+            onDragEnter={vaoVungTha}
+            onDragOver={trenVungTha}
+            onDragLeave={roiVungTha}
+            onDrop={thaVao}
+            className={`relative space-y-3 rounded-2xl transition-colors ${
+              dangKeo ? 'ring-2 ring-[#C3EA39] bg-[#C3EA39]/[0.06] p-3 -m-3' : ''
+            }`}
+          >
             <div className="flex items-center justify-between gap-2">
               <label className={nhan}>
                 <Layers className="w-3.5 h-3.5 text-[#C3EA39]" />
@@ -336,9 +403,20 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
               </button>
             </div>
 
+            {/* Lớp phủ lúc đang kéo. pointer-events-none để nó không nuốt mất
+                sự kiện thả của khối bên dưới. */}
+            {dangKeo && (
+              <div className="absolute inset-0 z-20 rounded-2xl bg-[#0E0E12]/85 backdrop-blur-sm flex items-center justify-center pointer-events-none">
+                <div className="flex items-center gap-2 font-mono text-sm text-[#C3EA39]">
+                  <Upload className="w-4 h-4" />
+                  <span>Thả hình vào đây</span>
+                </div>
+              </div>
+            )}
+
             {galleryList.length === 0 ? (
-              <div className="p-8 rounded-xl border-2 border-dashed border-white/10 text-center text-white/30 font-mono text-xs">
-                Chưa có hình nào
+              <div className="p-8 rounded-xl border-2 border-dashed border-white/15 text-center text-white/35 font-mono text-xs">
+                Kéo hình vào đây, hoặc bấm "Thêm Hình"
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
