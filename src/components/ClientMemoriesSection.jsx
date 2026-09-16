@@ -378,10 +378,25 @@ export default function ClientMemoriesSection() {
       id="clients" 
       className="pt-12 sm:pt-20 pb-14 sm:pb-24 scroll-mt-16 relative w-full max-w-full overflow-hidden touch-pan-y"
     >
-      {/* Subtle Exhibition Atmosphere Glow */}
-      <div 
-        className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[850px] h-[500px] pointer-events-none rounded-full" 
-        style={{ background: 'radial-gradient(circle, rgba(195, 234, 57, 0.07) 0%, transparent 70%)' }}
+      {/* Vệt sáng nền cho mục có không khí.
+          
+          Hai chỗ trước đây gây ra vết cắt thẳng, sửa cả hai:
+
+          1. `top-1/4 -translate-y-1/2` đẩy nó nhô lên 69px phía TRÊN mép mục,
+             mà mục thì `overflow-hidden` — cắt phăng một đường ngang. Giờ
+             `top-0` không kèm dịch lên, nằm trọn trong mục.
+
+          2. `radial-gradient(circle, ... 70%)` trên khung 850x500: hình tròn lấy
+             bán kính theo GÓC XA NHẤT (~493px), 70% của nó là 345px, trong khi
+             từ tâm lên mép trên chỉ có 250px — tới mép màu vẫn chưa tắt hẳn nên
+             thành viền cứng. Đổi sang `ellipse 45% 45%`: bán kính tính theo
+             chính khung nên màu tắt hẳn trước khi chạm mép, bốn phía đều mượt.
+
+          `max-w-full` / `max-h-full` kẹp nó không bao giờ to hơn chính mục. Màn
+          hẹp thì mục thấp hơn, để cứng 500px là lại thò ra ngoài rồi bị cắt. */}
+      <div
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-[850px] max-w-full h-[500px] max-h-full pointer-events-none"
+        style={{ background: 'radial-gradient(ellipse 45% 45% at 50% 50%, rgba(195, 234, 57, 0.08) 0%, rgba(195, 234, 57, 0) 100%)' }}
       />
 
       <div className="max-w-7xl mx-auto px-5 sm:px-8 relative z-10 space-y-8 sm:space-y-10">
