@@ -12,10 +12,12 @@ import {
   Sparkles,
   CheckCircle2
 } from 'lucide-react';
+import { KHUNG_LONG, DANG_THAN, MAU_NET } from '../data/khungLong';
 
 const ARTWORKS = [
   {
     id: 'cat',
+    emoji: '🐱',
     name: 'Mèo (Cat)',
     shortName: 'Mèo',
     fileName: 'cat.svg @ 100% (Vector Mascot, RGB/8#)',
@@ -29,6 +31,7 @@ const ARTWORKS = [
   },
   {
     id: 'dog',
+    emoji: '🐶',
     name: 'Chó (Dog)',
     shortName: 'Chó',
     fileName: 'dog.svg @ 100% (Vector Mascot, RGB/8#)',
@@ -39,6 +42,20 @@ const ARTWORKS = [
     swatchColor: '#3D2C22',
     fgColor: '#F58634',
     bgColor: '#3D2C22'
+  },
+  {
+    id: 'dino',
+    emoji: '🦖',
+    name: 'Khủng long (Dino)',
+    shortName: 'Khủng long',
+    fileName: 'khunglong.svg @ 100% (Vector Mascot, RGB/8#)',
+    shortFileName: 'khunglong.svg',
+    layerName: 'Vector: Dino_Mascot',
+    dimensions: '2000 x 2000 px',
+    viewBox: '0 0 2000 2000',
+    swatchColor: '#11083D',
+    fgColor: '#79E234',
+    bgColor: '#11083D'
   }
 ];
 
@@ -91,13 +108,17 @@ export default function PhotoshopSimulator() {
     };
   }, [selectedArtworkId, animKey]);
 
-  // Tự đổi qua lại Mèo <-> Chó, chạy trên cả mobile lẫn desktop.
+  // Tự đổi vòng qua từng con, chạy trên cả mobile lẫn desktop.
   // Chỉ là một setInterval 10 giây nên không ảnh hưởng hiệu năng; thứ nặng trên
   // iOS là hiệu ứng nghiêng 3D và khối trôi lơ lửng — mấy cái đó vẫn tắt ở
   // mobile qua biến isMobile bên dưới.
   useEffect(() => {
     const timer = setInterval(() => {
-      setSelectedArtworkId((prev) => (prev === 'cat' ? 'dog' : 'cat'));
+      // Chạy vòng theo danh sách, thêm con mới vào ARTWORKS là tự có mặt.
+      setSelectedArtworkId((prev) => {
+        const i = ARTWORKS.findIndex(a => a.id === prev);
+        return ARTWORKS[(i + 1) % ARTWORKS.length].id;
+      });
       setAnimKey((k) => k + 1);
     }, 10000);
     return () => clearInterval(timer);
@@ -246,7 +267,7 @@ export default function PhotoshopSimulator() {
                         : 'text-[#aaa] hover:text-white hover:bg-[#2e2e2e]'
                     }`}
                   >
-                    <span>{art.id === 'cat' ? '🐱' : '🐶'}</span>
+                    <span>{art.emoji}</span>
                     <span className="hidden xs:inline">{art.name}</span>
                     <span className="xs:hidden">{art.shortName}</span>
                   </button>
@@ -714,6 +735,118 @@ export default function PhotoshopSimulator() {
                             fill="#FFFFFF"
                             stroke="#FF9A00"
                             strokeWidth="6"
+                          />
+                        ))}
+                      </motion.g>
+                    )}
+
+                  </motion.svg>
+                )}
+
+
+                {/* 🦖 KHỦNG LONG — dựng từ chính file khunglong.svg
+                    
+                    Mèo và chó vẽ tay từng bước vì mỗi con chỉ hơn chục hình.
+                    Con này 57 hình nên chạy theo dữ liệu trong src/data/khungLong.js.
+                    
+                    GIỮ NGUYÊN THỨ TỰ trong mảng, chỉ đổi ĐỘ TRỄ của từng hình.
+                    Nét đen và mảng màu xen kẽ nhau trong file gốc — gom nét riêng
+                    màu riêng rồi vẽ lại là hình vỡ. Vẫn ra đúng cảm giác ba bước:
+                    rê bút dựng khung -> đổ màu -> đi nét. */}
+                {selectedArtworkId === 'dino' && (
+                  <motion.svg
+                    key={`dino-svg-${animKey}`}
+                    viewBox="0 0 2000 2000"
+                    className="w-full h-full drop-shadow-md"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+
+                    {/* BƯỚC 1: RÊ BÚT DỰNG KHUNG (0s -> 1.8s) */}
+                    <motion.path
+                      fill="none"
+                      stroke={MAU_NET}
+                      /* 18 trên khung 2000 — cùng độ dày tương đối với con chó.
+                         14 thì ở cỡ thật nét mảnh quá, giai đoạn rê bút gần như
+                         không thấy gì. */
+                      strokeWidth="18"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d={DANG_THAN}
+                      initial={{ pathLength: 0, opacity: 0.9 }}
+                      animate={{ pathLength: 1, opacity: [0.9, 1, 0.3] }}
+                      transition={{ duration: 1.8, ease: 'easeInOut' }}
+                    />
+
+                    {/* BƯỚC 2 & 3: đổ màu rồi đi nét */}
+                    {KHUNG_LONG.map((h, i) => {
+                      const laNet = h.f === MAU_NET;
+                      // Mảng màu vào trước, nét đi sau — và trong mỗi nhóm thì
+                      // nhích lệch nhau một chút cho ra cảm giác đang vẽ dần.
+                      const tre = (laNet ? 2.5 : 1.5) + i * 0.012;
+                      const chung = {
+                        fill: h.f,
+                        initial: { opacity: 0 },
+                        animate: { opacity: 1 },
+                        transition: { delay: tre, duration: 0.45, ease: 'easeOut' },
+                      };
+
+                      if (h.t === 'rect') {
+                        return <motion.rect key={`dino-${i}`} {...chung}
+                          x={h.x} y={h.y} width={h.width} height={h.height} transform={h.transform} />;
+                      }
+                      if (h.t === 'ellipse') {
+                        return <motion.ellipse key={`dino-${i}`} {...chung}
+                          cx={h.cx} cy={h.cy} rx={h.rx} ry={h.ry} transform={h.transform} />;
+                      }
+                      return <motion.path key={`dino-${i}`} {...chung} d={h.d} transform={h.transform} />;
+                    })}
+
+                    {/* CON TRỎ PENTOOL — chạy dọc đúng dáng thân trong lúc nét đang hiện ra.
+                        
+                        Toạ độ lấy bằng getPointAtLength trên chính đường DANG_THAN,
+                        chia đều 8 chặng rồi khép vòng về điểm đầu. Đặt tay thì con
+                        trỏ sẽ đi trật khỏi nét — mèo với chó hình đơn giản nên ước
+                        lượng còn được, con này thì không. */}
+                    <motion.g
+                      initial={{ opacity: 1, x: 1272, y: 858 }}
+                      animate={{
+                        opacity: [1, 1, 1, 1, 1, 1, 1, 1, 0],
+                        x: [1272, 1320, 1231, 484, 761, 750, 1520, 1328, 1272],
+                        y: [858, 937, 1445, 1415, 1050, 338, 468, 531, 858],
+                      }}
+                      transition={{
+                        duration: 1.8,
+                        ease: 'easeInOut',
+                        times: [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1],
+                      }}
+                    >
+                      <circle r="20" fill="#FF9A00" fillOpacity="0.35" stroke="#FF9A00" strokeWidth="4" />
+                      <line x1="-30" y1="0" x2="30" y2="0" stroke="#FF9A00" strokeWidth="6" />
+                      <line x1="0" y1="-30" x2="0" y2="30" stroke="#FF9A00" strokeWidth="6" />
+                    </motion.g>
+
+                    {/* Các điểm neo vector, hiện lúc đang vẽ */}
+                    {showVectorNodes && (
+                      <motion.g
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: [0, 1, 1, 0] }}
+                        transition={{ delay: 0.3, duration: 3.4, times: [0, 0.1, 0.75, 1] }}
+                      >
+                        {/* Cùng bộ toạ độ với con trỏ — điểm neo nằm đúng trên nét,
+                            không phải một vòng tròn ước lượng quanh hình. */}
+                        {[
+                          { x: 1272, y: 858 }, { x: 1320, y: 937 }, { x: 1231, y: 1445 },
+                          { x: 484, y: 1415 }, { x: 761, y: 1050 }, { x: 750, y: 338 },
+                          { x: 1520, y: 468 }, { x: 1328, y: 531 },
+                        ].map((pt, i) => (
+                          <rect
+                            key={`dino-node-${i}`}
+                            x={pt.x - 14} y={pt.y - 14}
+                            width="28" height="28"
+                            fill="#FFFFFF" stroke="#1473e6" strokeWidth="6"
                           />
                         ))}
                       </motion.g>
