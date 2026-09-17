@@ -917,7 +917,7 @@ export default function PhotoshopSimulator() {
                       className="w-5 h-5 rounded-[2px] border border-black/30 flex items-center justify-center text-[10px]"
                       style={{ backgroundColor: activeArtwork.swatchColor }}
                     >
-                      <span>{activeArtwork.id === 'cat' ? '🐱' : '🐶'}</span>
+                      <span>{activeArtwork.emoji}</span>
                     </div>
                     <span className="font-medium truncate max-w-[95px] text-black">
                       {activeArtwork.layerName}
