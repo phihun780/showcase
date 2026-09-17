@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Download, ArrowUpRight, Check, Copy, Loader2, Sparkles } from 'lucide-react';
 import { taiCvVeMay, cvNamTrongKho } from '../utils/r2Storage';
+import { duongDanLienKet } from '../utils/lienKetZalo';
 import { usePortfolioData } from '../context/PortfolioDataContext';
 import SmartImage from './SmartImage';
 
@@ -245,9 +246,18 @@ export default function AboutSection() {
                 </h3>
               </div>
 
-              {/* 4 Clean Compact Buttons in 1 Single Row: Behance, Facebook, Pinterest, Email */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+              {/* Cac nut lien ket. So cot chon sao cho hang cuoi day nhat co the:
+                  4 o -> 4 cot, 5 o -> 3 cot (3+2 nhin can hon 4+1), 6 o -> 3 cot. */}
+              <div className={`grid grid-cols-2 gap-2.5 sm:gap-3 ${
+                profile.socials.filter(s => duongDanLienKet(s)).length % 4 === 0
+                  ? 'sm:grid-cols-4'
+                  : 'sm:grid-cols-3'
+              }`}>
                 {profile.socials.map((soc, idx) => {
+                  const diaChi = duongDanLienKet(soc);
+                  // O chua dien gi thi khong hien — tranh nut bam vao khong ra dau.
+                  if (!diaChi) return null;
+
                   const isEmail = soc.name.toLowerCase().includes('email') || soc.url.startsWith('mailto:');
                   const emailAddress = soc.url.startsWith('mailto:') ? soc.url.replace('mailto:', '') : (profile.email || soc.url);
 
@@ -281,7 +291,7 @@ export default function AboutSection() {
                   return (
                     <a
                       key={idx}
-                      href={soc.url}
+                      href={diaChi}
                       target="_blank"
                       rel="noreferrer"
                       className="py-3 px-3.5 rounded-2xl border border-white/5 bg-white/[0.02] hover:border-[#C3EA39]/60 hover:bg-white/5 transition-all flex items-center justify-between group cursor-pointer"

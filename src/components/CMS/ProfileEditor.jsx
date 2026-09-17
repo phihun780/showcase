@@ -3,6 +3,7 @@ import { Plus, Trash2, Check, Upload, Image as ImageIcon, Sparkles, Loader2, Cro
 import { optimizeAndUploadToR2 } from '../../utils/imageOptimizer';
 import { deleteFromR2, uploadToR2 } from '../../utils/r2Storage';
 import ImageCropModal from './ImageCropModal';
+import { laZalo, duongDanZalo } from '../../utils/lienKetZalo';
 
 export default function ProfileEditor({ profile, onSave }) {
   const [formData, setFormData] = useState({
@@ -224,6 +225,18 @@ export default function ProfileEditor({ profile, onSave }) {
     setFormData(prev => ({
       ...prev,
       socials: [...prev.socials, { name: 'Liên kết', url: 'https://', handle: '' }]
+    }));
+  };
+
+  // Thêm sẵn ô Zalo, để trống số cho điền sau. Ô Zalo khác các ô kia ở chỗ chỉ
+  // cần gõ số điện thoại — phần "zalo.me/" trang tự ghép.
+  // Đã có Zalo rồi thì thôi, khỏi thêm cái thứ hai.
+  const daCoZalo = formData.socials.some(laZalo);
+  const themZalo = () => {
+    if (daCoZalo) return;
+    setFormData(prev => ({
+      ...prev,
+      socials: [...prev.socials, { name: 'Zalo', url: '', handle: '' }]
     }));
   };
 
@@ -1097,14 +1110,27 @@ export default function ProfileEditor({ profile, onSave }) {
             <Edit3 className="w-3.5 h-3.5 text-white/30" />
           </div>
 
-          <button
-            type="button"
-            onClick={handleAddSocial}
-            className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-[#C3EA39] hover:text-black text-white text-xs font-mono font-bold flex items-center gap-1 transition-colors cursor-pointer min-h-[34px]"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Thêm</span>
-          </button>
+          <div className="flex items-center gap-2">
+            {!daCoZalo && (
+              <button
+                type="button"
+                onClick={themZalo}
+                className="px-3 py-1.5 rounded-xl bg-[#0068FF]/15 hover:bg-[#0068FF] border border-[#0068FF]/40 text-[#7FB4FF] hover:text-white text-xs font-mono font-bold flex items-center gap-1 transition-colors cursor-pointer min-h-[34px]"
+                title="Thêm ô Zalo, chỉ cần điền số điện thoại"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Zalo</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={handleAddSocial}
+              className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-[#C3EA39] hover:text-black text-white text-xs font-mono font-bold flex items-center gap-1 transition-colors cursor-pointer min-h-[34px]"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Thêm</span>
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1163,11 +1189,33 @@ export default function ProfileEditor({ profile, onSave }) {
 
                 <input
                   type="text"
+                  inputMode={laZalo(soc) ? 'tel' : 'url'}
                   value={soc.url}
                   onChange={(e) => handleSocialChange(idx, 'url', e.target.value)}
-                  placeholder="URL (https://...)"
+                  placeholder={laZalo(soc) ? 'Số điện thoại, ví dụ 0901234567' : 'URL (https://...)'}
                   className="w-full px-3 py-2 sm:py-1.5 rounded-lg bg-black/60 border border-white/10 text-base sm:text-xs font-mono text-white/70"
                 />
+
+                {/* Ô Zalo: cho thấy trước địa chỉ thật sẽ ra, khỏi phải đoán. */}
+                {laZalo(soc) && (
+                  <p className="text-[11px] font-mono text-white/40 leading-relaxed">
+                    {soc.url?.trim() ? (
+                      <>
+                        Khách bấm sẽ mở:{' '}
+                        <a
+                          href={duongDanZalo(soc.url)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[#7FB4FF] hover:text-[#C3EA39] break-all cursor-pointer"
+                        >
+                          {duongDanZalo(soc.url)}
+                        </a>
+                      </>
+                    ) : (
+                      'Chỉ cần gõ số điện thoại, phần zalo.me/ trang tự ghép. Để trống thì nút này không hiện trên trang.'
+                    )}
+                  </p>
+                )}
               </div>
             );
           })}
