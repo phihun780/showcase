@@ -4,7 +4,7 @@ import { Menu, X } from 'lucide-react';
 import { usePortfolioData } from '../context/PortfolioDataContext';
 
 export default function Header({ activeSection, setActiveSection, onOpenCMS }) {
-  const { projects, profile } = usePortfolioData();
+  const { projects, clients, profile } = usePortfolioData();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [titleIndex, setTitleIndex] = useState(0);
 
@@ -42,8 +42,10 @@ export default function Header({ activeSection, setActiveSection, onOpenCMS }) {
     return () => clearInterval(interval);
   }, [titles.length]);
 
+  // Xếp đúng thứ tự các mục nằm trên trang: dự án -> bạn đồng hành -> về tui.
   const navItems = [
     { label: profile?.headerNavWork || 'Dự án của tui', id: 'work', count: `${projects.length}` },
+    { label: profile?.headerNavClients || 'Bạn đồng hành', id: 'clients', count: `${(clients || []).length}` },
     { label: profile?.headerNavAbout || 'Về tui', id: 'about' },
   ];
 

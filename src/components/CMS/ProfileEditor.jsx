@@ -24,6 +24,7 @@ export default function ProfileEditor({ profile, onSave }) {
     headerTitle1: profile?.headerTitle1 || 'PORTFOLIO // SHOWCASE',
     headerTitle2: profile?.headerTitle2 || 'GRAPHIC DESIGNER',
     headerNavWork: profile?.headerNavWork || 'Dự án của tui',
+    headerNavClients: profile?.headerNavClients || 'Bạn đồng hành',
     headerNavAbout: profile?.headerNavAbout || 'Về tui',
 
     // Hero Customization
@@ -89,6 +90,7 @@ export default function ProfileEditor({ profile, onSave }) {
         headerTitle1: profile.headerTitle1 ?? prev.headerTitle1,
         headerTitle2: profile.headerTitle2 ?? prev.headerTitle2,
         headerNavWork: profile.headerNavWork ?? prev.headerNavWork,
+        headerNavClients: profile.headerNavClients ?? prev.headerNavClients,
         headerNavAbout: profile.headerNavAbout ?? prev.headerNavAbout,
         heroTitleRow1: profile.heroTitleRow1 ?? prev.heroTitleRow1,
         heroTitleRow2: profile.heroTitleRow2 ?? prev.heroTitleRow2,
@@ -581,7 +583,20 @@ export default function ProfileEditor({ profile, onSave }) {
 
             <div className="space-y-1">
               <label className="text-xs font-mono text-white/70 uppercase block">
-                Tên nút Menu 2 (Về Tui)
+                Tên nút Menu 2 (Bạn Đồng Hành)
+              </label>
+              <input
+                type="text"
+                value={formData.headerNavClients || ''}
+                placeholder="Bạn đồng hành"
+                onChange={(e) => setFormData({ ...formData, headerNavClients: e.target.value })}
+                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-mono text-white/70 uppercase block">
+                Tên nút Menu 3 (Về Tui)
               </label>
               <input
                 type="text"
