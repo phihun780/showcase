@@ -220,6 +220,22 @@ export async function onRequest(context) {
   }
 
   const { origin, pathname } = new URL(context.request.url);
+
+  // Trang CMS: bao Google dung dua vao ket qua tim kiem.
+  //
+  // Day KHONG phai bao mat — ai go thang /cms van vao duoc man hinh nhap ma, va
+  // von di nen nhu vay: cai giu cua la ma PIN cung bo khoa khi nhap sai nhieu
+  // lan, chu khong phai viec giau duong dan. Chi la khong co ly do gi de dia
+  // chi trang quan tri nam trong ket qua tim kiem cua nguoi la.
+  //
+  // Co tinh KHONG ghi "/cms" vao robots.txt: file do ai cung doc duoc, viet vao
+  // la chi duong cho nguoi to mo thay vi giau di.
+  if (pathname === '/cms' || pathname.startsWith('/cms/')) {
+    const ra = new Response(response.body, response);
+    ra.headers.set('X-Robots-Tag', 'noindex, nofollow');
+    return ra;
+  }
+
   const data = await loadData(context.env);
   if (!data) return response;
 

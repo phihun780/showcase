@@ -13,6 +13,33 @@ const FAILURE_DELAY_MS = 700;
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
+// So sanh hai chuoi trong thoi gian NHU NHAU du dung hay sai.
+//
+// `a === b` dung may cham bit dau tien khac nhau la tra ve ngay. Chenh lech vai
+// phan trieu giay do, do di do lai hang nghin lan, la doan duoc tung ky tu mot
+// thay vi phai thu het moi to hop. Ham nay luon duyet het, nen khong lo ra gi.
+function bangNhau(a, b) {
+  const x = new TextEncoder().encode(a);
+  const y = new TextEncoder().encode(b);
+  let khac = x.length ^ y.length;
+  const n = Math.max(x.length, y.length);
+  for (let i = 0; i < n; i++) khac |= (x[i] || 0) ^ (y[i] || 0);
+  return khac === 0;
+}
+
+/**
+ * Cho giao dien biet ma PIN dai bao nhieu so, de ve dung so o tron.
+ *
+ * Chi tra ve DO DAI, khong bao gio tra ve ma. Do dai von da lo ra roi — nhin man
+ * hinh dang nhap la dem duoc — nen noi ra day khong mat them gi, doi lai la doi
+ * CMS_PASSWORD tren Cloudflare sang 6 hay 8 so thi khong phai sua code.
+ */
+export async function onRequestGet(context) {
+  const expected = getCmsPassword(context.env);
+  const n = expected ? expected.length : 4;
+  return json({ length: Math.min(12, Math.max(4, n)) });
+}
+
 export async function onRequestPost(context) {
   const { request, env } = context;
 
@@ -52,7 +79,7 @@ export async function onRequestPost(context) {
   }
 
   // 3. Đúng → cấp vé và xoá bộ đếm
-  if (password && password === expected) {
+  if (password && bangNhau(password, expected)) {
     await clearLoginFailures(env, request);
     return json({ success: true, token: await createToken(env) });
   }

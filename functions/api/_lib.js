@@ -1,3 +1,4 @@
+import { s3GetObject, s3PutObject, s3DeleteObject } from './_s3.js';
 // Tiện ích dùng chung cho các endpoint CMS.
 // File bắt đầu bằng "_" không được Cloudflare Pages biến thành route công khai.
 
@@ -178,15 +179,51 @@ async function guardKey(env, request) {
 }
 
 // Còn được phép thử không? Trả về { allowed, retryAfterMinutes }.
-export async function checkLoginAllowed(env, request) {
+// Đọc/ghi file đếm số lần nhập sai.
+//
+// VÌ SAO KHÔNG CHỈ DÙNG `getBucket`:
+// Bản chạy thật KHÔNG có R2 binding — mọi thứ khác trong dự án đều đi đường S3
+// (xem _s3.js). Ba hàm bên dưới trước đây chỉ thử binding rồi `if (!bucket)
+// return { allowed: true }`, nghĩa là trên trang thật bộ chặn KHÔNG BAO GIỜ
+// chạy: nhập sai bao nhiêu lần cũng không bị khoá. Đo trên trang thật: 6 lần
+// sai liên tiếp, `remaining` luôn null, không khoá.
+//
+// Giờ thử binding trước, không có thì đi S3 — giống hệt cách upload và tải ảnh
+// vẫn làm.
+async function docGuard(env, key) {
   const bucket = getBucket(env);
-  if (!bucket) return { allowed: true }; // không chặn được thì vẫn cho đăng nhập
+  if (bucket) {
+    const o = await bucket.get(key);
+    return o ? await o.text() : null;
+  }
+  const res = await s3GetObject(env, key);
+  return res && res.ok ? await res.text() : null;
+}
 
+async function ghiGuard(env, key, noiDung) {
+  const bucket = getBucket(env);
+  if (bucket) {
+    await bucket.put(key, noiDung, { httpMetadata: { contentType: 'application/json' } });
+    return;
+  }
+  await s3PutObject(env, key, noiDung, 'application/json');
+}
+
+async function xoaGuard(env, key) {
+  const bucket = getBucket(env);
+  if (bucket) {
+    await bucket.delete(key);
+    return;
+  }
+  await s3DeleteObject(env, key);
+}
+
+export async function checkLoginAllowed(env, request) {
   try {
-    const object = await bucket.get(await guardKey(env, request));
-    if (!object) return { allowed: true };
+    const chuoi = await docGuard(env, await guardKey(env, request));
+    if (!chuoi) return { allowed: true };
 
-    const state = JSON.parse(await object.text());
+    const state = JSON.parse(chuoi);
     if (state.lockedUntil && state.lockedUntil > Date.now()) {
       return {
         allowed: false,
@@ -201,18 +238,15 @@ export async function checkLoginAllowed(env, request) {
 
 // Ghi nhận một lần nhập sai. Trả về số lần thử còn lại.
 export async function recordLoginFailure(env, request) {
-  const bucket = getBucket(env);
-  if (!bucket) return { remaining: null };
-
   try {
     const key = await guardKey(env, request);
-    const object = await bucket.get(key);
+    const chuoi = await docGuard(env, key);
     const now = Date.now();
 
     let state = { fails: 0, windowStart: now, lockedUntil: 0 };
-    if (object) {
+    if (chuoi) {
       try {
-        const parsed = JSON.parse(await object.text());
+        const parsed = JSON.parse(chuoi);
         // Hết khoảng đếm thì bắt đầu lại từ đầu
         if (parsed.windowStart && now - parsed.windowStart < WINDOW_MS) state = parsed;
       } catch {
@@ -223,9 +257,7 @@ export async function recordLoginFailure(env, request) {
     state.fails = (state.fails || 0) + 1;
     if (state.fails >= MAX_FAILS) state.lockedUntil = now + LOCK_MS;
 
-    await bucket.put(key, JSON.stringify(state), {
-      httpMetadata: { contentType: 'application/json' },
-    });
+    await ghiGuard(env, key, JSON.stringify(state));
 
     return { remaining: Math.max(0, MAX_FAILS - state.fails) };
   } catch {
@@ -235,10 +267,8 @@ export async function recordLoginFailure(env, request) {
 
 // Đăng nhập đúng thì xoá bộ đếm.
 export async function clearLoginFailures(env, request) {
-  const bucket = getBucket(env);
-  if (!bucket) return;
   try {
-    await bucket.delete(await guardKey(env, request));
+    await xoaGuard(env, await guardKey(env, request));
   } catch {
     // không quan trọng
   }

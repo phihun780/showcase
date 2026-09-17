@@ -46,11 +46,23 @@ function r2DevPlugin() {
     name: 'r2-dev-api',
     configureServer(server) {
       const env = loadEnv('development', process.cwd(), '');
-      const accountId = env.VITE_R2_ACCOUNT_ID || 'a0650e4cdd588f8cab25b3a13a282dc4';
-      const accessKeyId = env.VITE_R2_ACCESS_KEY_ID || '72d7fdbd4e7fa547975af270f37f0800';
-      const secretAccessKey = env.VITE_R2_SECRET_ACCESS_KEY || '1af43a02ad0fa9c1219416cc9bd4f467fc0f47efb84e3107b2af0e04737fef2d';
-      bucket = env.VITE_R2_BUCKET_NAME || 'showcase';
-      publicUrl = env.VITE_R2_PUBLIC_URL || 'https://pub-0ad262edfb6a4345a3bd61b2110c549c.r2.dev';
+      // Notepad lưu file kèm một dấu vô hình ở đầu (BOM), làm tên biến đầu tiên
+      // sai đi và khoá coi như mất. Nên dò cả tên có dấu đó.
+      const doc = (ten) => env[ten] || env[`﻿${ten}`];
+      // KHÔNG viết khoá vào đây — file này nằm trong repo công khai.
+      // Chỉ lấy từ .env.local (file đó đã nằm trong .gitignore).
+      const accountId = doc('VITE_R2_ACCOUNT_ID');
+      const accessKeyId = doc('VITE_R2_ACCESS_KEY_ID');
+      const secretAccessKey = doc('VITE_R2_SECRET_ACCESS_KEY');
+
+      if (!accountId || !accessKeyId || !secretAccessKey) {
+        console.warn(
+          '[R2] Thiếu khoá trong .env.local — CMS ở máy sẽ không lưu được gì. ' +
+          'Chép .env.example thành .env.local rồi điền khoá lấy từ Cloudflare.'
+        );
+      }
+      bucket = doc('VITE_R2_BUCKET_NAME') || 'showcase';
+      publicUrl = doc('VITE_R2_PUBLIC_URL') || 'https://pub-0ad262edfb6a4345a3bd61b2110c549c.r2.dev';
 
       if (accountId && accessKeyId && secretAccessKey) {
         s3 = new S3Client({
@@ -64,6 +76,12 @@ function r2DevPlugin() {
         if (!req.url || !req.url.startsWith('/api/')) return next();
 
         // 1. /api/auth
+        // GET: man hinh dang nhap hoi ma PIN dai may so. O may thi cu 4.
+        if (req.url === '/api/auth' && req.method === 'GET') {
+          res.setHeader('Content-Type', 'application/json');
+          return res.end(JSON.stringify({ length: 4 }));
+        }
+        // POST: o may thi go so nao cung vao duoc — day la localhost, khong ra ngoai.
         if (req.url === '/api/auth' && req.method === 'POST') {
           res.setHeader('Content-Type', 'application/json');
           return res.end(JSON.stringify({ success: true, token: 'dev-token' }));

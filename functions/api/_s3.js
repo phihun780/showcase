@@ -2,10 +2,31 @@
 // Cho phép Cloudflare Pages Functions đọc/ghi/xoá R2 trực tiếp
 // ngay cả khi người dùng chưa gắn R2 bucket binding trong Cloudflare Dashboard.
 
-const DEFAULT_ACCOUNT_ID = 'a0650e4cdd588f8cab25b3a13a282dc4';
-const DEFAULT_ACCESS_KEY_ID = '72d7fdbd4e7fa547975af270f37f0800';
-const DEFAULT_SECRET_ACCESS_KEY = '1af43a02ad0fa9c1219416cc9bd4f467fc0f47efb84e3107b2af0e04737fef2d';
-const DEFAULT_BUCKET = 'showcase';
+// KHÔNG viết khoá vào đây.
+//
+// Ba dòng này trước đây là khoá R2 thật, viết cứng làm giá trị mặc định — mà
+// repo thì công khai trên GitHub. Ai mở file này ra cũng có quyền đọc, ghi, xoá
+// toàn bộ kho: không cần CMS, không cần mã PIN, không cần gì cả.
+//
+// Giờ bắt buộc lấy từ biến môi trường. Thiếu thì báo lỗi rõ ràng chứ không âm
+// thầm chạy bằng một khoá nào đó.
+const TEN_KHO_MAC_DINH = 'showcase';   // tên kho không phải bí mật
+
+function dayDuKhoa(env) {
+  const accId = env.R2_ACCOUNT_ID || env.ACCOUNT_ID;
+  const accKey = env.R2_ACCESS_KEY_ID || env.ACCESS_KEY_ID;
+  const secretKey = env.R2_SECRET_ACCESS_KEY || env.SECRET_ACCESS_KEY;
+
+  if (!accId || !accKey || !secretKey) {
+    throw new Error(
+      'Thiếu khoá R2. Vào Cloudflare → Workers & Pages → dự án → Settings → ' +
+      'Variables and Secrets, thêm R2_ACCOUNT_ID, R2_ACCESS_KEY_ID và ' +
+      'R2_SECRET_ACCESS_KEY.'
+    );
+  }
+
+  return { accId, accKey, secretKey, bucket: env.R2_BUCKET_NAME || env.BUCKET_NAME || TEN_KHO_MAC_DINH };
+}
 
 async function hmacSha256(key, data) {
   const cryptoKey = await crypto.subtle.importKey(
@@ -45,10 +66,7 @@ function buildCanonicalQuery(queryParams = {}) {
 }
 
 export async function s3Request({ method = 'GET', key = '', queryParams = null, body = null, contentType = 'application/json', env = {} }) {
-  const accId = env.R2_ACCOUNT_ID || env.ACCOUNT_ID || DEFAULT_ACCOUNT_ID;
-  const accKey = env.R2_ACCESS_KEY_ID || env.ACCESS_KEY_ID || DEFAULT_ACCESS_KEY_ID;
-  const secretKey = env.R2_SECRET_ACCESS_KEY || env.SECRET_ACCESS_KEY || DEFAULT_SECRET_ACCESS_KEY;
-  const bucket = env.R2_BUCKET_NAME || env.BUCKET_NAME || DEFAULT_BUCKET;
+  const { accId, accKey, secretKey, bucket } = dayDuKhoa(env);
 
   const host = `${accId}.r2.cloudflarestorage.com`;
   const cleanKey = key.replace(/^\/+/, '');

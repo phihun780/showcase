@@ -3,9 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Lock, ShieldCheck, ArrowLeft, Delete, KeyRound, Sparkles } from 'lucide-react';
 import { setCmsToken, clearCmsToken } from '../../utils/r2Storage';
 
-// So chu so cua ma PIN. Muon tang do an toan thi doi so nay (vi du 6 hoac 8)
-// roi doi CMS_PASSWORD tren Cloudflare cho khop — khong can sua gi them.
-const PIN_LENGTH = 4;
+// So o PIN hien tren man hinh. May chu moi biet ma dai bao nhieu, nen hoi no
+// (GET /api/auth chi tra ve DO DAI, khong tra ve ma). Doi CMS_PASSWORD tren
+// Cloudflare sang 6 hay 8 so la giao dien tu doi theo, khong can sua code.
+const PIN_MAC_DINH = 4;
 
 const AUTH_STORAGE_KEY = 'phihung_cms_authenticated';
 const AUTH_TIMESTAMP_KEY = 'phihung_cms_last_active';
@@ -19,6 +20,22 @@ export default function CMSAuthGate({ onAuthenticated, onBackToPortfolio }) {
   const [infoMsg, setInfoMsg] = useState('');
   const [isLocked, setIsLocked] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
+  const [soO, setSoO] = useState(PIN_MAC_DINH);
+
+  // Hoi may chu ma PIN dai bao nhieu so.
+  useEffect(() => {
+    let con = true;
+    fetch('/api/auth')
+      .then(res => (res.ok ? res.json() : null))
+      .then(d => {
+        const n = Number(d?.length);
+        if (con && Number.isInteger(n) && n >= 4 && n <= 12) setSoO(n);
+      })
+      .catch(() => {});
+    return () => {
+      con = false;
+    };
+  }, []);
 
   // Always reset scroll to top immediately when mounting CMS Auth Gate
   useLayoutEffect(() => {
@@ -37,9 +54,13 @@ export default function CMSAuthGate({ onAuthenticated, onBackToPortfolio }) {
     } catch (e) {}
   }, []);
 
-  // Kiểm tra mã PIN — chỉ máy chủ mới có quyền phân xử.
-  // (Trước đây có bản sao "dấu vân tay" của PIN nằm ngay trong mã nguồn
-  //  trang web, ai tải về cũng dò ngược ra được trong chưa tới 1 giây. Đã gỡ bỏ.)
+  // Kiểm tra mã PIN — CHỈ máy chủ mới có quyền phân xử.
+  //
+  // Trước đây ngay dưới đây có một lối vào phụ chạy trong trình duyệt: so mã với
+  // một "dấu vân tay" SHA-256 và với một mã viết thẳng trong code. Mà mã nguồn
+  // trang thì ai mở cũng đọc được — tức là cái mã đó nằm công khai trên mạng, gõ
+  // vào là vào thẳng CMS, bộ đếm nhập sai cũng vô nghĩa vì lối này không đi qua
+  // máy chủ. Đã gỡ hẳn. Sai mã, hay mất mạng, đều là không vào được.
   const verifyPin = async (enteredPin) => {
     setIsChecking(true);
 
@@ -65,26 +86,12 @@ export default function CMSAuthGate({ onAuthenticated, onBackToPortfolio }) {
       return;
     }
 
-    // Client-side SHA-256 verify (fallback for local dev and direct mode)
-    try {
-      const buf = new TextEncoder().encode(enteredPin);
-      const hashBuf = await crypto.subtle.digest('SHA-256', buf);
-      const hashHex = Array.from(new Uint8Array(hashBuf))
-        .map(b => b.toString(16).padStart(2, '0'))
-        .join('');
-
-      if (hashHex === '8752f24ec0a8ac50ef732fbaa26f2df1cea32e477b8d4ad4160748155ed23054' || enteredPin === '0780') {
-        handleSuccess(null);
-        return;
-      }
-    } catch (err) {}
-
     if (reachedServer && data?.error) {
       handleFailure(data.error, data.locked === true);
       return;
     }
 
-    handleFailure('Mật mã không đúng. Vui lòng thử lại.');
+    handleFailure('Không liên lạc được với máy chủ. Kiểm tra lại mạng rồi thử lại.');
   };
 
   const handleSuccess = (token) => {
@@ -125,10 +132,10 @@ export default function CMSAuthGate({ onAuthenticated, onBackToPortfolio }) {
 
   // Check whenever PIN changes
   useEffect(() => {
-    if (pin.length === PIN_LENGTH) {
+    if (pin.length === soO) {
       verifyPin(pin);
     }
-  }, [pin]);
+  }, [pin, soO]);
 
   // Handle Keyboard Input
   useEffect(() => {
@@ -139,18 +146,18 @@ export default function CMSAuthGate({ onAuthenticated, onBackToPortfolio }) {
       }
       if (isChecking || isLocked) return;
       if (e.key >= '0' && e.key <= '9') {
-        setPin(prev => (prev.length < 4 ? prev + e.key : prev));
+        setPin(prev => (prev.length < soO ? prev + e.key : prev));
       } else if (e.key === 'Backspace') {
         setPin(prev => prev.slice(0, -1));
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onBackToPortfolio, isChecking, isLocked]);
+  }, [onBackToPortfolio, isChecking, isLocked, soO]);
 
   const handleButtonClick = (num) => {
     if (isChecking || isLocked) return;
-    if (pin.length < PIN_LENGTH) {
+    if (pin.length < soO) {
       setPin(prev => prev + num);
     }
   };
@@ -219,13 +226,13 @@ export default function CMSAuthGate({ onAuthenticated, onBackToPortfolio }) {
             Quản Trị CMS
           </h2>
           <p className="text-xs text-white/50 font-mono">
-            {isLocked ? 'CMS đang tạm khoá' : `Nhập mã PIN ${PIN_LENGTH} số để mở khóa`}
+            {isLocked ? 'CMS đang tạm khoá' : `Nhập mã PIN ${soO} số để mở khóa`}
           </p>
         </div>
 
-        {/* 4 PIN Indicators */}
+        {/* Các ô tròn báo đã nhập mấy số */}
         <div className="flex items-center gap-3.5 py-1">
-          {Array.from({ length: PIN_LENGTH }, (_, i) => i).map((idx) => {
+          {Array.from({ length: soO }, (_, i) => i).map((idx) => {
             const isFilled = pin.length > idx;
             return (
               <motion.div
