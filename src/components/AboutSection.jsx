@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Download, ArrowUpRight, Check, Copy, Loader2, Sparkles } from 'lucide-react';
+import { Download, ArrowUpRight, Check, Loader2, Sparkles } from 'lucide-react';
 import { taiCvVeMay, cvNamTrongKho } from '../utils/r2Storage';
 import { duongDanLienKet } from '../utils/lienKetZalo';
 import { usePortfolioData } from '../context/PortfolioDataContext';
@@ -283,23 +283,22 @@ export default function AboutSection() {
                         key={idx}
                         type="button"
                         onClick={(e) => handleCopyEmail(e, emailAddress)}
-                        className={`py-3 px-2 rounded-2xl border transition-all flex items-center justify-between group cursor-pointer ${
+                        className={`py-3 px-2 rounded-2xl border transition-all flex items-center justify-center group cursor-pointer ${
                           copiedEmail
                             ? 'border-[#C3EA39] bg-[#C3EA39]/10 text-[#C3EA39]'
                             : 'border-white/5 bg-white/[0.02] hover:border-[#C3EA39]/60 hover:bg-white/5 text-white'
                         }`}
+                        // Truoc day nut nay co them icon nen no lech hang voi bon nut
+                        // kia: chu can trai, icon nam phai. Bo icon di cho dong bo.
+                        // Bam xong chu doi thanh "Da chep!" va ca nut sang mau chanh
+                        // — thay ro hon mot cai icon nho xiu.
                         title={`Bấm để sao chép email: ${emailAddress}`}
                       >
                         <span className={`text-sm lg:text-[13px] xl:text-sm font-bold truncate transition-colors ${
                           copiedEmail ? 'text-[#C3EA39]' : 'text-white group-hover:text-[#C3EA39]'
                         }`}>
-                          {copiedEmail ? 'Đã sao chép!' : soc.name}
+                          {copiedEmail ? 'Đã chép!' : soc.name}
                         </span>
-                        {copiedEmail ? (
-                          <Check className="w-2.5 h-2.5 text-[#C3EA39] shrink-0 ml-0.5 animate-fadeIn" />
-                        ) : (
-                          <Copy className="w-2.5 h-2.5 text-white/40 group-hover:text-[#C3EA39] transition-all shrink-0 ml-0.5" />
-                        )}
                       </button>
                     );
                   }
