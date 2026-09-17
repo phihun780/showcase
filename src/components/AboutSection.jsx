@@ -290,7 +290,7 @@ export default function AboutSection() {
                         }`}
                         title={`Bấm để sao chép email: ${emailAddress}`}
                       >
-                        <span className={`text-[11px] font-bold truncate transition-colors ${
+                        <span className={`text-sm lg:text-[13px] xl:text-sm font-bold truncate transition-colors ${
                           copiedEmail ? 'text-[#C3EA39]' : 'text-white group-hover:text-[#C3EA39]'
                         }`}>
                           {copiedEmail ? 'Đã sao chép!' : soc.name}
@@ -310,12 +310,14 @@ export default function AboutSection() {
                       href={diaChi}
                       target="_blank"
                       rel="noreferrer"
-                      className="py-3 px-2 rounded-2xl border border-white/5 bg-white/[0.02] hover:border-[#C3EA39]/60 hover:bg-white/5 transition-all flex items-center justify-between group cursor-pointer"
+                      className="py-3 px-2 rounded-2xl border border-white/5 bg-white/[0.02] hover:border-[#C3EA39]/60 hover:bg-white/5 transition-all flex items-center justify-center group cursor-pointer"
                     >
-                      <span className="text-[11px] font-bold text-white group-hover:text-[#C3EA39] transition-colors truncate">
+                      {/* Bo mui ten o day: no chiem 12px, ma 12px do la tat ca phan
+                          chenh giua chu 11px va chu 14px. Vien va chu doi sang mau
+                          chanh khi re chuot da du bao day la nut bam duoc. */}
+                      <span className="text-sm lg:text-[13px] xl:text-sm font-bold text-white group-hover:text-[#C3EA39] transition-colors truncate">
                         {soc.name}
                       </span>
-                      <ArrowUpRight className="w-2.5 h-2.5 text-white/40 group-hover:text-[#C3EA39] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0 ml-0.5" />
                     </a>
                   );
                 })}
