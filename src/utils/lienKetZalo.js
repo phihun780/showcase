@@ -8,6 +8,10 @@
 // Vẫn nhận địa chỉ đầy đủ như thường — ai có trang Zalo OA hay link mời kết bạn
 // riêng thì dán thẳng vào, không bị đụng tới.
 
+// Ô mới thêm được điền sẵn "https://". Coi như còn trống, đừng vẽ nút dẫn
+// tới hư không.
+const CHI_CO_GIAO_THUC = /^https?:\/\/$/i;
+
 /** Ô này có phải Zalo không? Nhận biết theo tên nút người dùng đặt. */
 export function laZalo(soc) {
   return String(soc?.name || '').trim().toLowerCase().includes('zalo');
@@ -25,7 +29,7 @@ export function laZalo(soc) {
  */
 export function duongDanZalo(giaTri) {
   const tho = String(giaTri || '').trim();
-  if (!tho) return '';
+  if (!tho || CHI_CO_GIAO_THUC.test(tho)) return '';
 
   // Đã là địa chỉ đầy đủ thì để yên.
   if (/^https?:\/\//i.test(tho)) return tho;
@@ -46,5 +50,7 @@ export function duongDanZalo(giaTri) {
 
 /** Địa chỉ cuối cùng của một ô liên kết bất kỳ. Chỉ ô Zalo mới được xử lý thêm. */
 export function duongDanLienKet(soc) {
-  return laZalo(soc) ? duongDanZalo(soc?.url) : String(soc?.url || '');
+  if (laZalo(soc)) return duongDanZalo(soc?.url);
+  const tho = String(soc?.url || '').trim();
+  return CHI_CO_GIAO_THUC.test(tho) ? '' : tho;
 }

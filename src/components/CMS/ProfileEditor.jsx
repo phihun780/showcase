@@ -228,18 +228,6 @@ export default function ProfileEditor({ profile, onSave }) {
     }));
   };
 
-  // Thêm sẵn ô Zalo, để trống số cho điền sau. Ô Zalo khác các ô kia ở chỗ chỉ
-  // cần gõ số điện thoại — phần "zalo.me/" trang tự ghép.
-  // Đã có Zalo rồi thì thôi, khỏi thêm cái thứ hai.
-  const daCoZalo = formData.socials.some(laZalo);
-  const themZalo = () => {
-    if (daCoZalo) return;
-    setFormData(prev => ({
-      ...prev,
-      socials: [...prev.socials, { name: 'Zalo', url: '', handle: '' }]
-    }));
-  };
-
   const handleRemoveSocial = (idx) => {
     setFormData(prev => ({
       ...prev,
@@ -1110,27 +1098,14 @@ export default function ProfileEditor({ profile, onSave }) {
             <Edit3 className="w-3.5 h-3.5 text-white/30" />
           </div>
 
-          <div className="flex items-center gap-2">
-            {!daCoZalo && (
-              <button
-                type="button"
-                onClick={themZalo}
-                className="px-3 py-1.5 rounded-xl bg-[#0068FF]/15 hover:bg-[#0068FF] border border-[#0068FF]/40 text-[#7FB4FF] hover:text-white text-xs font-mono font-bold flex items-center gap-1 transition-colors cursor-pointer min-h-[34px]"
-                title="Thêm ô Zalo, chỉ cần điền số điện thoại"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Zalo</span>
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={handleAddSocial}
-              className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-[#C3EA39] hover:text-black text-white text-xs font-mono font-bold flex items-center gap-1 transition-colors cursor-pointer min-h-[34px]"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Thêm</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={handleAddSocial}
+            className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-[#C3EA39] hover:text-black text-white text-xs font-mono font-bold flex items-center gap-1 transition-colors cursor-pointer min-h-[34px]"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Thêm</span>
+          </button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

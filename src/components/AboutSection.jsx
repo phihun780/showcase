@@ -6,12 +6,29 @@ import { duongDanLienKet } from '../utils/lienKetZalo';
 import { usePortfolioData } from '../context/PortfolioDataContext';
 import SmartImage from './SmartImage';
 
+// Tailwind chi sinh CSS cho ten lop no thay nguyen van trong code, nen phai
+// liet ke san thay vi ghep chuoi luc chay.
+const SO_COT = {
+  1: 'sm:grid-cols-1',
+  2: 'sm:grid-cols-2',
+  3: 'sm:grid-cols-3',
+  4: 'sm:grid-cols-4',
+  5: 'sm:grid-cols-5',
+  6: 'sm:grid-cols-6',
+};
+
 export default function AboutSection() {
   const { profile } = usePortfolioData();
   const [copiedEmail, setCopiedEmail] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadStatus, setDownloadStatus] = useState('idle'); // 'idle' | 'success' | 'maintenance'
+
+  // Dem so nut THAT SU hien ra, de chia dung so cot. O chua dien gi thi khong
+  // tinh — no cung khong duoc ve.
+  const soLienKet = Array.isArray(profile?.socials)
+    ? profile.socials.filter(soc => duongDanLienKet(soc)).length
+    : 0;
 
   const handleCopyEmail = (e, emailVal) => {
     e.preventDefault();
@@ -246,13 +263,12 @@ export default function AboutSection() {
                 </h3>
               </div>
 
-              {/* Cac nut lien ket. So cot chon sao cho hang cuoi day nhat co the:
-                  4 o -> 4 cot, 5 o -> 3 cot (3+2 nhin can hon 4+1), 6 o -> 3 cot. */}
-              <div className={`grid grid-cols-2 gap-2.5 sm:gap-3 ${
-                profile.socials.filter(s => duongDanLienKet(s)).length % 4 === 0
-                  ? 'sm:grid-cols-4'
-                  : 'sm:grid-cols-3'
-              }`}>
+              {/* Cac nut lien ket. Tu man hinh vua tro len: TAT CA nam tren MOT hang,
+                  bao nhieu nut thi bay nhieu cot. Tailwind can ten lop viet san nen
+                  phai tra bang, ghep chuoi `sm:grid-cols-${n}` se khong sinh ra CSS.
+                  Dien thoai thi van 2 cot — nhet 5 nut vao 375px thi chu "Pinterest"
+                  bi cat cut, doc khong ra. */}
+              <div className={`grid grid-cols-2 gap-2 ${SO_COT[soLienKet] || 'sm:grid-cols-4'}`}>
                 {profile.socials.map((soc, idx) => {
                   const diaChi = duongDanLienKet(soc);
                   // O chua dien gi thi khong hien — tranh nut bam vao khong ra dau.
@@ -267,22 +283,22 @@ export default function AboutSection() {
                         key={idx}
                         type="button"
                         onClick={(e) => handleCopyEmail(e, emailAddress)}
-                        className={`py-3 px-3.5 rounded-2xl border transition-all flex items-center justify-between group cursor-pointer ${
+                        className={`py-3 px-2 rounded-2xl border transition-all flex items-center justify-between group cursor-pointer ${
                           copiedEmail
                             ? 'border-[#C3EA39] bg-[#C3EA39]/10 text-[#C3EA39]'
                             : 'border-white/5 bg-white/[0.02] hover:border-[#C3EA39]/60 hover:bg-white/5 text-white'
                         }`}
                         title={`Bấm để sao chép email: ${emailAddress}`}
                       >
-                        <span className={`text-xs sm:text-sm font-bold truncate transition-colors ${
+                        <span className={`text-[11px] font-bold truncate transition-colors ${
                           copiedEmail ? 'text-[#C3EA39]' : 'text-white group-hover:text-[#C3EA39]'
                         }`}>
                           {copiedEmail ? 'Đã sao chép!' : soc.name}
                         </span>
                         {copiedEmail ? (
-                          <Check className="w-3.5 h-3.5 text-[#C3EA39] shrink-0 ml-1.5 animate-fadeIn" />
+                          <Check className="w-2.5 h-2.5 text-[#C3EA39] shrink-0 ml-0.5 animate-fadeIn" />
                         ) : (
-                          <Copy className="w-3.5 h-3.5 text-white/40 group-hover:text-[#C3EA39] transition-all shrink-0 ml-1.5" />
+                          <Copy className="w-2.5 h-2.5 text-white/40 group-hover:text-[#C3EA39] transition-all shrink-0 ml-0.5" />
                         )}
                       </button>
                     );
@@ -294,12 +310,12 @@ export default function AboutSection() {
                       href={diaChi}
                       target="_blank"
                       rel="noreferrer"
-                      className="py-3 px-3.5 rounded-2xl border border-white/5 bg-white/[0.02] hover:border-[#C3EA39]/60 hover:bg-white/5 transition-all flex items-center justify-between group cursor-pointer"
+                      className="py-3 px-2 rounded-2xl border border-white/5 bg-white/[0.02] hover:border-[#C3EA39]/60 hover:bg-white/5 transition-all flex items-center justify-between group cursor-pointer"
                     >
-                      <span className="text-xs sm:text-sm font-bold text-white group-hover:text-[#C3EA39] transition-colors truncate">
+                      <span className="text-[11px] font-bold text-white group-hover:text-[#C3EA39] transition-colors truncate">
                         {soc.name}
                       </span>
-                      <ArrowUpRight className="w-3.5 h-3.5 text-white/40 group-hover:text-[#C3EA39] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0 ml-1.5" />
+                      <ArrowUpRight className="w-2.5 h-2.5 text-white/40 group-hover:text-[#C3EA39] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0 ml-0.5" />
                     </a>
                   );
                 })}
