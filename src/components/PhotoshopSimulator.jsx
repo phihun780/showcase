@@ -782,6 +782,11 @@ export default function PhotoshopSimulator() {
 
                     {/* BƯỚC 2 & 3: đổ màu rồi đi nét */}
                     {KHUNG_LONG.map((h, i) => {
+                      // Bỏ tấm nền vàng phủ kín khung của file gốc: mèo và chó
+                      // đều nền trong suốt, để nguyên thì riêng con này có một
+                      // mảng vàng đè lên nền tối của khung vẽ.
+                      if (h.t === 'rect' && +h.width >= 2000 && +h.height >= 2000) return null;
+
                       const laNet = h.f === MAU_NET;
                       // Mảng màu vào trước, nét đi sau — và trong mỗi nhóm thì
                       // nhích lệch nhau một chút cho ra cảm giác đang vẽ dần.
