@@ -103,7 +103,10 @@ export default function Header({ activeSection, setActiveSection, onOpenCMS }) {
                 <button
                   key={item.id}
                   onClick={() => scrollToSection(item.id)}
-                  className={`relative py-1 transition-colors flex items-center gap-1.5 ${
+                  /* `cursor-pointer` phải tự thêm: trình duyệt cho <button> con
+                     trỏ mũi tên, chỉ <a href> mới tự thành bàn tay. Logo là thẻ
+                     <a> nên có sẵn, mấy nút này thì không. */
+                  className={`relative py-1 transition-colors flex items-center gap-1.5 cursor-pointer ${
                     isActive
                       ? 'text-[#C3EA39] font-bold'
                       : 'text-white/70 hover:text-white'
@@ -126,7 +129,7 @@ export default function Header({ activeSection, setActiveSection, onOpenCMS }) {
           {/* Mobile Menu Toggle */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-1.5 text-white/80 hover:text-[#C3EA39] transition-colors"
+            className="md:hidden p-1.5 text-white/80 hover:text-[#C3EA39] transition-colors cursor-pointer"
             aria-label="Toggle menu"
           >
             {mobileMenuOpen ? <X className="w-6 h-6 text-[#C3EA39]" /> : <Menu className="w-6 h-6" />}
@@ -142,7 +145,7 @@ export default function Header({ activeSection, setActiveSection, onOpenCMS }) {
             <button
               key={item.id}
               onClick={() => scrollToSection(item.id)}
-              className={`w-full text-left py-2 text-sm font-mono flex items-center justify-between ${
+              className={`w-full text-left py-2 text-sm font-mono flex items-center justify-between cursor-pointer ${
                 activeSection === item.id
                   ? 'text-[#C3EA39] font-bold'
                   : 'text-white/70'
