@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useLayoutEffect, useMemo, useCallba
 import { usePortfolioData, defaultMarqueeItems } from '../../context/PortfolioDataContext';
 import ProjectEditorModal from './ProjectEditorModal';
 import ShowcaseWallEditor from './ShowcaseWallEditor';
+import DanhSachBrand from './DanhSachBrand';
 import { CAC_MUC } from './truongNoiDung';
 import { ONhap, Khoi, LuoiO } from './ONhap';
 import ProfileEditor from './ProfileEditor';
@@ -1416,189 +1417,20 @@ export default function CMSPage({ onBackToPortfolio }) {
           )}
 
           {mucHienTai?.khoiAnh === 'brand' && (
-            <>
-            {/* Top Action Controls Bar */}
-            <div className="p-3.5 sm:p-4 rounded-2xl bg-[#121216] border border-white/10 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-[#C3EA39]/15 text-[#C3EA39] flex items-center justify-center shrink-0">
-                  <HeartHandshake className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-display font-bold text-white">
-                    Quản Lý Khách Hàng & Kỷ Niệm
-                  </h3>
-                  <p className="text-[11px] font-mono text-white/50">
-                    Lưu giữ các thương hiệu, đối tác và tác phẩm đã bàn giao
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleOpenAddClient}
-                  className="px-4 py-2 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black font-display font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-[1.02] cursor-pointer min-h-[38px] active:scale-95"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Thêm Khách Hàng</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Clients List or Empty State */}
-            {localClients.length === 0 ? (
-              <div
-                onClick={handleOpenAddClient}
-                className="p-10 sm:p-14 rounded-2xl border-2 border-dashed border-white/15 hover:border-[#C3EA39]/50 bg-black/30 hover:bg-black/50 transition-all flex flex-col items-center justify-center text-center cursor-pointer group"
-              >
-                <div className="w-12 h-12 rounded-2xl bg-[#C3EA39]/10 text-[#C3EA39] flex items-center justify-center font-mono font-bold text-lg mb-3 group-hover:scale-110 transition-transform">
-                  <HeartHandshake className="w-6 h-6" />
-                </div>
-                <p className="font-display font-bold text-white text-base">Chưa Có Khách Hàng Nào</p>
-                <p className="text-xs text-white/40 mt-1 font-mono max-w-sm">
-                  Nhấp vào đây để thêm khách hàng đầu tiên cùng tác phẩm kỷ niệm đã bàn giao.
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {localClients.map((client, idx) => (
-                  <div
-                    key={client.id || idx}
-                    className="relative rounded-2xl overflow-hidden border border-white/10 bg-black/40 group flex flex-col hover:border-[#C3EA39]/40 transition-all shadow-xl"
-                  >
-                    {/* Image Preview Thumbnail */}
-                    <div className="relative aspect-[16/10] w-full overflow-hidden bg-black border-b border-white/5">
-                      {client.coverImage ? (
-                        <img
-                          src={client.coverImage}
-                          alt={client.clientName}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-white/5 text-white/20">
-                          <Building2 className="w-10 h-10" />
-                        </div>
-                      )}
-
-                      {/* Top Badges */}
-                      <div className="absolute top-2 left-2 flex items-center gap-1.5 z-20">
-                        <span className="px-2 py-0.5 rounded-lg bg-black/85 backdrop-blur-md text-[10px] font-mono font-bold text-[#C3EA39] border border-white/15 shadow-md">
-                          #{idx + 1 < 10 ? `0${idx + 1}` : idx + 1}
-                        </span>
-                        {client.featured && (
-                          <span className="px-2 py-0.5 rounded-lg bg-[#C3EA39] text-black text-[10px] font-mono font-bold shadow-md flex items-center gap-1">
-                            <Sparkles className="w-3 h-3" />
-                            <span>Nổi bật</span>
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Top Right Quick Actions */}
-                      <div className="absolute top-2 right-2 flex items-center gap-1 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={() => handleMoveClientItem(idx, 'up')}
-                          disabled={idx === 0}
-                          className="p-1.5 rounded-lg bg-black/80 hover:bg-white text-white hover:text-black border border-white/15 disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
-                          title="Lên trên"
-                        >
-                          <ArrowUp className="w-3 h-3" />
-                        </button>
-                        <button
-                          onClick={() => handleMoveClientItem(idx, 'down')}
-                          disabled={idx === localClients.length - 1}
-                          className="p-1.5 rounded-lg bg-black/80 hover:bg-white text-white hover:text-black border border-white/15 disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
-                          title="Xuống dưới"
-                        >
-                          <ArrowDown className="w-3 h-3" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Content Card Body */}
-                    <div className="p-3.5 sm:p-4 flex flex-col justify-between flex-1 gap-2.5 bg-[#121216]">
-                      <div className="space-y-1.5">
-                        <div className="flex items-center gap-2">
-                          {client.logo ? (
-                            <img
-                              src={client.logo}
-                              alt={client.clientName}
-                              className="w-6 h-6 rounded-md object-cover bg-white/10 p-0.5 border border-white/15 shrink-0"
-                            />
-                          ) : (
-                            <div className="w-6 h-6 rounded-md bg-white/10 border border-white/10 flex items-center justify-center text-[#C3EA39] font-mono text-[10px] shrink-0 font-bold">
-                              ✦
-                            </div>
-                          )}
-
-                          <h4 className="font-display font-bold text-sm text-white truncate group-hover:text-[#C3EA39] transition-colors flex-1">
-                            {client.clientName}
-                          </h4>
-
-                          {client.year && (
-                            <span className="text-[10px] font-mono text-white/40 px-1.5 py-0.5 rounded bg-white/5 border border-white/10 shrink-0">
-                              {client.year}
-                            </span>
-                          )}
-                        </div>
-
-                        <p className="text-[11px] font-mono text-[#C3EA39]/80 truncate">
-                          {client.service || 'Graphic Design'}
-                        </p>
-
-                        {client.note && (
-                          <p className="text-xs text-white/60 line-clamp-2 leading-relaxed font-light">
-                            {client.note}
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Bottom Actions Bar */}
-                      <div className="pt-2.5 border-t border-white/10 flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1.5">
-                          {client.link && (
-                            <a
-                              href={client.link.startsWith('http') ? client.link : `https://${client.link}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-white/60 hover:text-white transition-colors"
-                              title="Xem trang của khách"
-                            >
-                              <ExternalLink className="w-3.5 h-3.5" />
-                            </a>
-                          )}
-                          <button
-                            onClick={() => setPreviewingImage(client.coverImage)}
-                            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-white/60 hover:text-white transition-colors cursor-pointer"
-                            title="Xem ảnh lớn"
-                          >
-                            <Eye className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            onClick={() => handleOpenEditClient(client)}
-                            className="px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-[#C3EA39] text-white hover:text-black transition-colors font-mono text-xs flex items-center gap-1 cursor-pointer border border-white/10"
-                          >
-                            <Edit2 className="w-3 h-3" />
-                            <span>Sửa</span>
-                          </button>
-                          <button
-                            onClick={() => handleDeleteClientItem(client.id)}
-                            className="p-1.5 rounded-xl bg-white/5 hover:bg-red-500 text-white/60 hover:text-white transition-colors cursor-pointer border border-white/10"
-                            title="Xóa khách hàng"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            </>
+            <DanhSachBrand
+              danhSach={localClients}
+              onThem={handleOpenAddClient}
+              onSua={handleOpenEditClient}
+              onXoa={handleDeleteClientItem}
+              onDoiThuTu={(tu, dich) => {
+                setLocalClients(truoc => {
+                  const ra = [...truoc];
+                  const [lay] = ra.splice(tu, 1);
+                  ra.splice(dich, 0, lay);
+                  return ra;
+                });
+              }}
+            />
           )}
 
           {mucHienTai?.khoiAnh === 'marquee' && (

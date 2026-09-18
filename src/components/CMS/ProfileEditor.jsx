@@ -3,7 +3,7 @@ import { Plus, Trash2, Check, Upload, Image as ImageIcon, Sparkles, Loader2, Cro
 import { optimizeAndUploadToR2 } from '../../utils/imageOptimizer';
 import { deleteFromR2, uploadToR2 } from '../../utils/r2Storage';
 import ImageCropModal from './ImageCropModal';
-import { laZalo, duongDanZalo } from '../../utils/lienKetZalo';
+import { laZalo } from '../../utils/lienKetZalo';
 
 /**
  * Khối hồ sơ ở mục 04: ảnh chân dung, CV, hành trình, các liên kết.
@@ -706,26 +706,6 @@ export default function ProfileEditor({ formData, setFormData }) {
                   className="w-full px-3 py-2 sm:py-1.5 rounded-lg bg-black/60 border border-white/10 text-base sm:text-xs font-mono text-white/70"
                 />
 
-                {/* Ô Zalo: cho thấy trước địa chỉ thật sẽ ra, khỏi phải đoán. */}
-                {laZalo(soc) && (
-                  <p className="text-[11px] font-mono text-white/40 leading-relaxed">
-                    {soc.url?.trim() ? (
-                      <>
-                        Khách bấm sẽ mở:{' '}
-                        <a
-                          href={duongDanZalo(soc.url)}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-[#7FB4FF] hover:text-[#C3EA39] break-all cursor-pointer"
-                        >
-                          {duongDanZalo(soc.url)}
-                        </a>
-                      </>
-                    ) : (
-                      'Chỉ cần gõ số điện thoại, phần zalo.me/ trang tự ghép. Để trống thì nút này không hiện trên trang.'
-                    )}
-                  </p>
-                )}
               </div>
             );
           })}
