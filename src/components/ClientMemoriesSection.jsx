@@ -28,11 +28,21 @@ function ngauNhien(hat) {
  * quanh mức lý tưởng rồi chọn số nào cho HÀNG CUỐI ĐẦY NHẤT — 11 brand thì 6 cột
  * ra 6–5, hoặc 4 cột ra 4–4–3, cả hai đều gọn.
  */
-function soCotCua(tong, rong, cao) {
-  const lyTuong = Math.max(1, Math.round(Math.sqrt(tong * (rong / Math.max(1, cao)))));
+function soCotCua(tong, rong, rongCoBan, leNgang) {
+  // Số cột suy ra từ BỀ NGANG, không từ tỉ lệ khung.
+  //
+  // Trước đây tính theo rong/cao, mà chiều cao giờ lại tính ngược từ số hàng —
+  // thành ra vòng tròn. Lấy theo bề ngang thì dứt khoát.
+  //
+  // TRẦN CỨNG: một ô không được hẹp hơn chính cái thẻ. Không chặn thì trên màn
+  // 375px nó chọn 4 cột trong khi bề ngang chỉ đủ 3,7 thẻ — ô hẹp hơn thẻ, và
+  // 8 cặp đè lên nhau.
+  const dungDuoc = Math.max(1, rong - leNgang * 2);
+  const toiDa = Math.max(1, Math.floor(dungDuoc / rongCoBan));
+  const lyTuong = Math.min(toiDa, Math.max(1, Math.round(dungDuoc / (rongCoBan * 1.25))));
   let tot = lyTuong, diem = -1;
 
-  for (let c = Math.max(1, lyTuong - 2); c <= lyTuong + 2; c++) {
+  for (let c = Math.max(1, lyTuong - 2); c <= Math.min(toiDa, lyTuong + 2); c++) {
     if (c > tong) break;
     const du = tong % c;
     const hangCuoi = du === 0 ? c : du;       // hàng cuối có mấy cái
@@ -45,9 +55,24 @@ function soCotCua(tong, rong, cao) {
 
 // Lưới gồm cot × hang ô. Brand xếp lần lượt, mấy ô dư ở cuối là chỗ để một
 // brand tan đi rồi mọc lên.
-function soChoCua(tong, rong, cao) {
-  const cot = soCotCua(tong, rong, cao);
+function soChoCua(tong, rong, rongCoBan, leNgang) {
+  const cot = soCotCua(tong, rong, rongCoBan, leNgang);
   return cot * Math.max(1, Math.ceil(tong / cot));
+}
+
+/** Chiều cao vừa khít số hàng, không để lại khoảng trống ở đáy. */
+function caoVuaDu(tong, rong, rongCoBan, caoCoBan, leDoc, leNgang) {
+  const cot = soCotCua(tong, rong, rongCoBan, leNgang);
+  const hang = Math.max(1, Math.ceil(tong / cot));
+  // Mỗi hàng chừa bao nhiêu chiều cao.
+  //
+  // KHÔNG lấy `caoCoBan * 1.12`. `caoCoBan` (145) là con số ước lượng dư để
+  // tính khoảng cách an toàn, chứ thẻ thật đo được chỉ cao 46–52px. Chừa 170px
+  // một hàng thì đáy khung thừa hơn 200px, đẩy mục "Về tui" xuống xa.
+  const ry = (caoCoBan * 1.12) / 2;
+  // Mỗi ô cao bằng thẻ lớn nhất cộng 26px cho thoáng. Cộng thêm 2*ry vì lề trên
+  // và lề dưới đo theo MÉP thẻ, tức là đã trừ nửa thẻ ở mỗi đầu.
+  return Math.round(leDoc * 2 + 2 * ry + hang * (2 * ry + 26));
 }
 
 // Rải các CHỖ ĐỨNG ra khung, ngẫu nhiên nhưng không cái nào đè cái nào.
@@ -93,9 +118,15 @@ function raiCho(soCho, cot, rong, cao, leNgang, leDoc, rongCoBan, caoCoBan) {
     const rx = (rongCoBan * tiLe) / 2;
     const ry = (caoCoBan * tiLe) / 2;
 
-    // Lệch khỏi tâm ô, nhưng chỉ trong lòng ô nên không bao giờ đè ô bên cạnh.
-    const lechX = (ngauNhien(i * 7 + 3) - 0.5) * wO * 0.32;
-    const lechY = (ngauNhien(i * 13 + 9) - 0.5) * hO * 0.32;
+    // Lệch khỏi tâm ô cho đỡ khô cứng, NHƯNG chặn lại theo chỗ thật sự còn
+    // trống trong ô: `(cạnh ô - thẻ) / 2`. Chặn kiểu này thì thẻ không bao giờ
+    // ra khỏi ô của nó, nên dù khung có hẹp tới đâu cũng không thể đè nhau.
+    // Bản trước lệch cứng 32% cạnh ô — ô hẹp lại là lệch ra ngoài, đè cái bên
+    // cạnh; đo được 5 cặp đè nhau.
+    const nhichX = Math.max(0, (wO - rx * 2) / 2);
+    const nhichY = Math.max(0, (hO - ry * 2) / 2);
+    const lechX = (ngauNhien(i * 7 + 3) - 0.5) * 2 * nhichX;
+    const lechY = (ngauNhien(i * 13 + 9) - 0.5) * 2 * nhichY;
 
     ds.push({
       px: xMin + wO * (c + 0.5) + lechX,
@@ -237,24 +268,44 @@ export default function ClientMemoriesSection() {
   //
   // Tính theo MÉP thẻ: không mép nào lọt vào dải này, kể cả thẻ to nhất.
   const leNgang = hepMH ? 14 : 32;
-  const leDoc = hepMH ? 14 : 28;
+  const leDoc = hepMH ? 14 : 16;
 
-  // Chiều cao tối thiểu: đủ chỗ cho chừng ấy brand mà không phải chen chúc.
-  // Ước theo diện tích — mỗi chỗ đứng cần khoảng một ô vuông cạnh `kichCo`.
-  const caoToiThieu = hepMH ? 300 : 540;
 
-  // Cỡ gốc của một thẻ brand (chưa nhân tỉ lệ) — dùng để giữ khoảng cách và để
-  // tính lề theo mép. Lấy dư một chút cho chắc.
-  const rongCoBan = hepMH ? 82 : 170;
-  const caoCoBan = hepMH ? 104 : 145;
+  // Cỡ HỘP BỌC của một thẻ brand — đây mới là thứ cần giữ cách nhau.
+  //
+  // Đo trên trang thật: màn rộng hộp bọc tối đa 156x52, màn hẹp 99x95. Bên
+  // trong hộp còn một lớp `scale()` nữa, nhưng phần nhìn thấy luôn NHỎ HƠN hộp
+  // bọc và nằm giữa, nên canh theo hộp bọc là chắc.
+  //
+  // Mấy con số cũ (170x145 màn rộng, 82x104 màn hẹp) là ước lượng chứ không
+  // phải đo: chiều cao màn rộng dư gần ba lần nên đáy khung thừa hơn 200px, còn
+  // bề ngang màn hẹp lại thiếu nên các thẻ chen vào nhau.
+  // Màn HẸP giữ nguyên hai số cũ: khung bên đó là hình vuông, đã chạy tốt và
+  // đã kiểm. Chỉ sửa màn RỘNG — nơi đang thừa hơn 200px ở đáy.
+  const rongCoBan = hepMH ? 82 : 160;
+  const caoCoBan = hepMH ? 104 : 56;
+
+  // Chiều cao VỪA KHÍT số hàng.
+  //
+  // Trước đây gán cứng 540px. Lưới chỉ dùng 2 hàng nên đáy khung còn thừa một
+  // khoảng, đẩy mục "Về tui" xuống xa. Giờ cao bao nhiêu là do có mấy hàng.
+  // Màn hẹp thì khung vẫn vuông, số này chỉ làm mức tối thiểu.
+  // Màn hẹp: giữ 300px làm mức tối thiểu như cũ, khung vẫn vuông theo bề ngang.
+  // Màn rộng: cao đúng bằng số hàng cần, không thừa đáy.
+  const caoToiThieu = useMemo(
+    () => (hepMH
+      ? 300
+      : caoVuaDu(clientList.length, khungCo.rong || 1000, rongCoBan, caoCoBan, leDoc, leNgang)),
+    [hepMH, clientList.length, khungCo.rong, rongCoBan, caoCoBan, leDoc, leNgang]
+  );
 
   const soCot = useMemo(
-    () => soCotCua(clientList.length, khungCo.rong || 1000, khungCo.cao || 500),
-    [clientList.length, khungCo.rong, khungCo.cao]
+    () => soCotCua(clientList.length, khungCo.rong || 1000, rongCoBan, leNgang),
+    [clientList.length, khungCo.rong, rongCoBan, leNgang]
   );
   const soCho = useMemo(
-    () => soChoCua(clientList.length, khungCo.rong || 1000, khungCo.cao || 500),
-    [clientList.length, khungCo.rong, khungCo.cao]
+    () => soChoCua(clientList.length, khungCo.rong || 1000, rongCoBan, leNgang),
+    [clientList.length, khungCo.rong, rongCoBan, leNgang]
   );
 
   const cacCho = useMemo(() => {
@@ -431,7 +482,7 @@ export default function ClientMemoriesSection() {
   return (
     <section 
       id="clients" 
-      className="pt-12 sm:pt-20 pb-14 sm:pb-24 scroll-mt-16 relative w-full max-w-full overflow-hidden touch-pan-y"
+      className="pt-12 sm:pt-20 pb-8 sm:pb-10 scroll-mt-16 relative w-full max-w-full overflow-hidden touch-pan-y"
     >
       {/* Vệt sáng nền cho mục có không khí.
           
