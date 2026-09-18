@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Download, ArrowUpRight, Check, Loader2, Sparkles } from 'lucide-react';
 import { taiCvVeMay, cvNamTrongKho } from '../utils/r2Storage';
@@ -33,9 +33,17 @@ export default function AboutSection() {
 
   // Dem so nut THAT SU hien ra, de chia dung so cot. O chua dien gi thi khong
   // tinh — no cung khong duoc ve.
-  const soLienKet = Array.isArray(profile?.socials)
-    ? profile.socials.filter(soc => duongDanLienKet(soc)).length
-    : 0;
+  // Lọc TRƯỚC khi vẽ, không lọc bên trong map.
+  //
+  // Cần biết cái nào là nút CUỐI để cho nó chiếm cả hàng khi số nút là số lẻ —
+  // lọc trong map thì chỉ số bị lệch so với danh sách thật.
+  const nutLienKet = useMemo(
+    () => (Array.isArray(profile?.socials) ? profile.socials : [])
+      .map(soc => ({ soc, diaChi: duongDanLienKet(soc) }))
+      .filter(x => x.diaChi),
+    [profile?.socials]
+  );
+  const soLienKet = nutLienKet.length;
 
   const handleCopyEmail = (e, emailVal) => {
     e.preventDefault();
@@ -295,10 +303,12 @@ export default function AboutSection() {
                   Dien thoai thi van 2 cot — nhet 5 nut vao 375px thi chu "Pinterest"
                   bi cat cut, doc khong ra. */}
               <div className={`grid grid-cols-2 gap-2 ${SO_COT[soLienKet] || 'sm:grid-cols-4'}`}>
-                {profile.socials.map((soc, idx) => {
-                  const diaChi = duongDanLienKet(soc);
-                  // O chua dien gi thi khong hien — tranh nut bam vao khong ra dau.
-                  if (!diaChi) return null;
+                {nutLienKet.map(({ soc, diaChi }, idx) => {
+                  // Màn hẹp chia 2 cột. Số nút lẻ thì nút cuối trơ một mình nửa
+                  // hàng, cột trái 3 cái cột phải 2 cái — lệch, nhìn không thuận
+                  // mắt. Cho nó chiếm cả hàng thì thành 2 · 2 · 1-trọn-hàng.
+                  // Từ màn vừa trở lên các nút nằm một hàng nên trả về 1 cột.
+                  const trongCaHang = soLienKet % 2 === 1 && idx === soLienKet - 1;
 
                   const isEmail = soc.name.toLowerCase().includes('email') || soc.url.startsWith('mailto:');
                   const emailAddress = soc.url.startsWith('mailto:') ? soc.url.replace('mailto:', '') : (profile.email || soc.url);
@@ -310,6 +320,8 @@ export default function AboutSection() {
                         type="button"
                         onClick={(e) => handleCopyEmail(e, emailAddress)}
                         className={`py-3 px-2 rounded-2xl border transition-all flex items-center justify-center group cursor-pointer ${
+                          trongCaHang ? 'col-span-2 sm:col-span-1' : ''
+                        } ${
                           copiedEmail
                             ? 'border-[#C3EA39] bg-[#C3EA39]/10 text-[#C3EA39]'
                             : 'border-white/5 bg-white/[0.02] hover:border-[#C3EA39]/60 hover:bg-white/5 text-white'
@@ -335,7 +347,9 @@ export default function AboutSection() {
                       href={diaChi}
                       target="_blank"
                       rel="noreferrer"
-                      className="py-3 px-2 rounded-2xl border border-white/5 bg-white/[0.02] hover:border-[#C3EA39]/60 hover:bg-white/5 transition-all flex items-center justify-center group cursor-pointer"
+                      className={`py-3 px-2 rounded-2xl border border-white/5 bg-white/[0.02] hover:border-[#C3EA39]/60 hover:bg-white/5 transition-all flex items-center justify-center group cursor-pointer ${
+                        trongCaHang ? 'col-span-2 sm:col-span-1' : ''
+                      }`}
                     >
                       {/* Bo mui ten o day: no chiem 12px, ma 12px do la tat ca phan
                           chenh giua chu 11px va chu 14px. Vien va chu doi sang mau
