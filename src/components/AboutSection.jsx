@@ -191,7 +191,7 @@ export default function AboutSection() {
               </div>
 
               {/* Items: Title + Faint Sub + Year with Active (Glow/Sáng) vs Inactive (Mờ) Status */}
-              <div className="space-y-4 sm:space-y-5">
+              <div className="space-y-3 sm:space-y-5">
                 {profile.experience.map((exp, idx) => {
                   const isCurrent = typeof exp.isCurrent === 'boolean'
                     ? exp.isCurrent
@@ -222,7 +222,7 @@ export default function AboutSection() {
                               <ArrowUpRight className="w-3.5 h-3.5 text-white/40 group-hover/link:text-[#C3EA39] group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-all inline-block" />
                             </a>
                           ) : (
-                            <h4 className={`text-sm sm:text-base font-bold transition-colors ${
+                            <h4 className={`text-sm sm:text-base font-bold leading-snug transition-colors ${
                               isCurrent ? 'text-white drop-shadow-sm' : 'text-white/80'
                             }`}>
                               {exp.company}
@@ -238,17 +238,32 @@ export default function AboutSection() {
                             </span>
                           )}
                         </div>
-                        <span className={`text-xs font-mono ${
+                        {/* Màn rộng: thời gian nằm cuối hàng tên. Màn hẹp thì nó
+                            xuống chung một dòng với vị trí ở dưới. */}
+                        <span className={`hidden sm:block text-xs font-mono shrink-0 ${
                           isCurrent ? 'text-[#C3EA39] font-bold' : 'text-white/40'
                         }`}>
                           {exp.period}
                         </span>
                       </div>
-                      <span className={`block text-xs font-mono ${
-                        isCurrent ? 'text-white/70' : 'text-white/40'
-                      }`}>
-                        // {exp.role}
-                      </span>
+
+                      {/* Màn hẹp: THỜI GIAN và VỊ TRÍ chung một dòng.
+                          Tên công ty dài ("Cty TNHH Thương Mại Và Xây Dựng Thanh
+                          Mai") đã chiếm hai dòng, cộng thời gian và vị trí mỗi
+                          thứ một dòng nữa là bốn dòng cho một mục — cả khối đọc
+                          rất mệt. Gộp hai dòng ngắn đó lại, mỗi mục bớt một dòng. */}
+                      <div className="flex items-baseline gap-2 flex-wrap">
+                        <span className={`sm:hidden text-xs font-mono shrink-0 ${
+                          isCurrent ? 'text-[#C3EA39] font-bold' : 'text-white/40'
+                        }`}>
+                          {exp.period}
+                        </span>
+                        <span className={`text-xs font-mono ${
+                          isCurrent ? 'text-white/70' : 'text-white/40'
+                        }`}>
+                          // {exp.role}
+                        </span>
+                      </div>
                     </div>
                   );
                 })}
