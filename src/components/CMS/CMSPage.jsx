@@ -985,7 +985,7 @@ export default function CMSPage({ onBackToPortfolio }) {
 
           <nav className="lg:sticky lg:top-4 pb-3 lg:pb-0 mb-4 lg:mb-0 border-b lg:border-b-0 border-white/10">
             <div className="flex lg:flex-col gap-1.5 overflow-x-auto lg:overflow-visible p-1.5 rounded-2xl bg-[#121216] border border-white/10 shadow-lg">
-              {CAC_MUC.map((m, i) => {
+              {CAC_MUC.map((m) => {
                 const dangChon = m.id === muc;
                 return (
                   <button
@@ -998,9 +998,9 @@ export default function CMSPage({ onBackToPortfolio }) {
                         : 'text-white/60 hover:text-white hover:bg-white/5'
                     }`}
                   >
-                    <span className={`font-mono text-[10px] shrink-0 ${dangChon ? 'text-black/50' : 'text-white/30'}`}>
-                      {String(i + 1).padStart(2, '0')}
-                    </span>
+                    {/* Bỏ số thứ tự riêng của thanh bên: nó đứng cạnh số mục
+                        thật của trang thành ra hai số liền nhau ("04  01 ·
+                        Cụm ảnh xoay"), đọc rất rối. */}
                     <span className="lg:leading-tight">{m.ten}</span>
                   </button>
                 );
