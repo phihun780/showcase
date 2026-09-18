@@ -11,7 +11,7 @@ const TOKEN_TTL_MS = 12 * 60 * 60 * 1000;
 // portfolio.json) cố tình không có ở đây để không thể bị xoá nhầm.
 // "clients" là nơi chứa logo và ảnh của các brand đã làm việc cùng
 // (clients/, clients/logos/, clients/gallery/).
-const WRITABLE_FOLDERS = ['projects', 'cover_banners', 'random_works', 'profile', 'clients', 'uploads'];
+const WRITABLE_FOLDERS = ['projects', 'cover_banners', 'random_works', 'showcase_wall', 'profile', 'clients', 'uploads'];
 
 export function json(data, status = 200) {
   return new Response(JSON.stringify(data), {

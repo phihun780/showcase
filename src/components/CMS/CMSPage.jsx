@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { usePortfolioData, defaultMarqueeItems } from '../../context/PortfolioDataContext';
 import ProjectEditorModal from './ProjectEditorModal';
+import ShowcaseWallEditor from './ShowcaseWallEditor';
 import ProfileEditor from './ProfileEditor';
 import ImageCropModal from './ImageCropModal';
 import JuxtaposeEmbedModal from './JuxtaposeEmbedModal';
@@ -191,6 +192,7 @@ export default function CMSPage({ onBackToPortfolio }) {
     profile,
     coverBanners,
     randomWorks,
+    showcaseWall,
     clients,
     marqueeItems,
     seasonalEffect,
@@ -209,6 +211,7 @@ export default function CMSPage({ onBackToPortfolio }) {
     deleteRandomWork,
     moveRandomWork,
     updateRandomWorksList,
+    updateShowcaseWall,
     addClient,
     updateClient,
     deleteClient,
@@ -248,6 +251,7 @@ export default function CMSPage({ onBackToPortfolio }) {
   const [localProjects, setLocalProjects] = useState(projects);
   const [localCoverBanners, setLocalCoverBanners] = useState(coverBanners);
   const [localRandomWorks, setLocalRandomWorks] = useState(randomWorks);
+  const [localShowcaseWall, setLocalShowcaseWall] = useState(showcaseWall);
   const [localClients, setLocalClients] = useState(clients);
   const [localMarqueeItems, setLocalMarqueeItems] = useState(marqueeItems);
   const [localSeasonalEffect, setLocalSeasonalEffect] = useState(seasonalEffect);
@@ -270,6 +274,7 @@ export default function CMSPage({ onBackToPortfolio }) {
   useEffect(() => { setLocalProjects(projects); }, [projects]);
   useEffect(() => { setLocalCoverBanners(coverBanners); }, [coverBanners]);
   useEffect(() => { setLocalRandomWorks(randomWorks); }, [randomWorks]);
+  useEffect(() => { setLocalShowcaseWall(showcaseWall); }, [showcaseWall]);
   useEffect(() => { setLocalClients(clients); }, [clients]);
   useEffect(() => { setLocalMarqueeItems(marqueeItems); }, [marqueeItems]);
   useEffect(() => { setLocalSeasonalEffect(seasonalEffect); }, [seasonalEffect]);
@@ -320,6 +325,7 @@ export default function CMSPage({ onBackToPortfolio }) {
       projects: localProjects,
       coverBanners: localCoverBanners,
       randomWorks: localRandomWorks,
+      showcaseWall: localShowcaseWall,
       clients: localClients,
       marqueeItems: localMarqueeItems,
       seasonalEffect: localSeasonalEffect,
@@ -335,12 +341,14 @@ export default function CMSPage({ onBackToPortfolio }) {
   // Tab Save Handlers (Persist to Store & Sync to Cloudflare R2)
   const handleSaveProjectsTab = async () => {
     updateProjectsList(localProjects);
+    updateShowcaseWall(localShowcaseWall);
     const res = await saveToCloud({
       updatedAt: new Date().toISOString(),
       profile,
       projects: localProjects,
       coverBanners: localCoverBanners,
       randomWorks: localRandomWorks,
+      showcaseWall: localShowcaseWall,
       clients: localClients,
       marqueeItems: localMarqueeItems,
       seasonalEffect: localSeasonalEffect,
@@ -364,6 +372,7 @@ export default function CMSPage({ onBackToPortfolio }) {
       projects: localProjects,
       coverBanners: localCoverBanners,
       randomWorks: localRandomWorks,
+      showcaseWall: localShowcaseWall,
       clients: localClients,
       marqueeItems: localMarqueeItems,
       seasonalEffect: localSeasonalEffect,
@@ -390,6 +399,7 @@ export default function CMSPage({ onBackToPortfolio }) {
       projects: localProjects,
       coverBanners: localCoverBanners,
       randomWorks: localRandomWorks,
+      showcaseWall: localShowcaseWall,
       clients: localClients,
       marqueeItems: localMarqueeItems,
       seasonalEffect: localSeasonalEffect,
@@ -444,6 +454,7 @@ export default function CMSPage({ onBackToPortfolio }) {
       projects: updated,
       coverBanners: localCoverBanners,
       randomWorks: localRandomWorks,
+      showcaseWall: localShowcaseWall,
       marqueeItems: localMarqueeItems,
       seasonalEffect: localSeasonalEffect,
     });
@@ -472,6 +483,7 @@ export default function CMSPage({ onBackToPortfolio }) {
         projects: updated,
         coverBanners: localCoverBanners,
         randomWorks: localRandomWorks,
+        showcaseWall: localShowcaseWall,
         marqueeItems: localMarqueeItems,
         seasonalEffect: localSeasonalEffect,
       });
@@ -1393,13 +1405,20 @@ export default function CMSPage({ onBackToPortfolio }) {
               </div>
             )}
 
+            {/* Tường ảnh 3D — nằm chung tab Dự Án vì nó hiện ở mục 02, ngay
+                dưới danh sách dự án. Lưu chung một nút với danh sách dự án. */}
+            <ShowcaseWallEditor
+              items={localShowcaseWall}
+              onChange={setLocalShowcaseWall}
+            />
+
             {/* Sticky Bottom Save Bar for Projects */}
             <StickySaveBar
               isSaved={savedAlerts.projects}
               onSave={handleSaveProjectsTab}
               isSyncing={isCloudSyncing}
               label="Lưu Danh Sách Dự Án"
-              hint="Nhớ bấm lưu để cập nhật thứ tự và danh sách dự án"
+              hint="Nhớ bấm lưu để cập nhật dự án và tường ảnh 3D"
             />
           </div>
         )}
@@ -2116,6 +2135,7 @@ export default function CMSPage({ onBackToPortfolio }) {
                 projects: localProjects,
                 coverBanners: localCoverBanners,
                 randomWorks: localRandomWorks,
+                showcaseWall: localShowcaseWall,
                 clients: localClients,
                 marqueeItems: localMarqueeItems,
                 seasonalEffect: localSeasonalEffect,

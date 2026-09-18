@@ -15,6 +15,7 @@ const STORAGE_COVER_BANNERS_KEY = 'phihung_portfolio_cover_banners';
 const STORAGE_CLIENTS_KEY = 'phihung_portfolio_clients';
 const STORAGE_SEASONAL_EFFECT_KEY = 'phihung_portfolio_seasonal_effect';
 const STORAGE_MARQUEE_KEY = 'phihung_portfolio_marquee';
+const STORAGE_SHOWCASE_WALL_KEY = 'phihung_portfolio_showcase_wall';
 
 export const defaultMarqueeItems = [
   "UI/UX PRODUCT DESIGN",
@@ -92,6 +93,21 @@ export function PortfolioDataProvider({ children }) {
     return defaultRandomWorks;
   });
 
+  // Tường ảnh 3D ở mục 02 — danh sách ảnh rời, tự thêm trong CMS.
+  // Không có bản mặc định: chưa thêm ảnh nào thì mục này ẩn luôn.
+  const [showcaseWall, setShowcaseWall] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_SHOWCASE_WALL_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {
+      console.error('Failed to load showcaseWall from localStorage', e);
+    }
+    return [];
+  });
+
   // Load clients from localStorage or default
   const [clients, setClients] = useState(() => {
     try {
@@ -160,6 +176,9 @@ export function PortfolioDataProvider({ children }) {
           if (Array.isArray(cloudData.randomWorks)) {
             setRandomWorks(cloudData.randomWorks);
           }
+          if (Array.isArray(cloudData.showcaseWall)) {
+            setShowcaseWall(cloudData.showcaseWall);
+          }
           if (Array.isArray(cloudData.clients)) {
             setClients(cloudData.clients);
           }
@@ -201,6 +220,7 @@ export function PortfolioDataProvider({ children }) {
       projects,
       coverBanners,
       randomWorks,
+      showcaseWall,
       clients,
       marqueeItems,
       seasonalEffect,
@@ -223,6 +243,10 @@ export function PortfolioDataProvider({ children }) {
       if (Array.isArray(customPayload.randomWorks)) {
         setRandomWorks(customPayload.randomWorks);
         try { localStorage.setItem(STORAGE_RANDOM_WORKS_KEY, JSON.stringify(customPayload.randomWorks)); } catch (e) {}
+      }
+      if (Array.isArray(customPayload.showcaseWall)) {
+        setShowcaseWall(customPayload.showcaseWall);
+        try { localStorage.setItem(STORAGE_SHOWCASE_WALL_KEY, JSON.stringify(customPayload.showcaseWall)); } catch (e) {}
       }
       if (Array.isArray(customPayload.clients)) {
         setClients(customPayload.clients);
@@ -268,10 +292,11 @@ export function PortfolioDataProvider({ children }) {
     safeSet(STORAGE_SEASONAL_EFFECT_KEY, seasonalEffect);
     safeSet(STORAGE_COVER_BANNERS_KEY, coverBanners);
     safeSet(STORAGE_RANDOM_WORKS_KEY, randomWorks);
+    safeSet(STORAGE_SHOWCASE_WALL_KEY, showcaseWall);
     safeSet(STORAGE_CLIENTS_KEY, clients);
     safeSet(STORAGE_PROJECTS_KEY, projects);
     safeSet(STORAGE_PROFILE_KEY, profile);
-  }, [marqueeItems, seasonalEffect, coverBanners, randomWorks, clients, projects, profile]);
+  }, [marqueeItems, seasonalEffect, coverBanners, randomWorks, showcaseWall, clients, projects, profile]);
 
   // 3. Auto-sync to Cloudflare R2 ONLY when user has made real edits in CMS
   useEffect(() => {
@@ -285,7 +310,7 @@ export function PortfolioDataProvider({ children }) {
     }, 1500);
 
     return () => clearTimeout(timer);
-  }, [projects, profile, coverBanners, randomWorks, clients, marqueeItems, seasonalEffect]);
+  }, [projects, profile, coverBanners, randomWorks, showcaseWall, clients, marqueeItems, seasonalEffect]);
 
   // Project CRUD Actions
   const addProject = (newProjectData) => {
@@ -440,6 +465,13 @@ export function PortfolioDataProvider({ children }) {
     setRandomWorks(newList);
   };
 
+  // Tường ảnh 3D — CMS sửa cả danh sách một lượt (thêm, xoá, đổi thứ tự) nên
+  // chỉ cần một hàm thay nguyên mảng, không cần thêm/xoá từng cái.
+  const updateShowcaseWall = (newList) => {
+    hasUserEditedRef.current = true;
+    setShowcaseWall(Array.isArray(newList) ? newList : []);
+  };
+
   // Client Memories CRUD Actions (Kỷ Niệm & Khách Hàng)
   const addClient = (clientData) => {
     hasUserEditedRef.current = true;
@@ -546,6 +578,7 @@ export function PortfolioDataProvider({ children }) {
       projects,
       coverBanners,
       randomWorks,
+      showcaseWall,
       clients,
       marqueeItems,
       seasonalEffect,
@@ -579,6 +612,9 @@ export function PortfolioDataProvider({ children }) {
           if (parsed.randomWorks && Array.isArray(parsed.randomWorks)) {
             setRandomWorks(parsed.randomWorks);
           }
+          if (parsed.showcaseWall && Array.isArray(parsed.showcaseWall)) {
+            setShowcaseWall(parsed.showcaseWall);
+          }
           if (parsed.clients && Array.isArray(parsed.clients)) {
             setClients(parsed.clients);
           }
@@ -605,6 +641,7 @@ export function PortfolioDataProvider({ children }) {
         profile,
         coverBanners,
         randomWorks,
+        showcaseWall,
         clients,
         marqueeItems,
         seasonalEffect,
@@ -624,6 +661,7 @@ export function PortfolioDataProvider({ children }) {
         deleteRandomWork,
         moveRandomWork,
         updateRandomWorksList,
+        updateShowcaseWall,
         addClient,
         updateClient,
         deleteClient,

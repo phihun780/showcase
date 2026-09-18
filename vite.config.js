@@ -220,7 +220,7 @@ function r2DevPlugin() {
           // Cùng bộ luật với bản chạy thật (functions/api/tai-anh.js): chỉ các
           // thư mục của CMS. Để dev dễ dãi hơn thì có lỗi chỉ lộ ra khi đã lên
           // trang thật.
-          const thuMucChoPhep = ['projects', 'cover_banners', 'random_works', 'profile', 'clients', 'uploads'];
+          const thuMucChoPhep = ['projects', 'cover_banners', 'random_works', 'showcase_wall', 'profile', 'clients', 'uploads'];
           const hopLe =
             key &&
             !key.includes('..') &&
