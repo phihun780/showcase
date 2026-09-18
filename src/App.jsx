@@ -3,7 +3,7 @@ import { PortfolioDataProvider, usePortfolioData } from './context/PortfolioData
 import Header from './components/Header';
 import Hero from './components/Hero';
 import CoverBannerSection from './components/CoverBannerSection';
-import RandomWorkSection from './components/RandomWorkSection';
+import ShowcaseWallSection from './components/ShowcaseWallSection';
 import WorkSection from './components/WorkSection';
 import AboutSection from './components/AboutSection';
 import ClientMemoriesSection from './components/ClientMemoriesSection';
@@ -334,7 +334,7 @@ function PortfolioApp() {
       <main id="top" className="relative z-10 w-full max-w-full overflow-x-hidden">
         <Hero />
         <CoverBannerSection />
-        <RandomWorkSection />
+        <ShowcaseWallSection />
         <WorkSection />
         <ClientMemoriesSection />
         <AboutSection />

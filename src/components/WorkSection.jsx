@@ -5,7 +5,6 @@ import ProjectModal from './ProjectModal';
 import SmartImage from './SmartImage';
 import { projectPath, slugFromLocation, findProjectBySlug } from '../utils/projectUrl';
 import ScrollArea from './ScrollArea';
-import ShowcaseWall from './ShowcaseWall';
 
 // Khung chứa danh sách dự án. Đủ ngắn thì xếp thường; dài quá thì bọc trong
 // vùng cuộn có thanh chỉ báo tự vẽ (thanh trượt gốc của trình duyệt không chỉnh
@@ -29,7 +28,7 @@ function KhungDanhSach({ isScrollable, children }) {
 }
 
 export default function WorkSection() {
-  const { projects, profile, showcaseWall } = usePortfolioData();
+  const { projects, profile } = usePortfolioData();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [activeProjectModal, setActiveProjectModal] = useState(null);
   // Máy có rê chuột thật hay không.
@@ -327,25 +326,6 @@ export default function WorkSection() {
             </motion.div>
 
           </div>
-        )}
-
-        {/* Tường ảnh 3D. Đây là chỗ ngắm cho vui — muốn xem dự án đầy đủ thì
-            vẫn bấm vào danh sách phía trên, hai thứ không thay nhau.
-            Chưa thêm ảnh nào trong CMS thì ShowcaseWall tự trả về null. */}
-        {Array.isArray(showcaseWall) && showcaseWall.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-60px' }}
-            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-            className="mt-10 sm:mt-14"
-          >
-            <ShowcaseWall
-              items={showcaseWall}
-              title={profile?.showcaseWallTitle || 'Vài khung hình khác'}
-              hint={profile?.showcaseWallHint}
-            />
-          </motion.div>
         )}
 
       </div>

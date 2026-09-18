@@ -207,9 +207,6 @@ export default function CMSPage({ onBackToPortfolio }) {
     deleteCoverBanner,
     moveCoverBanner,
     updateCoverBannersList,
-    addRandomWork,
-    deleteRandomWork,
-    moveRandomWork,
     updateRandomWorksList,
     updateShowcaseWall,
     addClient,
@@ -242,10 +239,7 @@ export default function CMSPage({ onBackToPortfolio }) {
   const projectFileInputRef = useRef(null);
   const coverBannerFileInputRef = useRef(null);
   const replaceBannerFileInputRef = useRef(null);
-  const randomWorkFileInputRef = useRef(null);
-  const replaceRandomFileInputRef = useRef(null);
   const [replacingBannerIndex, setReplacingBannerIndex] = useState(null);
-  const [replacingRandomIndex, setReplacingRandomIndex] = useState(null);
 
   // Local Working States for Tabs (Changes are applied upon clicking "Lưu Thay Đổi")
   const [localProjects, setLocalProjects] = useState(projects);
@@ -341,7 +335,6 @@ export default function CMSPage({ onBackToPortfolio }) {
   // Tab Save Handlers (Persist to Store & Sync to Cloudflare R2)
   const handleSaveProjectsTab = async () => {
     updateProjectsList(localProjects);
-    updateShowcaseWall(localShowcaseWall);
     const res = await saveToCloud({
       updatedAt: new Date().toISOString(),
       profile,
@@ -363,7 +356,7 @@ export default function CMSPage({ onBackToPortfolio }) {
 
   const handleSaveHomeTab = async () => {
     updateCoverBannersList(localCoverBanners);
-    updateRandomWorksList(localRandomWorks);
+    updateShowcaseWall(localShowcaseWall);
     updateMarqueeItems(localMarqueeItems);
     updateSeasonalEffect(localSeasonalEffect);
     const res = await saveToCloud({
@@ -699,9 +692,6 @@ export default function CMSPage({ onBackToPortfolio }) {
     setEditingMediaItem({ item: banner, index: idx, mode: 'banner' });
   };
 
-  const handleOpenEditRandomWork = (work, idx) => {
-    setEditingMediaItem({ item: work, index: idx, mode: 'random' });
-  };
 
   const handleSaveMediaItem = (updatedItem) => {
     if (!editingMediaItem) return;
@@ -873,122 +863,13 @@ export default function CMSPage({ onBackToPortfolio }) {
   };
 
   // 2. Random Works Handlers (Framing Preview 1:1 on Upload & Adjustment)
-  const handleUploadRandomWork = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (loadEvent) => {
-        setCropModalConfig({
-          isOpen: true,
-          imageSrc: loadEvent.target.result,
-          mode: 'random',
-          actionType: 'add',
-          targetIndex: null,
-          title: file.name.replace(/\.[^/.]+$/, "") || "Artwork mới",
-          subtitle: "Tác phẩm lúc rảnh rỗi",
-          initialAspectRatio: 1,
-          folderPrefix: 'random_works',
-        });
-      };
-      reader.readAsDataURL(file);
-    }
-    e.target.value = '';
-  };
 
-  const handleTriggerReplaceRandom = (idx) => {
-    setReplacingRandomIndex(idx);
-    replaceRandomFileInputRef.current?.click();
-  };
 
-  const handleReplaceRandomFile = (e) => {
-    const file = e.target.files?.[0];
-    if (file && replacingRandomIndex !== null) {
-      const targetIdx = replacingRandomIndex;
-      const currentWork = localRandomWorks[targetIdx];
-      const reader = new FileReader();
-      reader.onload = (loadEvent) => {
-        setCropModalConfig({
-          isOpen: true,
-          imageSrc: loadEvent.target.result,
-          mode: 'random',
-          actionType: 'replace',
-          targetIndex: targetIdx,
-          title: currentWork?.title || file.name.replace(/\.[^/.]+$/, ""),
-          subtitle: currentWork?.subtitle || "Tác phẩm lúc rảnh rỗi",
-          initialAspectRatio: 1,
-          folderPrefix: 'random_works',
-        });
-      };
-      reader.readAsDataURL(file);
-    }
-    setReplacingRandomIndex(null);
-    e.target.value = '';
-  };
 
-  const handleAdjustRandomWork = (work, idx) => {
-    setCropModalConfig({
-      isOpen: true,
-      imageSrc: work.image,
-      mode: 'random',
-      actionType: 'adjust',
-      targetIndex: idx,
-      title: work.title || `Artwork ${idx + 1}`,
-      subtitle: work.subtitle || "Tác phẩm lúc rảnh rỗi",
-      initialAspectRatio: 1,
-      folderPrefix: 'random_works',
-    });
-  };
 
-  const handleEditRandomWorkInfo = (work, idx) => {
-    const newTitle = window.prompt("Nhập tên tác phẩm:", work.title || "");
-    if (newTitle !== null) {
-      const newSubtitle = window.prompt("Nhập mô tả phụ:", work.subtitle || "");
-      if (newSubtitle !== null) {
-        setLocalRandomWorks(prev => {
-          const updated = [...prev];
-          updated[idx] = {
-            ...updated[idx],
-            title: newTitle.trim(),
-            subtitle: newSubtitle.trim(),
-          };
-          return updated;
-        });
-      }
-    }
-  };
 
-  const handleAddRandomWorkUrl = () => {
-    const url = window.prompt("Nhập đường dẫn URL ảnh artwork:");
-    if (url && url.trim()) {
-      const title = window.prompt("Nhập tên tác phẩm (hoặc để trống):") || "Artwork mới";
-      const newWork = {
-        id: Date.now().toString(),
-        title: title.trim(),
-        subtitle: "Tác phẩm lúc rảnh rỗi",
-        image: url.trim(),
-      };
-      setLocalRandomWorks(prev => [...prev, newWork]);
-    }
-  };
 
-  const moveLocalRandomWork = (index, direction) => {
-    setLocalRandomWorks(prev => {
-      const targetIndex = direction === 'up' ? index - 1 : index + 1;
-      if (targetIndex < 0 || targetIndex >= prev.length) return prev;
-      const newArr = [...prev];
-      const temp = newArr[index];
-      newArr[index] = newArr[targetIndex];
-      newArr[targetIndex] = temp;
-      return newArr;
-    });
-  };
 
-  const handleDeleteRandomWork = (work, idx) => {
-    if (window.confirm("Xoá artwork này khỏi Tùm lum tà la?")) {
-      if (work.image) deleteFromR2(work.image);
-      setLocalRandomWorks(prev => prev.filter((_, i) => i !== idx));
-    }
-  };
 
 
 
@@ -1212,20 +1093,6 @@ export default function CMSPage({ onBackToPortfolio }) {
             onChange={handleReplaceBannerFile}
             className="hidden"
           />
-          <input
-            ref={randomWorkFileInputRef}
-            type="file"
-            accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,.gif,image/*"
-            onChange={handleUploadRandomWork}
-            className="hidden"
-          />
-          <input
-            ref={replaceRandomFileInputRef}
-            type="file"
-            accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,.gif,image/*"
-            onChange={handleReplaceRandomFile}
-            className="hidden"
-          />
         </div>
 
         {/* Tab 1: Dự án */}
@@ -1405,20 +1272,13 @@ export default function CMSPage({ onBackToPortfolio }) {
               </div>
             )}
 
-            {/* Tường ảnh 3D — nằm chung tab Dự Án vì nó hiện ở mục 02, ngay
-                dưới danh sách dự án. Lưu chung một nút với danh sách dự án. */}
-            <ShowcaseWallEditor
-              items={localShowcaseWall}
-              onChange={setLocalShowcaseWall}
-            />
-
             {/* Sticky Bottom Save Bar for Projects */}
             <StickySaveBar
               isSaved={savedAlerts.projects}
               onSave={handleSaveProjectsTab}
               isSyncing={isCloudSyncing}
               label="Lưu Danh Sách Dự Án"
-              hint="Nhớ bấm lưu để cập nhật dự án và tường ảnh 3D"
+              hint="Nhớ bấm lưu để cập nhật thứ tự và danh sách dự án"
             />
           </div>
         )}
@@ -1796,100 +1656,13 @@ export default function CMSPage({ onBackToPortfolio }) {
               )}
             </div>
 
-            {/* 2. TÙM LUM TÀ LA (Artwork Vuông 1:1) */}
-            <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#121216] border border-white/10 space-y-4 sm:space-y-5">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-[#C3EA39]/15 text-[#C3EA39] flex items-center justify-center shrink-0">
-                    <Sparkles className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm sm:text-base font-display font-bold text-white">
-                      2. Tùm Lum Tà La (Section 01 - Artwork 1:1)
-                    </h3>
-                    <p className="text-[11px] font-mono text-white/50">
-                      Artwork vuông & GIF xoay vòng ở Section 01
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 w-full sm:w-auto">
-                  <button
-                    onClick={() => randomWorkFileInputRef.current?.click()}
-                    className="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black text-xs font-display font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-[1.02] cursor-pointer min-h-[38px]"
-                  >
-                    <Upload className="w-3.5 h-3.5" />
-                    <span>Tải Ảnh</span>
-                  </button>
-
-                  <button
-                    onClick={handleAddRandomWorkUrl}
-                    className="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 text-xs font-mono transition-colors cursor-pointer flex items-center justify-center gap-1 min-h-[38px]"
-                    title="Nhập trực tiếp URL ảnh"
-                  >
-                    <span>🔗 URL</span>
-                  </button>
-                </div>
-              </div>
-
-              {localRandomWorks.length === 0 ? (
-                <div
-                  onClick={() => randomWorkFileInputRef.current?.click()}
-                  className="p-8 sm:p-12 rounded-2xl border-2 border-dashed border-white/15 hover:border-[#C3EA39]/50 bg-black/30 hover:bg-black/50 transition-all flex flex-col items-center justify-center text-center cursor-pointer group"
-                >
-                  <Upload className="w-8 h-8 text-[#C3EA39] mb-2 group-hover:scale-110 transition-transform" />
-                  <p className="font-display font-bold text-white text-sm">Chưa có Artwork Tùm Lum Tà La nào</p>
-                  <p className="text-xs text-white/40 mt-1 font-mono">Bấm để tải ảnh vuông 1:1 hoặc GIF</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
-                  {localRandomWorks.map((work, idx) => (
-                    <div
-                      key={work.id || idx}
-                      className="relative rounded-xl overflow-hidden border border-white/10 bg-black/40 group flex flex-col hover:border-[#C3EA39]/40 transition-all shadow-lg"
-                    >
-                      <div className="relative aspect-square w-full overflow-hidden bg-black border-b border-white/5">
-                        <img
-                          src={work.image}
-                          alt={work.title || `Artwork ${idx + 1}`}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-
-                        <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-black/80 backdrop-blur-md text-[9px] font-mono font-bold text-[#C3EA39] border border-white/10 flex items-center gap-1 z-20">
-                          <span>#{idx + 1 < 10 ? `0${idx + 1}` : idx + 1}</span>
-                        </div>
-
-                        <div className="absolute top-1.5 right-1.5 flex items-center gap-1 z-20">
-                          <button
-                            onClick={() => handleOpenEditRandomWork(work, idx)}
-                            className="p-1 rounded-md bg-black/80 hover:bg-[#C3EA39] text-[#C3EA39] hover:text-black transition-colors cursor-pointer border border-[#C3EA39]/30"
-                            title="Sửa ảnh"
-                          >
-                            <Edit2 className="w-3 h-3" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteRandomWork(work, idx)}
-                            className="p-1 rounded-md bg-black/80 hover:bg-red-500 text-white/80 hover:text-white transition-colors cursor-pointer border border-white/10"
-                            title="Xoá artwork"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="p-2 bg-[#121216]">
-                        <h4 className="text-xs font-display font-bold text-white truncate">
-                          {work.title || `Artwork #${idx + 1}`}
-                        </h4>
-                        <p className="text-[10px] text-white/40 truncate mt-0.5">
-                          {work.subtitle || 'Tác phẩm ngẫu hứng'}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            {/* 2. TƯỜNG ẢNH 3D (Mục 01) — thay cho "Tùm lum tà la" cũ.
+                Khối cũ là một khung vuông, ảnh tự đổi 7 giây một lần, xem thụ
+                động. Giờ là cụm ảnh kéo xoay được. */}
+            <ShowcaseWallEditor
+              items={localShowcaseWall}
+              onChange={setLocalShowcaseWall}
+            />
 
             {/* 3. DẢI CHỮ CHẠY (Infinite Marquee) */}
             <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#121216] border border-white/10 space-y-4">

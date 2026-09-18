@@ -6,10 +6,12 @@ import SmartImage from '../SmartImage';
 import NutTaiAnh from './NutTaiAnh';
 
 /**
- * Khối quản lý TƯỜNG ẢNH 3D ở mục 02.
+ * Khối quản lý TƯỜNG ẢNH 3D ở mục 01.
  *
- * Đây là một danh sách ảnh rời, không dính gì tới dự án nào. Muốn khoe dự án
- * đầy đủ thì vẫn dùng danh sách dự án phía trên — hai thứ không thay nhau.
+ * Chỗ này thay cho "Tùm lum tà la" cũ: một khung vuông, ảnh tự đổi 7 giây một
+ * lần, xem thụ động. Giờ là cụm ảnh kéo xoay được.
+ *
+ * Đây là danh sách ảnh rời, không dính gì tới dự án nào.
  *
  * Thứ tự trong danh sách là thứ tự các tấm chạy quanh vòng, nên kéo để sắp lại
  * là có ý nghĩa: hai tấm cạnh nhau trong danh sách sẽ nằm cạnh nhau trên vòng.
@@ -231,10 +233,10 @@ export default function ShowcaseWallEditor({ items, onChange }) {
           </div>
           <div>
             <h3 className="text-sm sm:text-base font-display font-bold text-white">
-              Tường Ảnh 3D (Mục 02)
+              2. Tường Ảnh 3D (Mục 01)
             </h3>
             <p className="text-[11px] font-mono text-white/50">
-              Ảnh rời để khách kéo xoay · kéo thả ảnh vào đây cũng được
+              Cụm ảnh khách kéo xoay ở Section 01 · kéo thả ảnh vào đây cũng được
             </p>
           </div>
         </div>
