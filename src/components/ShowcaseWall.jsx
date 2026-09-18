@@ -24,8 +24,11 @@ import { buildSrcSet } from '../utils/responsiveImage';
 // Kéo tay là hàng chục khung hình mỗi giây — mỗi khung một lần render React thì
 // giật ngay. Cách này chỉ đụng tới compositor, React không phải làm gì.
 
-const MA_SAT = 0.94;          // mỗi khung vận tốc còn lại bao nhiêu sau khi thả
-const TROI_NHE = 0.00045;     // tự trôi lúc không ai đụng vào, cho biết là kéo được
+// Mọi tốc độ ở đây tính theo GIÂY, không theo khung hình. Cộng một lượng cố
+// định mỗi khung thì màn 120Hz sẽ quay nhanh gấp đôi màn 60Hz, mà máy yếu tụt
+// khung hình là chậm hẳn lại.
+const MA_SAT = 0.94;          // vận tốc còn lại sau mỗi 1/60 giây, tính từ lúc thả tay
+const TOC_DO_TROI = 0.12;     // radian mỗi giây lúc không ai đụng vào (~52 giây một vòng)
 const NGUONG_KEO = 6;         // di chuyển quá bấy nhiêu px thì tính là kéo, không phải bấm
 const DO_NHAY = 0.0052;       // 1px kéo ngang bằng mấy radian
 
@@ -104,14 +107,23 @@ export default function ShowcaseWall({ items = [], title, hint }) {
 
     const { Rx, Rz, caoRai } = soDo;
 
-    const ve = () => {
+    let lucTruoc = 0;
+
+    const ve = (luc) => {
       const t = trangThai.current;
 
+      // Khoảng cách giữa hai khung hình, tính bằng số nhịp 1/60 giây. Khung đầu
+      // tiên và khi quay lại tab sau một lúc lâu thì chặn lại, không thì nó nhảy
+      // một phát rất xa.
+      const nhip = lucTruoc ? Math.min(3, (luc - lucTruoc) / 16.667) : 1;
+      lucTruoc = luc;
+
       if (!t.dangCam) {
-        t.xoay += t.vanToc;
-        t.vanToc *= MA_SAT;
+        t.xoay += t.vanToc * nhip;
+        t.vanToc *= Math.pow(MA_SAT, nhip);
         if (Math.abs(t.vanToc) < 0.00004) t.vanToc = 0;
-        if (t.vanToc === 0 && !it) t.xoay += TROI_NHE;   // trôi nhẹ cho đỡ chết cứng
+        // Trôi nhẹ cho đỡ chết cứng, và để người ta biết là kéo được.
+        if (t.vanToc === 0 && !it) t.xoay += (TOC_DO_TROI / 60) * nhip;
       }
 
       for (let i = 0; i < soAnh; i++) {
