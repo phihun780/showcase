@@ -5,129 +5,17 @@ import { deleteFromR2, uploadToR2 } from '../../utils/r2Storage';
 import ImageCropModal from './ImageCropModal';
 import { laZalo, duongDanZalo } from '../../utils/lienKetZalo';
 
-export default function ProfileEditor({ profile, onSave }) {
-  const [formData, setFormData] = useState({
-    name: profile?.name || 'Phi Hùng',
-    title: profile?.title || 'Graphic Designer',
-    avatar: profile?.avatar || profile?.image || '',
-    subtitle: profile?.subtitle || 'Đây là nơi mình lưu giữ các sản phẩm được làm ra trong thời gian qua, bạn ghé rồi thì xem qua thử nhaaa ^^',
-    cvUrl: profile?.cvUrl || profile?.resumeUrl || '',
-    location: profile?.location || 'Tp. Buôn Ma Thuột, Đắk Lắk',
-    email: profile?.email || 'phihung.contact@example.com',
-    tabTitle: profile?.tabTitle || 'Phi Hùng — Showcase | Portfolio',
-    metaDescription: profile?.metaDescription || 'Thiết kế không chỉ là thiết kế, mà còn là thiết kế...',
-    experienceTitle: profile?.experienceTitle || 'Quá Khứ Của Tui',
-    socialsTitle: profile?.socialsTitle || 'Những Nơi Khác',
-    favicon: profile?.favicon || 'https://pub-0ad262edfb6a4345a3bd61b2110c549c.r2.dev/profile/favicon.png',
-    ogImage: profile?.ogImage || 'https://pub-0ad262edfb6a4345a3bd61b2110c549c.r2.dev/profile/og-image.png',
-
-    // Header Customization
-    headerTitle1: profile?.headerTitle1 || 'PORTFOLIO // SHOWCASE',
-    headerTitle2: profile?.headerTitle2 || 'GRAPHIC DESIGNER',
-    headerNavWork: profile?.headerNavWork || 'Dự án của tui',
-    headerNavClients: profile?.headerNavClients || 'Bạn đồng hành',
-    headerNavAbout: profile?.headerNavAbout || 'Về tui',
-
-    // Hero Customization
-    heroTitleRow1: profile?.heroTitleRow1 || 'SHOW',
-    heroTitleRow2: profile?.heroTitleRow2 || 'CASE.',
-    heroCtaText: profile?.heroCtaText || 'Dạo xem 1 vòng',
-
-    // Section Headings Customization
-    section01Number: profile?.section01Number || '01',
-    section01Title: profile?.section01Title || 'Tùm lum tà la',
-    // ?? chứ không phải ||: để trống ('') là ý người dùng muốn ẩn, phải giữ
-    // nguyên. Dùng || thì chuỗi rỗng bị coi như "chưa có" và đổ lại chữ mặc
-    // định — xoá xong mở lại form là thấy chữ cũ quay về.
-    section01Subtitle: profile?.section01Subtitle ?? 'Những sản phẩm này được làm ra lúc rảnh rỗi và có hứng làm gì đó...',
-
-    section02Number: profile?.section02Number || '02',
-    section02Title: profile?.section02Title || 'Dự án của tui',
-    section02Subtitle: profile?.section02Subtitle ?? '',
-
-    // Mục "Về tui" chuyển sang số 04 vì mục Brand chen vào vị trí 03.
-    // Kế thừa giá trị cũ để tuỳ chỉnh của người dùng không mất.
-    section04Number: profile?.section04Number || '04',
-    section04Title: profile?.section04Title || profile?.section03Title || 'Về tui',
-    // Mục Brand đã làm việc cùng
-    sectionClientsNumber: profile?.sectionClientsNumber || '03',
-    sectionClientsTitle: profile?.sectionClientsTitle || 'Bạn đồng hành',
-    sectionClientsSubtitle: profile?.sectionClientsSubtitle ?? 'Những người bạn, đối tác dễ thương cùng mình tạo nên những sản phẩm đầy cảm hứng và đáng nhớ...',
-    cvButtonText: profile?.cvButtonText || 'TẢI CV / RESUME (PDF)',
-
-    // Footer Customization
-    footerCopyright: profile?.footerCopyright || profile?.name || 'Phi Hùng',
-    footerTagline: profile?.footerTagline || 'Graphic Designer Portfolio',
-
-    socials: Array.isArray(profile?.socials) ? [...profile.socials] : [],
-    experience: Array.isArray(profile?.experience)
-      ? profile.experience.map((e) => ({
-          ...e,
-          company: e.company === 'Tên Công Ty' ? '' : (e.company || ''),
-          role: e.role === 'Chức vụ / Vị trí' ? '' : (e.role || ''),
-          url: e.url || e.link || e.companyUrl || '',
-        }))
-      : [],
-  });
-
-  // Keep formData in sync when profile updates from R2 or parent
-  useEffect(() => {
-    if (profile) {
-      setFormData(prev => ({
-        ...prev,
-        name: profile.name ?? prev.name,
-        title: profile.title ?? prev.title,
-        avatar: profile.avatar || profile.image || prev.avatar,
-        subtitle: profile.subtitle ?? prev.subtitle,
-        cvUrl: profile.cvUrl || profile.resumeUrl || prev.cvUrl,
-        location: profile.location ?? prev.location,
-        email: profile.email ?? prev.email,
-        tabTitle: profile.tabTitle ?? prev.tabTitle,
-        metaDescription: profile.metaDescription ?? prev.metaDescription,
-        experienceTitle: profile.experienceTitle ?? prev.experienceTitle,
-        socialsTitle: profile.socialsTitle ?? prev.socialsTitle,
-        favicon: profile.favicon ?? prev.favicon,
-        ogImage: profile.ogImage ?? prev.ogImage,
-        headerTitle1: profile.headerTitle1 ?? prev.headerTitle1,
-        headerTitle2: profile.headerTitle2 ?? prev.headerTitle2,
-        headerNavWork: profile.headerNavWork ?? prev.headerNavWork,
-        headerNavClients: profile.headerNavClients ?? prev.headerNavClients,
-        headerNavAbout: profile.headerNavAbout ?? prev.headerNavAbout,
-        heroTitleRow1: profile.heroTitleRow1 ?? prev.heroTitleRow1,
-        heroTitleRow2: profile.heroTitleRow2 ?? prev.heroTitleRow2,
-        heroCtaText: profile.heroCtaText ?? prev.heroCtaText,
-        section01Number: profile.section01Number ?? prev.section01Number,
-        section01Title: profile.section01Title ?? prev.section01Title,
-        section01Subtitle: profile.section01Subtitle ?? prev.section01Subtitle,
-        section02Number: profile.section02Number ?? prev.section02Number,
-        section02Title: profile.section02Title ?? prev.section02Title,
-        section02Subtitle: profile.section02Subtitle ?? prev.section02Subtitle,
-        section04Number: profile.section04Number ?? prev.section04Number,
-        section04Title: profile.section04Title ?? prev.section04Title,
-        sectionClientsNumber: profile.sectionClientsNumber ?? prev.sectionClientsNumber,
-        sectionClientsTitle: profile.sectionClientsTitle ?? prev.sectionClientsTitle,
-        sectionClientsSubtitle: profile.sectionClientsSubtitle ?? prev.sectionClientsSubtitle,
-        cvButtonText: profile.cvButtonText ?? prev.cvButtonText,
-        footerCopyright: profile.footerCopyright ?? prev.footerCopyright,
-        footerTagline: profile.footerTagline ?? prev.footerTagline,
-        socials: Array.isArray(profile.socials) ? [...profile.socials] : prev.socials,
-        experience: Array.isArray(profile.experience)
-          ? profile.experience.map((e) => ({
-              ...e,
-              company: e.company === 'Tên Công Ty' ? '' : (e.company || ''),
-              role: e.role === 'Chức vụ / Vị trí' ? '' : (e.role || ''),
-              url: e.url || e.link || e.companyUrl || '',
-            }))
-          : prev.experience,
-      }));
-    }
-  }, [profile]);
-
-  const [savedAlert, setSavedAlert] = useState(false);
-  const [optimizeNotice, setOptimizeNotice] = useState('');
-  const [isUploading, setIsUploading] = useState(false);
-  const [cropImageSrc, setCropImageSrc] = useState(null);
-
+/**
+ * Khối hồ sơ ở mục 04: ảnh chân dung, CV, hành trình, các liên kết.
+ *
+ * Phần ô CHỮ thuần (tiêu đề mục, chữ nút, footer, hero…) đã chuyển sang danh
+ * mục trong `truongNoiDung.js` và do CMSPage dựng chung một kiểu — ở đây chỉ
+ * còn những thứ cần giao diện riêng.
+ *
+ * Trạng thái form nằm ở CMSPage chứ không nằm đây: cả trang CMS chỉ có MỘT bản
+ * nháp hồ sơ và MỘT nút lưu, nên không thể để mỗi khối giữ một bản riêng.
+ */
+export default function ProfileEditor({ formData, setFormData }) {
   // Tải file CV lên. Cố ý KHÔNG đi qua bộ tối ưu ảnh: nó nén và đổi sang WebP,
   // đúng thứ cần cho ảnh nhưng sẽ phá nát một file PDF. Đẩy thẳng file gốc lên.
   const cvInputRef = useRef(null);
@@ -164,6 +52,11 @@ export default function ProfileEditor({ profile, onSave }) {
       if (cvInputRef.current) cvInputRef.current.value = '';
     }
   };
+
+  // Mấy trạng thái này bị cắt nhầm lúc gộp khối; khai lại đúng như bản gốc.
+  const [cropImageSrc, setCropImageSrc] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [optimizeNotice, setOptimizeNotice] = useState('');
   const [isCropOpen, setIsCropOpen] = useState(false);
 
   // Drag & drop state for Experience list
@@ -412,18 +305,9 @@ export default function ProfileEditor({ profile, onSave }) {
     setCanDragSocial(false);
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSave({
-      ...profile,
-      ...formData,
-    });
-    setSavedAlert(true);
-    setTimeout(() => setSavedAlert(false), 2500);
-  };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       
       {/* 1. Combined Profile & Basic Info Panel */}
       <div className="p-5 sm:p-6 rounded-2xl bg-[#121216] border border-white/10 space-y-4">
@@ -528,361 +412,13 @@ export default function ProfileEditor({ profile, onSave }) {
         </div>
       </div>
 
-      {/* 2. Header & Footer Text Customization Panel */}
+      {/* Hồ sơ CV — nút tải CV ở mục 04 */}
       <div className="p-4 sm:p-6 rounded-2xl bg-[#121216] border border-white/10 space-y-4">
         <div className="pb-2 border-b border-white/10">
-          <h3 className="text-base font-display font-bold text-white">
-            Nội Dung Header & Footer (Thanh Điều Hướng & Chân Trang)
-          </h3>
+          <h3 className="text-sm sm:text-base font-display font-bold text-white">Hồ sơ CV</h3>
+          <p className="text-[11px] font-mono text-white/50 mt-0.5">File PDF khách bấm nút là tải về</p>
         </div>
-
-        {/* Header Customization */}
-        <div className="p-3.5 sm:p-4 rounded-xl bg-black/40 border border-white/10 space-y-3">
-          <span className="font-mono font-bold text-xs text-[#C3EA39] uppercase block">
-            1. Header (Logo Chạy Chữ & Menu Điều Hướng)
-          </span>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
-            <div className="space-y-1">
-              <label className="text-xs font-mono text-white/70 uppercase block">
-                Chữ chạy Logo 1 (Góc trái)
-              </label>
-              <input
-                type="text"
-                value={formData.headerTitle1 || ''}
-                placeholder="PORTFOLIO // SHOWCASE"
-                onChange={(e) => setFormData({ ...formData, headerTitle1: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-mono text-white/70 uppercase block">
-                Chữ chạy Logo 2 (Góc trái)
-              </label>
-              <input
-                type="text"
-                value={formData.headerTitle2 || ''}
-                placeholder="GRAPHIC DESIGNER"
-                onChange={(e) => setFormData({ ...formData, headerTitle2: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-mono text-white/70 uppercase block">
-                Tên nút Menu 1 (Dự Án)
-              </label>
-              <input
-                type="text"
-                value={formData.headerNavWork || ''}
-                placeholder="Dự án của tui"
-                onChange={(e) => setFormData({ ...formData, headerNavWork: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-mono text-white/70 uppercase block">
-                Tên nút Menu 2 (Bạn Đồng Hành)
-              </label>
-              <input
-                type="text"
-                value={formData.headerNavClients || ''}
-                placeholder="Bạn đồng hành"
-                onChange={(e) => setFormData({ ...formData, headerNavClients: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-mono text-white/70 uppercase block">
-                Tên nút Menu 3 (Về Tui)
-              </label>
-              <input
-                type="text"
-                value={formData.headerNavAbout || ''}
-                placeholder="Về tui"
-                onChange={(e) => setFormData({ ...formData, headerNavAbout: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Footer Customization */}
-        <div className="p-3.5 sm:p-4 rounded-xl bg-black/40 border border-white/10 space-y-3">
-          <span className="font-mono font-bold text-xs text-[#C3EA39] uppercase block">
-            2. Footer (Chân Trang)
-          </span>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
-            <div className="space-y-1">
-              <label className="text-xs font-mono text-white/70 uppercase block">
-                Tên bản quyền © (Footer Name)
-              </label>
-              <input
-                type="text"
-                value={formData.footerCopyright || ''}
-                placeholder="Phi Hùng"
-                onChange={(e) => setFormData({ ...formData, footerCopyright: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-mono text-white/70 uppercase block">
-                Chức danh / Tagline Chân Trang
-              </label>
-              <input
-                type="text"
-                value={formData.footerTagline || ''}
-                placeholder="Graphic Designer Portfolio"
-                onChange={(e) => setFormData({ ...formData, footerTagline: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 3. Hero & Section Headings Customization Panel */}
-      <div className="p-4 sm:p-6 rounded-2xl bg-[#121216] border border-white/10 space-y-4">
-        <div className="pb-2 border-b border-white/10">
-          <h3 className="text-base font-display font-bold text-white">
-            Nội Dung Hero & Tiêu Đề Các Đầu Mục (Sections 01, 02, 03)
-          </h3>
-        </div>
-
-        {/* Hero Headline & CTA */}
-        <div className="p-3.5 sm:p-4 rounded-xl bg-black/40 border border-white/10 space-y-3">
-          <span className="font-mono font-bold text-xs text-[#C3EA39] uppercase block">
-            Phần Mở Đầu (Hero Banner)
-          </span>
-
-          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 sm:gap-4 items-start">
-            <div className="sm:col-span-3 space-y-1">
-              <label className="text-xs font-mono text-white/70 uppercase block">
-                Địa chỉ / Vị trí (Tag đầu trang)
-              </label>
-              <input
-                type="text"
-                value={formData.location || ''}
-                placeholder="Tp. Buôn Ma Thuột, Đắk Lắk"
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm"
-              />
-            </div>
-
-            <div className="sm:col-span-3 space-y-1">
-              <label className="text-xs font-mono text-white/70 uppercase block">
-                Tiêu đề lớn 1 (Chữ trên)
-              </label>
-              <input
-                type="text"
-                value={formData.heroTitleRow1 || ''}
-                placeholder="SHOW"
-                onChange={(e) => setFormData({ ...formData, heroTitleRow1: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white font-bold text-base sm:text-sm"
-              />
-            </div>
-
-            <div className="sm:col-span-3 space-y-1">
-              <label className="text-xs font-mono text-white/70 uppercase block">
-                Tiêu đề lớn 2 (Chữ dưới)
-              </label>
-              <input
-                type="text"
-                value={formData.heroTitleRow2 || ''}
-                placeholder="CASE."
-                onChange={(e) => setFormData({ ...formData, heroTitleRow2: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white font-bold text-base sm:text-sm"
-              />
-            </div>
-
-            <div className="sm:col-span-3 space-y-1">
-              <label className="text-xs font-mono text-white/70 uppercase block">
-                Tên nút bấm cuộn
-              </label>
-              <input
-                type="text"
-                value={formData.heroCtaText || ''}
-                placeholder="Dạo xem 1 vòng"
-                onChange={(e) => setFormData({ ...formData, heroCtaText: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm font-medium"
-              />
-            </div>
-
-            <div className="sm:col-span-12 space-y-1">
-              <label className="text-xs font-mono text-white/70 uppercase block">
-                Lời giới thiệu Hero (Subtitle)
-              </label>
-              <input
-                type="text"
-                value={formData.subtitle || ''}
-                placeholder="Đây là nơi mình lưu giữ các sản phẩm được làm ra trong thời gian qua, bạn ghé rồi thì xem qua thử nhaaa ^^"
-                onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-sm"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Section 01: Tùm Lum Tà La */}
-        <div className="p-3.5 sm:p-4 rounded-xl bg-black/40 border border-white/10 space-y-3">
-          <span className="font-mono font-bold text-xs text-[#C3EA39] uppercase block">
-            Mục 01 (Tác phẩm ngẫu hứng / Random Works)
-          </span>
-
-          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 sm:gap-4 items-start">
-            <div className="sm:col-span-2 space-y-1">
-              <label className="text-xs font-mono text-white/70 uppercase block">Số mục</label>
-              <input
-                type="text"
-                value={formData.section01Number || ''}
-                placeholder="01"
-                onChange={(e) => setFormData({ ...formData, section01Number: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-[#C3EA39] font-mono font-bold text-center text-base sm:text-xs"
-              />
-            </div>
-
-            <div className="sm:col-span-4 space-y-1">
-              <label className="text-xs font-mono text-white/70 uppercase block">Tiêu đề mục</label>
-              <input
-                type="text"
-                value={formData.section01Title || ''}
-                placeholder="Tùm lum tà la"
-                onChange={(e) => setFormData({ ...formData, section01Title: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white font-bold text-base sm:text-xs"
-              />
-            </div>
-
-            <div className="sm:col-span-6 space-y-1">
-              <label className="text-xs font-mono text-white/70 uppercase block">Mô tả phụ</label>
-              <input
-                type="text"
-                value={formData.section01Subtitle || ''}
-                placeholder="Để trống thì ngoài trang sẽ ẩn dòng này"
-                onChange={(e) => setFormData({ ...formData, section01Subtitle: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Section 02: Dự Án */}
-        <div className="p-3.5 sm:p-4 rounded-xl bg-black/40 border border-white/10 space-y-3">
-          <span className="font-mono font-bold text-xs text-[#C3EA39] uppercase block">
-            Mục 02 (Dự Án Nổi Bật / Projects)
-          </span>
-
-          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 sm:gap-4 items-start">
-            <div className="sm:col-span-2 space-y-1">
-              <label className="text-xs font-mono text-white/70 uppercase block">Số mục</label>
-              <input
-                type="text"
-                value={formData.section02Number || ''}
-                placeholder="02"
-                onChange={(e) => setFormData({ ...formData, section02Number: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-[#C3EA39] font-mono font-bold text-center text-base sm:text-xs"
-              />
-            </div>
-
-            <div className="sm:col-span-4 space-y-1">
-              <label className="text-xs font-mono text-white/70 uppercase block">Tiêu đề mục</label>
-              <input
-                type="text"
-                value={formData.section02Title || ''}
-                placeholder="Dự án của tui"
-                onChange={(e) => setFormData({ ...formData, section02Title: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white font-bold text-base sm:text-xs"
-              />
-            </div>
-
-            <div className="sm:col-span-6 space-y-1">
-              <label className="text-xs font-mono text-white/70 uppercase block">Mô tả phụ</label>
-              <input
-                type="text"
-                value={formData.section02Subtitle || ''}
-                placeholder="Để trống thì ngoài trang sẽ ẩn dòng này"
-                onChange={(e) => setFormData({ ...formData, section02Subtitle: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Section 03: Bạn Đồng Hành */}
-        <div className="p-3.5 sm:p-4 rounded-xl bg-black/40 border border-white/10 space-y-3">
-          <span className="font-mono font-bold text-xs text-[#C3EA39] uppercase block">
-            Mục 03 (Bạn đồng hành / Thương hiệu đã hợp tác)
-          </span>
-
-          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 sm:gap-4 items-start">
-            <div className="sm:col-span-2 space-y-1">
-              <label className="text-xs font-mono text-white/70 uppercase block">Số mục</label>
-              <input
-                type="text"
-                value={formData.sectionClientsNumber || ''}
-                placeholder="03"
-                onChange={(e) => setFormData({ ...formData, sectionClientsNumber: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-[#C3EA39] font-mono font-bold text-center text-base sm:text-xs"
-              />
-            </div>
-
-            <div className="sm:col-span-4 space-y-1">
-              <label className="text-xs font-mono text-white/70 uppercase block">Tiêu đề mục</label>
-              <input
-                type="text"
-                value={formData.sectionClientsTitle || ''}
-                placeholder="Bạn đồng hành"
-                onChange={(e) => setFormData({ ...formData, sectionClientsTitle: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white font-bold text-base sm:text-xs"
-              />
-            </div>
-
-            <div className="sm:col-span-6 space-y-1">
-              <label className="text-xs font-mono text-white/70 uppercase block">Mô tả phụ</label>
-              <input
-                type="text"
-                value={formData.sectionClientsSubtitle || ''}
-                placeholder="Để trống thì ngoài trang sẽ ẩn dòng này"
-                onChange={(e) => setFormData({ ...formData, sectionClientsSubtitle: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white text-base sm:text-xs"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Section 04: Về Tui */}
-        <div className="p-3.5 sm:p-4 rounded-xl bg-black/40 border border-white/10 space-y-3">
-          <span className="font-mono font-bold text-xs text-[#C3EA39] uppercase block">
-            Mục 04 (Về Tui & Hồ Sơ / About)
-          </span>
-
-          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 sm:gap-4 items-start">
-            <div className="sm:col-span-2 space-y-1">
-              <label className="text-xs font-mono text-white/70 uppercase block">Số mục</label>
-              <input
-                type="text"
-                value={formData.section04Number || ''}
-                placeholder="04"
-                onChange={(e) => setFormData({ ...formData, section04Number: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-[#C3EA39] font-mono font-bold text-center text-base sm:text-xs"
-              />
-            </div>
-
-            <div className="sm:col-span-10 space-y-1">
-              <label className="text-xs font-mono text-white/70 uppercase block">Tiêu đề mục</label>
-              <input
-                type="text"
-                value={formData.section04Title || ''}
-                placeholder="Về tui"
-                onChange={(e) => setFormData({ ...formData, section04Title: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-black/60 border border-white/10 focus:border-[#C3EA39] focus:outline-none text-white font-bold text-base sm:text-xs"
-              />
-            </div>
-
+        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 sm:gap-4 items-start">
             <div className="sm:col-span-5 space-y-1">
               <label className="text-xs font-mono text-white/70 uppercase block">Tên nút Tải CV</label>
               <input
@@ -941,7 +477,6 @@ export default function ProfileEditor({ profile, onSave }) {
 
               {loiCV && <p className="text-[11px] font-mono text-red-400">{loiCV}</p>}
             </div>
-          </div>
         </div>
       </div>
 
@@ -1197,27 +732,6 @@ export default function ProfileEditor({ profile, onSave }) {
         </div>
       </div>
 
-      {/* Sticky Bottom Save Bar */}
-      <div className="sticky bottom-4 z-30 p-3.5 sm:p-4 rounded-2xl bg-[#121216]/95 backdrop-blur-xl border border-white/15 shadow-2xl flex items-center justify-between gap-3">
-        {savedAlert ? (
-          <span className="text-xs font-mono text-[#C3EA39] font-bold flex items-center gap-1.5 animate-fadeIn">
-            <Check className="w-4 h-4" />
-            <span>Đã lưu thành công!</span>
-          </span>
-        ) : (
-          <span className="text-xs font-mono text-white/40 hidden sm:inline">
-            Nhớ bấm lưu sau khi thay đổi thông tin
-          </span>
-        )}
-
-        <button
-          type="submit"
-          className="ml-auto px-6 py-2.5 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black font-display font-bold text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-[1.01] cursor-pointer min-h-[42px]"
-        >
-          <Check className="w-4 h-4" />
-          <span>Lưu Thay Đổi</span>
-        </button>
-      </div>
 
       {/* Khung cắt ảnh đại diện chân dung 3:4 */}
       <ImageCropModal
@@ -1230,6 +744,6 @@ export default function ProfileEditor({ profile, onSave }) {
         onClose={() => setIsCropOpen(false)}
       />
 
-    </form>
+    </div>
   );
 }

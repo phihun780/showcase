@@ -155,7 +155,9 @@ export default function AboutSection() {
                   <div className="w-20 h-20 rounded-full bg-[#C3EA39]/10 border border-[#C3EA39]/30 flex items-center justify-center text-2xl font-bold font-display text-[#C3EA39] mb-3 shadow-lg shadow-[#C3EA39]/5">
                     {profile.name ? profile.name.slice(0, 2).toUpperCase() : 'PH'}
                   </div>
-                  <span className="text-xs text-white/50 font-mono font-medium">Chưa có ảnh đại diện</span>
+                  <span className="text-xs text-white/50 font-mono font-medium">
+                    {profile?.emptyAvatar || 'Chưa có ảnh đại diện'}
+                  </span>
                 </div>
               )}
               <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/85 via-black/30 to-transparent flex flex-col justify-end p-6 sm:p-8 pointer-events-none">

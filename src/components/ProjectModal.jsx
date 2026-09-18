@@ -4,9 +4,14 @@ import { projectUrl } from '../utils/projectUrl';
 import { chepVaoBoNhoTam } from '../utils/clipboard';
 import { anhXemToiDa } from '../utils/responsiveImage';
 import { motion, AnimatePresence } from 'framer-motion';
+import { usePortfolioData } from '../context/PortfolioDataContext';
 import { X, ArrowRight, ArrowLeft, ArrowUp, Layers, Share2, Check } from 'lucide-react';
 
 export default function ProjectModal({ project, isOpen, onClose, onSelectNextProject }) {
+  // Chữ trên các nút đều sửa được trong CMS; không đặt được thì dùng chữ mặc định.
+  const { profile } = usePortfolioData();
+  const chu = (k, macDinh) => (profile?.[k] || '').trim() || macDinh;
+
   const [scrollProgress, setScrollProgress] = useState(0);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [showBackToTop, setShowBackToTop] = useState(false);
@@ -240,8 +245,8 @@ export default function ProjectModal({ project, isOpen, onClose, onSelectNextPro
                 className="text-xs font-mono text-white/50 hover:text-[#C3EA39] transition-colors flex items-center gap-1.5 cursor-pointer shrink-0"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">QUAY LẠI DANH SÁCH</span>
-                <span className="sm:hidden">QUAY LẠI</span>
+                <span className="hidden sm:inline">{chu('articleBack', 'QUAY LẠI DANH SÁCH')}</span>
+                <span className="sm:hidden">{chu('articleBackShort', 'QUAY LẠI')}</span>
               </button>
 
               {/* Nút nổi đã rút lui ở đây, nên đặt lối lên đầu ngay trong hàng này */}
@@ -252,7 +257,7 @@ export default function ProjectModal({ project, isOpen, onClose, onSelectNextPro
                 className="hidden sm:flex text-xs font-mono text-white/50 hover:text-[#C3EA39] transition-colors items-center gap-1.5 cursor-pointer shrink-0"
               >
                 <ArrowUp className="w-3.5 h-3.5" />
-                <span>LÊN ĐẦU</span>
+                <span>{chu('articleTop', 'LÊN ĐẦU')}</span>
               </button>
             </div>
 
@@ -266,14 +271,14 @@ export default function ProjectModal({ project, isOpen, onClose, onSelectNextPro
                 {shareState === 'copied' ? (
                   <>
                     <Check className="w-3.5 h-3.5" />
-                    <span>ĐÃ CHÉP LINK</span>
+                    <span>{chu('articleCopied', 'ĐÃ CHÉP LINK')}</span>
                   </>
                 ) : shareState === 'failed' ? (
                   <span className="normal-case tracking-normal">Chép không được — bấm giữ thanh địa chỉ để copy</span>
                 ) : (
                   <>
                     <Share2 className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">CHIA SẺ</span>
+                    <span className="hidden sm:inline">{chu('articleShare', 'CHIA SẺ')}</span>
                   </>
                 )}
               </button>
@@ -283,7 +288,7 @@ export default function ProjectModal({ project, isOpen, onClose, onSelectNextPro
                 onClick={handleNextProjectClick}
                 className="px-5 py-2.5 rounded-full bg-[#C3EA39] hover:bg-[#d4f854] text-black font-display font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-[1.02] cursor-pointer"
               >
-                <span>DỰ ÁN TIẾP THEO</span>
+                <span>{chu('articleNextProject', 'DỰ ÁN TIẾP THEO')}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               )}
@@ -304,7 +309,7 @@ export default function ProjectModal({ project, isOpen, onClose, onSelectNextPro
               title="Cuộn lên đầu trang"
             >
               <ArrowUp className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Lên đầu</span>
+              <span className="hidden sm:inline">{chu('articleTop', 'LÊN ĐẦU')}</span>
             </motion.button>
           )}
         </AnimatePresence>

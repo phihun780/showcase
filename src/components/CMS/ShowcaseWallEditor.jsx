@@ -233,10 +233,10 @@ export default function ShowcaseWallEditor({ items, onChange }) {
           </div>
           <div>
             <h3 className="text-sm sm:text-base font-display font-bold text-white">
-              2. Tường Ảnh 3D (Mục 01)
+              Ảnh trên cụm xoay
             </h3>
             <p className="text-[11px] font-mono text-white/50">
-              Cụm ảnh khách kéo xoay ở Section 01 · kéo thả ảnh vào đây cũng được
+              Kéo thả nhiều ảnh vào đây cũng được
             </p>
           </div>
         </div>

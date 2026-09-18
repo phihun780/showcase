@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { usePortfolioData } from '../context/PortfolioDataContext';
 import { X, ArrowLeft, ArrowUp, Share2, Check } from 'lucide-react';
 import { clientUrl } from '../utils/clientUrl';
 import { chepVaoBoNhoTam } from '../utils/clipboard';
@@ -15,6 +16,10 @@ import ImageViewer from './ImageViewer';
  * ruột: tiêu đề là tên brand + năm, rồi tới lưới ảnh kiểu Pinterest.
  */
 export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, onClose }) {
+  // Chữ trên các nút đều sửa được trong CMS; không đặt được thì dùng chữ mặc định.
+  const { profile } = usePortfolioData();
+  const chu = (k, macDinh) => (profile?.[k] || '').trim() || macDinh;
+
   const containerRef = useRef(null);
   const footerRef = useRef(null);
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -333,8 +338,8 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
                 className="text-xs font-mono text-white/50 hover:text-[#C3EA39] transition-colors flex items-center gap-1.5 cursor-pointer shrink-0"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">QUAY LẠI DANH SÁCH</span>
-                <span className="sm:hidden">QUAY LẠI</span>
+                <span className="hidden sm:inline">{chu('articleBack', 'QUAY LẠI DANH SÁCH')}</span>
+                <span className="sm:hidden">{chu('articleBackShort', 'QUAY LẠI')}</span>
               </button>
 
               <span className="hidden sm:block w-px h-3 bg-white/15 shrink-0" />
@@ -344,7 +349,7 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
                 className="hidden sm:flex text-xs font-mono text-white/50 hover:text-[#C3EA39] transition-colors items-center gap-1.5 cursor-pointer shrink-0"
               >
                 <ArrowUp className="w-3.5 h-3.5" />
-                <span>LÊN ĐẦU</span>
+                <span>{chu('articleTop', 'LÊN ĐẦU')}</span>
               </button>
             </div>
 
@@ -357,14 +362,14 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
               {shareState === 'copied' ? (
                 <>
                   <Check className="w-3.5 h-3.5" />
-                  <span>ĐÃ CHÉP LINK</span>
+                  <span>{chu('articleCopied', 'ĐÃ CHÉP LINK')}</span>
                 </>
               ) : shareState === 'failed' ? (
                 <span className="normal-case tracking-normal">Chép không được — bấm giữ thanh địa chỉ để copy</span>
               ) : (
                 <>
                   <Share2 className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">CHIA SẺ</span>
+                  <span className="hidden sm:inline">{chu('articleShare', 'CHIA SẺ')}</span>
                 </>
               )}
             </button>
@@ -389,7 +394,7 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
               title="Cuộn lên đầu trang"
             >
               <ArrowUp className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Lên đầu</span>
+              <span className="hidden sm:inline">{chu('articleTop', 'LÊN ĐẦU')}</span>
             </motion.button>
           )}
         </AnimatePresence>

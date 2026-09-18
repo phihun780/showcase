@@ -148,7 +148,9 @@ export default function WorkSection() {
             <div className="w-12 h-12 rounded-2xl bg-[#C3EA39]/10 text-[#C3EA39] flex items-center justify-center font-mono font-bold text-lg">
               ✦
             </div>
-            <h3 className="text-lg sm:text-xl font-display font-bold text-white">Chưa có dự án nào</h3>
+            <h3 className="text-lg sm:text-xl font-display font-bold text-white">
+              {profile?.emptyProjects || 'Chưa có dự án nào'}
+            </h3>
           </motion.div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">

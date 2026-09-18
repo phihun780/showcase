@@ -439,7 +439,9 @@ export default function ClientMemoriesSection() {
             <div className="w-12 h-12 rounded-2xl bg-[#C3EA39]/10 text-[#C3EA39] flex items-center justify-center font-mono font-bold text-lg">
               <HeartHandshake className="w-6 h-6" />
             </div>
-            <h3 className="text-lg sm:text-xl font-display font-bold text-white">Chưa có bạn đồng hành nào</h3>
+            <h3 className="text-lg sm:text-xl font-display font-bold text-white">
+              {profile?.emptyClients || 'Chưa có bạn đồng hành nào'}
+            </h3>
             <p className="text-xs text-white/50 max-w-sm">
               Bạn có thể vào trang quản trị CMS để thêm tên thương hiệu, ảnh sản phẩm đã bàn giao và những câu chuyện kỷ niệm đáng nhớ.
             </p>
