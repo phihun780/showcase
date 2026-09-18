@@ -976,33 +976,36 @@ export default function CMSPage({ onBackToPortfolio }) {
       </header>
 
       {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-7 space-y-4 sm:space-y-6">
-        
-        {/* Thanh mục — xếp đúng thứ tự các mục nhìn thấy trên trang, để muốn
-            sửa chỗ nào thì tìm theo chỗ đó chứ không phải nhớ nó nằm tab nào. */}
-        <div className="w-full pb-2 sm:pb-4 border-b border-white/10">
-          <div className="flex gap-1.5 overflow-x-auto p-1.5 rounded-2xl bg-[#121216] border border-white/10 shadow-lg scrollbar-none">
-            {CAC_MUC.map((m, i) => {
-              const dangChon = m.id === muc;
-              return (
-                <button
-                  key={m.id}
-                  onClick={() => datMuc(m.id)}
-                  title={m.mo}
-                  className={`shrink-0 px-3 py-2 rounded-xl text-xs font-display font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
-                    dangChon
-                      ? 'bg-[#C3EA39] text-black shadow-md shadow-[#C3EA39]/20'
-                      : 'text-white/60 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <span className={`font-mono text-[10px] ${dangChon ? 'text-black/50' : 'text-white/30'}`}>
-                    {String(i + 1).padStart(2, '0')}
-                  </span>
-                  <span>{m.ten}</span>
-                </button>
-              );
-            })}
-          </div>
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-7">
+        {/* Hai cột từ màn hình lớn: danh sách mục nằm dọc bên trái, nội dung
+            bên phải. Dọc thì thấy hết 11 mục cùng lúc, không phải kéo ngang đi
+            tìm. Điện thoại vẫn là dải ngang cuộn được — dựng cột dọc trên màn
+            375px thì nó ăn mất nửa bề ngang. */}
+        <div className="lg:grid lg:grid-cols-[224px_minmax(0,1fr)] lg:gap-6 lg:items-start">
+
+          <nav className="lg:sticky lg:top-4 pb-3 lg:pb-0 mb-4 lg:mb-0 border-b lg:border-b-0 border-white/10">
+            <div className="flex lg:flex-col gap-1.5 overflow-x-auto lg:overflow-visible p-1.5 rounded-2xl bg-[#121216] border border-white/10 shadow-lg">
+              {CAC_MUC.map((m, i) => {
+                const dangChon = m.id === muc;
+                return (
+                  <button
+                    key={m.id}
+                    onClick={() => datMuc(m.id)}
+                    title={m.mo}
+                    className={`shrink-0 lg:w-full px-3 py-2 lg:py-2.5 rounded-xl text-xs font-display font-bold whitespace-nowrap lg:whitespace-normal lg:text-left transition-all cursor-pointer flex items-center gap-2 ${
+                      dangChon
+                        ? 'bg-[#C3EA39] text-black shadow-md shadow-[#C3EA39]/20'
+                        : 'text-white/60 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    <span className={`font-mono text-[10px] shrink-0 ${dangChon ? 'text-black/50' : 'text-white/30'}`}>
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                    <span className="lg:leading-tight">{m.ten}</span>
+                  </button>
+                );
+              })}
+            </div>
 
           {/* Hidden File Inputs for Direct Actions */}
           <input
@@ -1026,7 +1029,8 @@ export default function CMSPage({ onBackToPortfolio }) {
             onChange={handleReplaceBannerFile}
             className="hidden"
           />
-        </div>
+          </nav>
+
 
         {/* Thân: ô chữ của mục đang chọn, rồi tới khối ảnh của mục đó. */}
         <div className="space-y-4 sm:space-y-6">
@@ -1834,6 +1838,7 @@ export default function CMSPage({ onBackToPortfolio }) {
             label="Lưu Thay Đổi"
             hint="Một nút lưu cho cả trang — sửa mục này không làm mất mục kia"
           />
+        </div>
         </div>
       </main>
 
