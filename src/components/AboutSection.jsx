@@ -17,6 +17,13 @@ const SO_COT = {
   6: 'sm:grid-cols-6',
 };
 
+// Tên hiện trên màn HẸP. Bỏ trống ô tên ngắn thì dùng luôn tên đầy đủ.
+//
+// Có ô riêng vì tên công ty đầy đủ ("Cty TNHH Thương Mại Và Xây Dựng Thanh Mai")
+// ăn hai dòng trên điện thoại. Rút gọn bằng cách cắt chữ thì dễ ra những kiểu
+// kỳ cục, nên để người viết tự chọn chữ nào giữ lại.
+const tenGon = (exp) => (exp?.companyShort || '').trim() || exp?.company || '';
+
 export default function AboutSection() {
   const { profile } = usePortfolioData();
   const [copiedEmail, setCopiedEmail] = useState(false);
@@ -218,14 +225,16 @@ export default function AboutSection() {
                               }`}
                               title={`Ghé thăm website ${exp.company}`}
                             >
-                              <span>{exp.company}</span>
+                              <span className="sm:hidden">{tenGon(exp)}</span>
+                              <span className="hidden sm:inline">{exp.company}</span>
                               <ArrowUpRight className="w-3.5 h-3.5 text-white/40 group-hover/link:text-[#C3EA39] group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-all inline-block" />
                             </a>
                           ) : (
                             <h4 className={`text-sm sm:text-base font-bold leading-snug transition-colors ${
                               isCurrent ? 'text-white drop-shadow-sm' : 'text-white/80'
                             }`}>
-                              {exp.company}
+                              <span className="sm:hidden">{tenGon(exp)}</span>
+                              <span className="hidden sm:inline">{exp.company}</span>
                             </h4>
                           )}
                           {isCurrent && (

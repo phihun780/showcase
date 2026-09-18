@@ -553,6 +553,14 @@ export default function ProfileEditor({ formData, setFormData }) {
                     />
                     <input
                       type="text"
+                      placeholder="Tên ngắn cho điện thoại (tuỳ chọn)"
+                      value={exp.companyShort || ''}
+                      onChange={(e) => handleExpChange(idx, 'companyShort', e.target.value)}
+                      title="Bỏ trống thì điện thoại dùng luôn tên đầy đủ ở trên"
+                      className="w-full px-2.5 py-1 rounded-lg bg-black/30 border border-white/5 focus:border-[#C3EA39]/60 focus:outline-none text-white/70 text-sm sm:text-[11px]"
+                    />
+                    <input
+                      type="text"
                       placeholder="🔗 Link web cty (tuỳ chọn)"
                       value={exp.url || ''}
                       onChange={(e) => handleExpChange(idx, 'url', e.target.value)}
