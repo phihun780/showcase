@@ -37,9 +37,12 @@ function soCotCua(tong, rong, rongCoBan, leNgang) {
   // TRẦN CỨNG: một ô không được hẹp hơn chính cái thẻ. Không chặn thì trên màn
   // 375px nó chọn 4 cột trong khi bề ngang chỉ đủ 3,7 thẻ — ô hẹp hơn thẻ, và
   // 8 cặp đè lên nhau.
-  const dungDuoc = Math.max(1, rong - leNgang * 2);
-  const toiDa = Math.max(1, Math.floor(dungDuoc / rongCoBan));
-  const lyTuong = Math.min(toiDa, Math.max(1, Math.round(dungDuoc / (rongCoBan * 1.25))));
+  // Tâm trải từ mép đến mép, nên chỗ dùng được là bề ngang trừ lề VÀ trừ một
+  // thẻ (nửa thẻ mỗi đầu). Số cột nhiều nhất là khi hai tâm liền nhau cách nhau
+  // đúng bằng một thẻ.
+  const dungDuoc = Math.max(1, rong - leNgang * 2 - rongCoBan);
+  const toiDa = Math.max(1, Math.floor(dungDuoc / rongCoBan) + 1);
+  const lyTuong = Math.min(toiDa, Math.max(1, Math.round(dungDuoc / (rongCoBan * 1.15)) + 1));
   let tot = lyTuong, diem = -1;
 
   for (let c = Math.max(1, lyTuong - 2); c <= Math.min(toiDa, lyTuong + 2); c++) {
@@ -69,10 +72,14 @@ function caoVuaDu(tong, rong, rongCoBan, caoCoBan, leDoc, leNgang) {
   // KHÔNG lấy `caoCoBan * 1.12`. `caoCoBan` (145) là con số ước lượng dư để
   // tính khoảng cách an toàn, chứ thẻ thật đo được chỉ cao 46–52px. Chừa 170px
   // một hàng thì đáy khung thừa hơn 200px, đẩy mục "Về tui" xuống xa.
-  const ry = (caoCoBan * 1.12) / 2;
-  // Mỗi ô cao bằng thẻ lớn nhất cộng 26px cho thoáng. Cộng thêm 2*ry vì lề trên
-  // và lề dưới đo theo MÉP thẻ, tức là đã trừ nửa thẻ ở mỗi đầu.
-  return Math.round(leDoc * 2 + 2 * ry + hang * (2 * ry + 26));
+  // Khe DỌC để bằng khe NGANG cho nhìn đều.
+  //
+  // Khe ngang là chỗ còn lại sau khi trải các tâm từ mép đến mép, nên tính ra
+  // được; lấy đúng số đó làm khe dọc. Đặt 22px cố định thì màn rộng ra khe ngang
+  // 38px mà khe dọc chỉ 22px, lưới trông bị dẹt.
+  const cotStep = cot > 1 ? (rong - leNgang * 2 - rongCoBan) / (cot - 1) : 0;
+  const kheNgang = Math.max(18, Math.min(48, Math.round(cotStep - rongCoBan)));
+  return Math.round(leDoc * 2 + caoCoBan + Math.max(0, hang - 1) * (caoCoBan + kheNgang));
 }
 
 // Rải các CHỖ ĐỨNG ra khung, ngẫu nhiên nhưng không cái nào đè cái nào.
@@ -101,12 +108,19 @@ function raiCho(soCho, cot, rong, cao, leNgang, leDoc, rongCoBan, caoCoBan) {
 
   // Vùng dùng được, đã trừ lề. Lề tính theo MÉP thẻ nên trừ thêm nửa thẻ lớn
   // nhất — thẻ to nhất ứng với tiLe 1.12 bên dưới.
-  const rxMax = (rongCoBan * 1.12) / 2;
-  const ryMax = (caoCoBan * 1.12) / 2;
+  const rxMax = rongCoBan / 2;
+  const ryMax = caoCoBan / 2;
   const xMin = leNgang + rxMax, xMax = rong - leNgang - rxMax;
   const yMin = leDoc + ryMax, yMax = cao - leDoc - ryMax;
-  const wO = Math.max(1, xMax - xMin) / cot;
-  const hO = Math.max(1, yMax - yMin) / hang;
+
+  // Khoảng cách giữa hai TÂM liền nhau: chia cho (số cột − 1), không phải số cột.
+  //
+  // Bản trước chia cho số cột rồi đặt tâm ở giữa mỗi ô, nên nửa ô đầu và nửa ô
+  // cuối bỏ trống — hai bên thừa 53px mà các tâm lại chỉ cách nhau 65px trong
+  // khi thẻ rộng 99px, thành ra đè nhau 23px. Trải từ mép đến mép thì dùng hết
+  // bề ngang: cùng 3 cột, tâm cách nhau 103px, thẻ 99px là vừa.
+  const buocX = cot > 1 ? Math.max(1, xMax - xMin) / (cot - 1) : 0;
+  const buocY = hang > 1 ? Math.max(1, yMax - yMin) / (hang - 1) : 0;
 
   const ds = [];
   for (let i = 0; i < soCho; i++) {
@@ -114,23 +128,20 @@ function raiCho(soCho, cot, rong, cao, leNgang, leDoc, rongCoBan, caoCoBan) {
     const h = Math.floor(i / cot);
 
     const sau = ngauNhien(i * 11 + 5);
-    const tiLe = 0.62 + sau * 0.5;               // 0.62 .. 1.12
+    const tiLe = 0.62 + sau * 0.38;              // 0.62 .. 1.0
     const rx = (rongCoBan * tiLe) / 2;
     const ry = (caoCoBan * tiLe) / 2;
 
-    // Lệch khỏi tâm ô cho đỡ khô cứng, NHƯNG chặn lại theo chỗ thật sự còn
-    // trống trong ô: `(cạnh ô - thẻ) / 2`. Chặn kiểu này thì thẻ không bao giờ
-    // ra khỏi ô của nó, nên dù khung có hẹp tới đâu cũng không thể đè nhau.
-    // Bản trước lệch cứng 32% cạnh ô — ô hẹp lại là lệch ra ngoài, đè cái bên
-    // cạnh; đo được 5 cặp đè nhau.
-    const nhichX = Math.max(0, (wO - rx * 2) / 2);
-    const nhichY = Math.max(0, (hO - ry * 2) / 2);
+    // Lệch khỏi tâm cho đỡ khô cứng, NHƯNG chặn theo chỗ thật sự còn trống giữa
+    // hai thẻ liền nhau. Chặn kiểu này thì dù khung hẹp tới đâu cũng không đè.
+    const nhichX = Math.max(0, (buocX - rx * 2) / 2);
+    const nhichY = Math.max(0, (buocY - ry * 2) / 2);
     const lechX = (ngauNhien(i * 7 + 3) - 0.5) * 2 * nhichX;
     const lechY = (ngauNhien(i * 13 + 9) - 0.5) * 2 * nhichY;
 
     ds.push({
-      px: xMin + wO * (c + 0.5) + lechX,
-      py: yMin + hO * (h + 0.5) + lechY,
+      px: (cot > 1 ? xMin + buocX * c : (xMin + xMax) / 2) + lechX,
+      py: (hang > 1 ? yMin + buocY * h : (yMin + yMax) / 2) + lechY,
       sau, tiLe, rx, ry,
     });
   }
@@ -280,23 +291,28 @@ export default function ClientMemoriesSection() {
   // Mấy con số cũ (170x145 màn rộng, 82x104 màn hẹp) là ước lượng chứ không
   // phải đo: chiều cao màn rộng dư gần ba lần nên đáy khung thừa hơn 200px, còn
   // bề ngang màn hẹp lại thiếu nên các thẻ chen vào nhau.
-  // Màn HẸP giữ nguyên hai số cũ: khung bên đó là hình vuông, đã chạy tốt và
-  // đã kiểm. Chỉ sửa màn RỘNG — nơi đang thừa hơn 200px ở đáy.
-  const rongCoBan = hepMH ? 82 : 160;
-  const caoCoBan = hepMH ? 104 : 56;
+  // Cả hai cỡ màn đều lấy theo SỐ ĐO THẬT của hộp bọc thẻ:
+  //   màn rộng 156x52  -> 160x56
+  //   màn hẹp   99x95  -> 100x96
+  // Số cũ (170x145 và 82x104) là ước lượng: màn rộng dư gần ba lần nên đáy
+  // khung thừa, màn hẹp thì bề ngang thiếu nên các thẻ chen vào nhau.
+  const rongCoBan = hepMH ? 100 : 160;
+  const caoCoBan = hepMH ? 96 : 56;
 
   // Chiều cao VỪA KHÍT số hàng.
   //
   // Trước đây gán cứng 540px. Lưới chỉ dùng 2 hàng nên đáy khung còn thừa một
   // khoảng, đẩy mục "Về tui" xuống xa. Giờ cao bao nhiêu là do có mấy hàng.
   // Màn hẹp thì khung vẫn vuông, số này chỉ làm mức tối thiểu.
-  // Màn hẹp: giữ 300px làm mức tối thiểu như cũ, khung vẫn vuông theo bề ngang.
-  // Màn rộng: cao đúng bằng số hàng cần, không thừa đáy.
+  // Cao đúng bằng số hàng cần, cả hai cỡ màn.
+  //
+  // Màn hẹp vẫn kèm `aspectRatio: 1/1`, nên ít brand thì khung VUÔNG cho gọn
+  // như trước; nhiều brand thì số này lớn hơn cạnh vuông và khung cao thêm.
+  // Trước đây ép cứng vuông 335px trong khi 11 brand cần 4 hàng — mỗi hàng chỉ
+  // còn 48px cho cái thẻ cao 95px, nên chúng chen vào nhau.
   const caoToiThieu = useMemo(
-    () => (hepMH
-      ? 300
-      : caoVuaDu(clientList.length, khungCo.rong || 1000, rongCoBan, caoCoBan, leDoc, leNgang)),
-    [hepMH, clientList.length, khungCo.rong, rongCoBan, caoCoBan, leDoc, leNgang]
+    () => caoVuaDu(clientList.length, khungCo.rong || 1000, rongCoBan, caoCoBan, leDoc, leNgang),
+    [clientList.length, khungCo.rong, rongCoBan, caoCoBan, leDoc, leNgang]
   );
 
   const soCot = useMemo(
