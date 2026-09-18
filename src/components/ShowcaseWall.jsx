@@ -29,6 +29,10 @@ const TROI_NHE = 0.00045;     // tự trôi lúc không ai đụng vào, cho bi�
 const NGUONG_KEO = 6;         // di chuyển quá bấy nhiêu px thì tính là kéo, không phải bấm
 const DO_NHAY = 0.0052;       // 1px kéo ngang bằng mấy radian
 
+// Mép trái phải mờ dần. Đặt theo phần trăm để màn to màn nhỏ đều cân.
+const MEP_TAN =
+  'linear-gradient(to right, transparent 0%, #000 9%, #000 91%, transparent 100%)';
+
 export default function ShowcaseWall({ items = [], title, hint }) {
   const khungRef = useRef(null);
   const tamRef = useRef(null);
@@ -170,13 +174,21 @@ export default function ShowcaseWall({ items = [], title, hint }) {
     keo.current.dangKeo = false;
     trangThai.current.dangCam = false;
     try { e.currentTarget.releasePointerCapture?.(e.pointerId); } catch { /* không sao */ }
-  };
 
-  // Bấm vào một tấm: chỉ mở ảnh khi tay gần như đứng yên. Không có cái này thì
-  // kéo xong nhả tay là ảnh bật ra, khó chịu.
-  const bamThe = (idx) => {
-    if (keo.current.tong > NGUONG_KEO) return;
-    datDangXem(idx);
+    // MỞ ẢNH Ở ĐÂY, KHÔNG PHẢI BẰNG onClick TRÊN TỪNG TẤM.
+    //
+    // Khung đang giữ con trỏ bằng `setPointerCapture` để kéo ra ngoài khung vẫn
+    // theo dõi được. Nhưng khi con trỏ đang bị giữ thì trình duyệt dồn luôn sự
+    // kiện `click` về chỗ giữ — tức là về cái khung — nên `onClick` đặt trên
+    // từng tấm không bao giờ chạy. Bấm vào ảnh không ra gì cả.
+    //
+    // Nên tự tìm tấm nằm dưới ngón tay lúc buông. Ảnh bên trong đã đặt
+    // `pointer-events: none` nên nhìn xuống là thấy đúng tấm.
+    if (keo.current.tong <= NGUONG_KEO) {
+      const duoi = document.elementFromPoint(e.clientX, e.clientY);
+      const o = duoi && duoi.closest ? duoi.closest('[data-tam-idx]') : null;
+      if (o) datDangXem(Number(o.dataset.tamIdx));
+    }
   };
 
   if (!soAnh) return null;
@@ -200,6 +212,14 @@ export default function ShowcaseWall({ items = [], title, hint }) {
           height: coCho.h || 420,
           perspective: '1500px',
           touchAction: 'pan-y',
+          // Hai mép tan dần, để tấm ở rìa không bị cắt ngang một nhát.
+          //
+          // Dùng mask chứ KHÔNG phủ hai dải gradient màu nền lên trên: dải màu
+          // nền thì tô đè luôn cả lưới ô vuông ở background, thành ra hai vệt
+          // trống hai bên. Mask thì làm mờ chính mấy tấm ảnh, nền phía sau
+          // không bị đụng tới.
+          WebkitMaskImage: MEP_TAN,
+          maskImage: MEP_TAN,
         }}
       >
         {/* Neo giữa khung. Các tấm định vị quanh điểm này. */}
@@ -212,7 +232,7 @@ export default function ShowcaseWall({ items = [], title, hint }) {
             <div
               key={it.id || i}
               ref={el => { theRefs.current[i] = el; }}
-              onClick={() => bamThe(i)}
+              data-tam-idx={i}
               className="absolute rounded-xl overflow-hidden border border-white/10 bg-[#121216] shadow-2xl cursor-pointer"
               style={{
                 width: soDo.rongThe,
@@ -242,9 +262,6 @@ export default function ShowcaseWall({ items = [], title, hint }) {
           ))}
         </div>
 
-        {/* Hai mép tan vào nền, để tấm ở rìa không bị cắt ngang một nhát. */}
-        <div className="pointer-events-none absolute inset-y-0 left-0 w-16 sm:w-28 z-[1001] bg-gradient-to-r from-[#08080A] to-transparent" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-16 sm:w-28 z-[1001] bg-gradient-to-l from-[#08080A] to-transparent" />
       </div>
 
       <p className="text-center text-[10px] font-mono uppercase tracking-[0.2em] text-white/30 mt-2">
