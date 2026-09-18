@@ -480,7 +480,12 @@ export default function ClientMemoriesSection() {
               minHeight: hepMH ? `${caoToiThieu}px` : undefined,
               height: hepMH ? undefined : `${caoToiThieu}px`,
             }}
-            className="relative w-full rounded-3xl border border-white/10 bg-[#0B0B0E] overflow-hidden"
+            /* KHÔNG viền, KHÔNG nền riêng: các brand nằm lơ lửng thẳng trên
+               nền trang, thấy luôn lưới ô vuông phía sau. Khung cũ có viền và
+               nền #0B0B0E nên nhìn ra một cái hộp đặt trên trang.
+               Vẫn giữ `overflow-hidden` để phòng một tấm nào lỡ lệch ra ngoài
+               thì không làm trang sinh thanh cuộn ngang. */
+            className="relative w-full overflow-hidden"
           >
             {/* Vệt sáng nền để cảnh có không khí, không phẳng lì */}
             <div
