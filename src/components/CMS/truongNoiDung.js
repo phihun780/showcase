@@ -47,7 +47,7 @@ export const CAC_MUC = [
   },
   {
     id: 'muc01',
-    ten: 'Nội dung 1 · Cụm ảnh xoay',
+    ten: 'Nội dung 1',
     mo: 'Tiêu đề mục và những tấm ảnh khách kéo xoay',
     khoiAnh: 'tuongAnh',
     truong: [
@@ -58,7 +58,7 @@ export const CAC_MUC = [
   },
   {
     id: 'muc02',
-    ten: 'Nội dung 2 · Khu trưng bày',
+    ten: 'Nội dung 2',
     mo: 'Tiêu đề mục và danh sách dự án',
     khoiAnh: 'duAn',
     truong: [
@@ -69,7 +69,7 @@ export const CAC_MUC = [
   },
   {
     id: 'muc03',
-    ten: 'Nội dung 3 · Bạn đồng hành',
+    ten: 'Nội dung 3',
     mo: 'Tiêu đề mục và danh sách thương hiệu',
     khoiAnh: 'brand',
     truong: [
@@ -80,7 +80,7 @@ export const CAC_MUC = [
   },
   {
     id: 'muc04',
-    ten: 'Nội dung 4 · Về tui',
+    ten: 'Nội dung 4',
     mo: 'Ảnh chân dung, giới thiệu, hành trình, liên hệ, CV',
     khoiAnh: 'veTui',
     truong: [
