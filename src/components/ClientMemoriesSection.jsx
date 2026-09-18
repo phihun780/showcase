@@ -20,8 +20,34 @@ function ngauNhien(hat) {
 // trông vẫn ngẫu nhiên mà chắc chắn không đè nhau.
 // Số CHỖ ĐỨNG trong khung. Luôn nhiều hơn số brand để còn chỗ mà nhảy sang —
 // vừa đủ mỗi brand một chỗ thì brand tan đi rồi hiện lại đúng chỗ cũ.
-function soChoCua(tong) {
-  return tong + Math.max(1, Math.round(tong * 0.4));
+/**
+ * Chọn số cột cho lưới.
+ *
+ * Không lấy thẳng số cột "đẹp theo tỉ lệ khung", vì có những con số ra hàng cuối
+ * trơ một cái: 11 brand xếp 5 cột thành 5–5–1, nhìn hụt hẫng. Nên thử vài số cột
+ * quanh mức lý tưởng rồi chọn số nào cho HÀNG CUỐI ĐẦY NHẤT — 11 brand thì 6 cột
+ * ra 6–5, hoặc 4 cột ra 4–4–3, cả hai đều gọn.
+ */
+function soCotCua(tong, rong, cao) {
+  const lyTuong = Math.max(1, Math.round(Math.sqrt(tong * (rong / Math.max(1, cao)))));
+  let tot = lyTuong, diem = -1;
+
+  for (let c = Math.max(1, lyTuong - 2); c <= lyTuong + 2; c++) {
+    if (c > tong) break;
+    const du = tong % c;
+    const hangCuoi = du === 0 ? c : du;       // hàng cuối có mấy cái
+    // Ưu tiên hàng cuối đầy; bằng nhau thì lấy số cột gần mức lý tưởng hơn.
+    const d = hangCuoi * 100 - Math.abs(c - lyTuong);
+    if (d > diem) { diem = d; tot = c; }
+  }
+  return tot;
+}
+
+// Lưới gồm cot × hang ô. Brand xếp lần lượt, mấy ô dư ở cuối là chỗ để một
+// brand tan đi rồi mọc lên.
+function soChoCua(tong, rong, cao) {
+  const cot = soCotCua(tong, rong, cao);
+  return cot * Math.max(1, Math.ceil(tong / cot));
 }
 
 // Rải các CHỖ ĐỨNG ra khung, ngẫu nhiên nhưng không cái nào đè cái nào.
@@ -36,56 +62,51 @@ function soChoCua(tong) {
 //
 // Tất định theo `ngauNhien`: cùng kích thước khung thì luôn ra cùng một cách
 // rải, nên React vẽ lại bao nhiêu lần cũng không nhảy lung tung.
-function raiCho(soCho, rong, cao, leNgang, leDoc, rongCoBan, caoCoBan) {
-  const ds = [];
-  let hat = 1;
+function raiCho(soCho, cot, rong, cao, leNgang, leDoc, rongCoBan, caoCoBan) {
+  // Chia khung thành LƯỚI CHỮ NHẬT rồi đặt mỗi chỗ vào giữa một ô.
+  //
+  // Bản trước gieo vị trí thật sự ngẫu nhiên rồi kiểm không đè nhau. Ngẫu nhiên
+  // thì có cái hay, nhưng luôn ra vài chỗ dồn cục và vài khoảng trống to — nhìn
+  // không gọn. Lưới thì hàng lối rõ, khoảng cách đều, mà vẫn không khô cứng vì:
+  //
+  //   - mỗi chỗ lệch khỏi tâm ô một chút (tối đa 16% cạnh ô)
+  //   - cỡ to nhỏ vẫn khác nhau theo "độ sâu"
+  //
+  const hang = Math.max(1, Math.ceil(soCho / cot));
 
+  // Vùng dùng được, đã trừ lề. Lề tính theo MÉP thẻ nên trừ thêm nửa thẻ lớn
+  // nhất — thẻ to nhất ứng với tiLe 1.12 bên dưới.
+  const rxMax = (rongCoBan * 1.12) / 2;
+  const ryMax = (caoCoBan * 1.12) / 2;
+  const xMin = leNgang + rxMax, xMax = rong - leNgang - rxMax;
+  const yMin = leDoc + ryMax, yMax = cao - leDoc - ryMax;
+  const wO = Math.max(1, xMax - xMin) / cot;
+  const hO = Math.max(1, yMax - yMin) / hang;
+
+  const ds = [];
   for (let i = 0; i < soCho; i++) {
-    // Độ sâu quyết định cỡ to nhỏ. Dải rộng cho cái to cái nhỏ rõ rệt.
+    const c = i % cot;
+    const h = Math.floor(i / cot);
+
     const sau = ngauNhien(i * 11 + 5);
-    const tiLe = 0.5 + sau * 0.62;
+    const tiLe = 0.62 + sau * 0.5;               // 0.62 .. 1.12
     const rx = (rongCoBan * tiLe) / 2;
     const ry = (caoCoBan * tiLe) / 2;
 
-    // Lề tính theo MÉP thẻ chứ không theo tâm: cộng thêm nửa thẻ vào lề thì
-    // mép ngoài cùng mới thật sự cách viền khung đúng ngần ấy.
-    const xMin = leNgang + rx, xMax = rong - leNgang - rx;
-    const yMin = leDoc + ry, yMax = cao - leDoc - ry;
-    const wX = Math.max(0, xMax - xMin), wY = Math.max(0, yMax - yMin);
+    // Lệch khỏi tâm ô, nhưng chỉ trong lòng ô nên không bao giờ đè ô bên cạnh.
+    const lechX = (ngauNhien(i * 7 + 3) - 0.5) * wO * 0.32;
+    const lechY = (ngauNhien(i * 13 + 9) - 0.5) * hO * 0.32;
 
-    let tot = null, totNhat = null, xaNhat = -Infinity;
-
-    for (let thu = 0; thu < 500; thu++) {
-      const px = xMin + ngauNhien(hat++) * wX;
-      const py = yMin + ngauNhien(hat++) * wY;
-
-      // So bằng HÌNH CHỮ NHẬT chứ không bằng hình tròn: thẻ cao hơn rộng khá
-      // nhiều (logo nằm trên, tên nằm dưới), lấy một bán kính chung thì hoặc là
-      // lọt cặp đè nhau theo chiều dọc, hoặc là phải nới rộng quá mức rồi không
-      // xếp nổi.
-      let ho = Infinity;
-      for (const o of ds) {
-        const hoX = Math.abs(px - o.px) - (rx + o.rx);
-        const hoY = Math.abs(py - o.py) - (ry + o.ry);
-        const h = Math.max(hoX, hoY);        // rời nhau nếu TÁCH được theo một trục
-        if (h < ho) ho = h;
-      }
-
-      if (ho > xaNhat) { xaNhat = ho; totNhat = { px, py }; }
-      if (ho >= 8) { tot = { px, py }; break; }   // chừa 8px cho thoáng
-    }
-
-    const cho = tot || totNhat;
-    ds.push({ px: cho.px, py: cho.py, sau, tiLe, rx, ry });
+    ds.push({
+      px: xMin + wO * (c + 0.5) + lechX,
+      py: yMin + hO * (h + 0.5) + lechY,
+      sau, tiLe, rx, ry,
+    });
   }
 
   return ds;
 }
 
-// Chỗ nào gần tâm khung hơn.
-function xaTam(cho, rong, cao) {
-  return Math.hypot(cho.px - rong / 2, cho.py - cao / 2);
-}
 
 export default function ClientMemoriesSection() {
   const { clients, profile } = usePortfolioData();
@@ -177,6 +198,16 @@ export default function ClientMemoriesSection() {
 
   // Brand đang được rê chuột / đang giữ bàn phím (null = không có cái nào).
   const [reVao, setReVao] = useState(null);
+  // Bản sao trong ref để hẹn giờ của đèn rọi đọc được giá trị MỚI NHẤT mà không
+  // phải gắn lại hẹn giờ mỗi lần chuột đi qua một brand.
+  const reVaoRef = useRef(null);
+  const datReVao = useCallback((v) => {
+    setReVao(truoc => {
+      const sau = typeof v === 'function' ? v(truoc) : v;
+      reVaoRef.current = sau;
+      return sau;
+    });
+  }, []);
 
   // Brand đang tan đi để mọc lên chỗ khác (null = không có cái nào).
   const [dangAn, setDangAn] = useState(null);
@@ -210,32 +241,47 @@ export default function ClientMemoriesSection() {
 
   // Chiều cao tối thiểu: đủ chỗ cho chừng ấy brand mà không phải chen chúc.
   // Ước theo diện tích — mỗi chỗ đứng cần khoảng một ô vuông cạnh `kichCo`.
-  const caoToiThieu = hepMH ? 300 : 460;
+  const caoToiThieu = hepMH ? 300 : 540;
 
   // Cỡ gốc của một thẻ brand (chưa nhân tỉ lệ) — dùng để giữ khoảng cách và để
   // tính lề theo mép. Lấy dư một chút cho chắc.
   const rongCoBan = hepMH ? 82 : 170;
   const caoCoBan = hepMH ? 104 : 145;
 
-  const soCho = soChoCua(clientList.length);
+  const soCot = useMemo(
+    () => soCotCua(clientList.length, khungCo.rong || 1000, khungCo.cao || 500),
+    [clientList.length, khungCo.rong, khungCo.cao]
+  );
+  const soCho = useMemo(
+    () => soChoCua(clientList.length, khungCo.rong || 1000, khungCo.cao || 500),
+    [clientList.length, khungCo.rong, khungCo.cao]
+  );
 
   const cacCho = useMemo(() => {
     if (!khungCo.rong || !khungCo.cao) return [];
-    return raiCho(soCho, khungCo.rong, khungCo.cao, leNgang, leDoc, rongCoBan, caoCoBan);
-  }, [soCho, khungCo.rong, khungCo.cao, leNgang, leDoc, rongCoBan, caoCoBan]);
+    return raiCho(soCho, soCot, khungCo.rong, khungCo.cao, leNgang, leDoc, rongCoBan, caoCoBan);
+  }, [soCho, soCot, khungCo.rong, khungCo.cao, leNgang, leDoc, rongCoBan, caoCoBan]);
 
   // Brand thứ i đang đứng chỗ nào.
   const [choCuaBrand, setChoCuaBrand] = useState([]);
   useEffect(() => {
     if (cacCho.length === 0) return;
-    // Xếp vào các chỗ GẦN TÂM nhất trước, mấy chỗ rìa để trống.
-    const theoTam = cacCho
-      .map((c, i) => i)
-      .sort((a, b) => xaTam(cacCho[a], khungCo.rong, khungCo.cao) - xaTam(cacCho[b], khungCo.rong, khungCo.cao));
-    setChoCuaBrand(Array.from({ length: clientList.length }, (_, i) => theoTam[i % cacCho.length]));
+    // FORM là chữ nhật, nhưng AI ĐỨNG Ô NÀO thì ngẫu nhiên.
+    //
+    // Lưới đã lo phần gọn gàng: ô nào cũng cách đều, khối luôn vuông vắn. Còn
+    // xếp brand vào ô thì trộn ngẫu nhiên, không theo thứ tự trong dữ liệu —
+    // xếp lần lượt thì brand thêm sau cùng mãi mãi nằm cuối hàng dưới.
+    //
+    // Trộn bằng Fisher–Yates: mỗi ô nhận đúng một brand, không ô nào trùng.
+    const o = Array.from({ length: cacCho.length }, (_, i) => i);
+    for (let i = o.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [o[i], o[j]] = [o[j], o[i]];
+    }
+    setChoCuaBrand(o.slice(0, clientList.length));
     datDangAn(null);
-    setReVao(null);
-  }, [clientList.length, cacCho, khungCo.rong, khungCo.cao, datDangAn]);
+    datReVao(null);
+  }, [clientList.length, cacCho, khungCo.rong, khungCo.cao, datDangAn, datReVao]);
 
   const giamChuyenDong = () =>
     typeof window !== 'undefined' &&
@@ -258,8 +304,8 @@ export default function ClientMemoriesSection() {
   const vaoBrand = useCallback((idx) => {
     // Đang chờ tan mà quay lại rê tiếp thì huỷ, giữ nó ở nguyên chỗ cũ.
     huyHen();
-    setReVao(idx);
-  }, [huyHen]);
+    datReVao(idx);
+  }, [huyHen, datReVao]);
 
   // MỌC LÊN CHỖ KHÁC: hết lượt được nhìn thì brand mờ trắng đen trở lại, tan
   // hẳn đi, rồi hiện lên ở một chỗ còn trống.
@@ -268,7 +314,7 @@ export default function ClientMemoriesSection() {
   // mốc 0.95s) nên mắt không thấy nó trượt — chỉ thấy chỗ này mất đi, chỗ kia
   // mọc lên. Cũng vì vậy mà không đặt transition cho left/top.
   const roiBrand = useCallback((idx) => {
-    setReVao(prev => (prev === idx ? null : prev));
+    datReVao(prev => (prev === idx ? null : prev));
     if (giamChuyenDong()) return;
     if (cacCho.length <= clientList.length) return;   // không dư chỗ thì thôi
 
@@ -285,13 +331,16 @@ export default function ClientMemoriesSection() {
           for (let c = 0; c < cacCho.length; c++) if (!dangDung.has(c)) trong.push(c);
           if (trong.length === 0) return prev;
 
-          // Bốc hai chỗ trống rồi giữ cái gần tâm hơn. Vẫn ngẫu nhiên nên không
-          // đoán trước được, nhưng về lâu dài thì đám brand dồn về giữa khung
-          // chứ không tản dần ra bốn góc.
-          const a = trong[Math.floor(Math.random() * trong.length)];
-          const b = trong[Math.floor(Math.random() * trong.length)];
-          const chon =
-            xaTam(cacCho[a], khungCo.rong, khungCo.cao) <= xaTam(cacCho[b], khungCo.rong, khungCo.cao) ? a : b;
+          // Bốc ĐỀU trong các ô còn trống.
+          //
+          // Bản trước bốc hai ô rồi giữ ô gần tâm hơn, để đám brand dồn về giữa.
+          // Với lưới chữ nhật thì thiên lệch đó thành có hại: nó kéo các brand
+          // về giữa và làm rỗng dần hai đầu, khối mất vuông vắn.
+          //
+          // Ô vừa rời ra thành ô trống mới, nên cái "lỗ" cứ đi lang thang trong
+          // lưới — cách sắp xếp đổi liên tục mà không lặp lại, giống trò xếp
+          // hình mười lăm ô.
+          const chon = trong[Math.floor(Math.random() * trong.length)];
 
           const moi = [...prev];
           moi[idx] = chon;
@@ -300,9 +349,9 @@ export default function ClientMemoriesSection() {
         datDangAn(null);
       }, 950));
     }, 450));
-  }, [cacCho, khungCo.rong, khungCo.cao, clientList.length, huyHen, datDangAn]);
+  }, [cacCho, khungCo.rong, khungCo.cao, clientList.length, huyHen, datDangAn, datReVao]);
 
-  // ĐÈN RỌI TỰ ĐỘNG — CHỈ CHO MÀN CẢM ỨNG.
+  // ĐÈN RỌI TỰ ĐỘNG — chạy ở MỌI máy.
   //
   // Máy tính thì con chuột lo hết: rê vào cái nào là cái đó rõ, bỏ ra thì nó
   // tan. Điện thoại không có "rê chuột", nên ở đó cho các brand thay phiên nhau
@@ -310,7 +359,6 @@ export default function ClientMemoriesSection() {
   const [noiBat, setNoiBat] = useState(0);
   const noiBatRef = useRef(0);
   useEffect(() => {
-    if (co3D) return;                        // có chuột thì thôi, để chuột lo
     const tong = clientList.length;
     if (tong <= 1) return;
     if (giamChuyenDong()) return;
@@ -319,6 +367,10 @@ export default function ClientMemoriesSection() {
       // Bốc trong (tong - 1) cái RỒI nhảy qua chính nó, để luôn đổi sang brand
       // khác. Bốc thẳng trong `tong` thì có lúc trúng lại chính nó, người xem
       // thấy cả khung đứng im một nhịp tưởng bị treo.
+      // Đang rê chuột vào một brand thì đứng yên chờ: chuột được ưu tiên,
+      // không giành đèn với người xem.
+      if (reVaoRef.current !== null) return;
+
       const hienTai = noiBatRef.current;
       let k = Math.floor(Math.random() * (tong - 1));
       if (k >= hienTai) k += 1;
@@ -328,10 +380,13 @@ export default function ClientMemoriesSection() {
       roiBrand(hienTai);                     // cái vừa hết lượt: tan rồi mọc chỗ khác
     }, 2800);
     return () => clearInterval(t);
-  }, [co3D, clientList.length, roiBrand]);
+  }, [clientList.length, roiBrand]);
 
   // Cái nào đang rõ: máy tính thì do chuột, cảm ứng thì do đèn rọi tự động.
-  const iRo = co3D
+  // Cái nào đang rõ: rê chuột vào cái nào thì cái đó, còn không thì theo đèn
+  // rọi tự động. Trước đây máy có chuột thì KHÔNG có đèn rọi, nên chưa rê vào
+  // là cả khung trắng đen im lìm.
+  const iRo = reVao !== null
     ? reVao
     : (noiBat < clientList.length ? noiBat : 0);
 
