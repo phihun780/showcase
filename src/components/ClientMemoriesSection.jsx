@@ -28,6 +28,11 @@ function ngauNhien(hat) {
  * quanh mức lý tưởng rồi chọn số nào cho HÀNG CUỐI ĐẦY NHẤT — 11 brand thì 6 cột
  * ra 6–5, hoặc 4 cột ra 4–4–3, cả hai đều gọn.
  */
+// Thẻ đang được đèn rọi phóng to bấy nhiêu lần (xem `transform: scale()` lúc
+// render). Phần chừa lề phải tính theo cỡ ĐÃ PHÓNG, không thì lúc nó sáng lên là
+// vượt ra ngoài khung và bị `overflow-hidden` cắt mất một góc.
+const PHONG_TO = 1.18;
+
 function soCotCua(tong, rong, rongCoBan, leNgang) {
   // Số cột suy ra từ BỀ NGANG, không từ tỉ lệ khung.
   //
@@ -40,6 +45,10 @@ function soCotCua(tong, rong, rongCoBan, leNgang) {
   // Tâm trải từ mép đến mép, nên chỗ dùng được là bề ngang trừ lề VÀ trừ một
   // thẻ (nửa thẻ mỗi đầu). Số cột nhiều nhất là khi hai tâm liền nhau cách nhau
   // đúng bằng một thẻ.
+  // Ở ĐÂY dùng cỡ CHƯA phóng. Chỉ có đúng một thẻ sáng lên mỗi lúc, và nó nổi
+  // lên trên chứ không cần chỗ trống riêng; tính số cột theo cỡ đã phóng thì
+  // màn 375px tụt từ 3 cột xuống 2, khung cao vọt lên 861px.
+  // Cỡ đã phóng chỉ dùng cho phần chừa LỀ, để nó không bị mép khung cắt.
   const dungDuoc = Math.max(1, rong - leNgang * 2 - rongCoBan);
   const toiDa = Math.max(1, Math.floor(dungDuoc / rongCoBan) + 1);
   const lyTuong = Math.min(toiDa, Math.max(1, Math.round(dungDuoc / (rongCoBan * 1.15)) + 1));
@@ -78,8 +87,13 @@ function caoVuaDu(tong, rong, rongCoBan, caoCoBan, leDoc, leNgang) {
   // được; lấy đúng số đó làm khe dọc. Đặt 22px cố định thì màn rộng ra khe ngang
   // 38px mà khe dọc chỉ 22px, lưới trông bị dẹt.
   const cotStep = cot > 1 ? (rong - leNgang * 2 - rongCoBan) / (cot - 1) : 0;
-  const kheNgang = Math.max(18, Math.min(48, Math.round(cotStep - rongCoBan)));
-  return Math.round(leDoc * 2 + caoCoBan + Math.max(0, hang - 1) * (caoCoBan + kheNgang));
+  // Khe DỌC nới rộng hơn khe ngang một nhịp (+24px), và có sàn 44px.
+  //
+  // Hộp bọc thẻ rộng hơn phần logo nhìn thấy, nên theo chiều ngang mắt vẫn thấy
+  // thoáng dù hai hộp gần nhau. Chiều dọc thì không có khoảng đệm đó: thẻ cao
+  // 56px mà chỉ cách nhau 38px là nhìn chật, các logo như xếp chồng.
+  const kheNgang = Math.max(44, Math.min(72, Math.round(cotStep - rongCoBan) + 24));
+  return Math.round(leDoc * 2 + caoCoBan * PHONG_TO + Math.max(0, hang - 1) * (caoCoBan + kheNgang));
 }
 
 // Rải các CHỖ ĐỨNG ra khung, ngẫu nhiên nhưng không cái nào đè cái nào.
@@ -108,8 +122,8 @@ function raiCho(soCho, cot, rong, cao, leNgang, leDoc, rongCoBan, caoCoBan) {
 
   // Vùng dùng được, đã trừ lề. Lề tính theo MÉP thẻ nên trừ thêm nửa thẻ lớn
   // nhất — thẻ to nhất ứng với tiLe 1.12 bên dưới.
-  const rxMax = rongCoBan / 2;
-  const ryMax = caoCoBan / 2;
+  const rxMax = (rongCoBan * PHONG_TO) / 2;
+  const ryMax = (caoCoBan * PHONG_TO) / 2;
   const xMin = leNgang + rxMax, xMax = rong - leNgang - rxMax;
   const yMin = leDoc + ryMax, yMax = cao - leDoc - ryMax;
 
@@ -296,7 +310,10 @@ export default function ClientMemoriesSection() {
   //   màn hẹp   99x95  -> 100x96
   // Số cũ (170x145 và 82x104) là ước lượng: màn rộng dư gần ba lần nên đáy
   // khung thừa, màn hẹp thì bề ngang thiếu nên các thẻ chen vào nhau.
-  const rongCoBan = hepMH ? 100 : 160;
+  // Màn rộng lấy 172 chứ không phải 156 (hộp rộng nhất đo được): lúc thẻ sáng
+  // lên nó phóng 1,18× nên cần dư, đo thấy còn thiếu 3px là đã bị mép cắt.
+  // Màn hẹp giữ 100 — nới thêm là tụt từ 3 cột xuống 2, khung cao vọt lên.
+  const rongCoBan = hepMH ? 100 : 172;
   const caoCoBan = hepMH ? 96 : 56;
 
   // Chiều cao VỪA KHÍT số hàng.
