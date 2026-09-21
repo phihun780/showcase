@@ -451,7 +451,7 @@ export default function ClientMemoriesSection() {
                       giua ? 'border-white/15 bg-[#18181b]' : 'border-white/8 bg-[#121216]'
                     }`}
                   >
-                    <div className="relative aspect-[16/10] w-full rounded-xl bg-black/50 border border-white/5 overflow-hidden flex items-center justify-center p-5 sm:p-7">
+                    <div className="relative aspect-[4/5] w-full rounded-xl bg-black/50 border border-white/5 overflow-hidden flex items-center justify-center p-5 sm:p-7">
                       {logo ? (
                         <SmartImage
                           src={logo}
@@ -490,22 +490,6 @@ export default function ClientMemoriesSection() {
               })}
             </div>
 
-            {/* Chấm chỉ vị trí. Bấm chấm nào thì lướt tới brand đó.
-                Bỏ hai nút mũi tên: kéo tay, vuốt và lăn ngang đều đi được rồi,
-                thêm nút chỉ làm rối chân khung. */}
-            <div className="flex items-center justify-center gap-1.5 pt-4">
-              {clientList.map((c, i) => (
-                <button
-                  key={c.id || i}
-                  type="button"
-                  onClick={() => toiThe(i)}
-                  aria-label={`Tới ${c.clientName || `brand ${i + 1}`}`}
-                  className={`h-1.5 rounded-full transition-all cursor-pointer ${
-                    i === iGiua ? 'w-5 bg-[#C3EA39]' : 'w-1.5 bg-white/20 hover:bg-white/40'
-                  }`}
-                />
-              ))}
-            </div>
           </motion.div>
         )}
 
