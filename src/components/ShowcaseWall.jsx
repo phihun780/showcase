@@ -276,9 +276,14 @@ export default function ShowcaseWall({ items = [], title, hint }) {
 
       </div>
 
-      <p className="text-center text-[10px] font-mono uppercase tracking-[0.2em] text-white/30 mt-2">
-        {hint || 'Kéo để xoay · Bấm để xem lớn'}
-      </p>
+      {/* Dòng gợi ý chỉ hiện khi có chữ trong CMS.
+          Trước đây luôn hiện, kể cả khi ô trong CMS để trống, vì có một câu mặc
+          định viết cứng ở đây. Bỏ câu mặc định đi thì để trống là ẩn hẳn. */}
+      {(hint || '').trim() && (
+        <p className="text-center text-[10px] font-mono uppercase tracking-[0.2em] text-white/30 mt-2">
+          {hint}
+        </p>
+      )}
 
       {dangXem !== null && (
         <ImageViewer

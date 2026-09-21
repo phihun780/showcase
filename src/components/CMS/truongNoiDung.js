@@ -53,7 +53,7 @@ export const CAC_MUC = [
     truong: [
       ...dauMuc('section01Number', 'section01Title', '01', 'Lúc rảnh rỗi'),
       { k: 'section01Subtitle', nhan: 'Mô tả phụ (bỏ trống thì ẩn)', vd: '', co: 12, dong: 2 },
-      { k: 'showcaseWallHint', nhan: 'Dòng gợi ý dưới cụm ảnh', vd: 'Kéo để xoay · Bấm để xem lớn', co: 12 },
+      { k: 'showcaseWallHint', nhan: 'Dòng gợi ý dưới cụm ảnh (bỏ trống thì ẩn)', vd: 'Kéo để xoay · Bấm để xem lớn', co: 12 },
     ],
   },
   {
