@@ -474,6 +474,10 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
                 {isUploadingLogo ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
                 <span>Tải Logo</span>
               </button>
+
+              {!formData.logo && (
+                <span className="font-mono text-xs text-[#C3EA39]/70">600 × 600 px</span>
+              )}
             </div>
           </div>
 
@@ -534,8 +538,9 @@ export default function ClientEditorModal({ client, isOpen, onClose, onSave }) {
             )}
 
             {galleryList.length === 0 ? (
-              <div className="p-8 rounded-xl border-2 border-dashed border-white/15 text-center text-white/35 font-mono text-xs">
-                Kéo hình vào đây, hoặc bấm "Thêm Hình"
+              <div className="p-8 rounded-xl border-2 border-dashed border-white/15 text-center font-mono text-xs space-y-1">
+                <p className="text-white/35">Kéo hình vào đây, hoặc bấm "Thêm Hình"</p>
+                <p className="text-[#C3EA39]/70">Rộng 1600 px · cao tuỳ ý</p>
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">

@@ -1102,6 +1102,7 @@ export default function CMSPage({ onBackToPortfolio }) {
                       <Upload className="w-8 h-8 text-[#C3EA39] mb-2 group-hover:scale-110 transition-transform" />
                       <p className="font-display font-bold text-white text-sm">Tải Ảnh Slide Banner</p>
                       <p className="text-xs text-white/40 mt-1 font-mono">Tải ảnh cover góc nhìn rộng</p>
+                      <p className="text-xs text-[#C3EA39]/70 mt-1 font-mono">2432 × 900 px</p>
                     </div>
 
                     <div

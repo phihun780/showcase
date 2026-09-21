@@ -456,6 +456,9 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
                   <span className="text-[10px] font-mono text-white/30 mt-0.5">
                     Kéo thả hoặc bấm vào đây
                   </span>
+                  <span className="text-[10px] font-mono text-[#C3EA39]/70 mt-1">
+                    1600 × 1000 px
+                  </span>
                 </div>
               )}
 
@@ -639,6 +642,9 @@ export default function ProjectEditorModal({ isOpen, project, onClose, onSave })
                   </span>
                   <span className="text-[10px] font-mono text-white/30 mt-0.5">
                     Kéo thả hoặc bấm để chọn file
+                  </span>
+                  <span className="text-[10px] font-mono text-[#C3EA39]/70 mt-1">
+                    Rộng 1760 px · cao tuỳ ý
                   </span>
                 </div>
               )}

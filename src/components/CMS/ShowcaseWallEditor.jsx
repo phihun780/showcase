@@ -288,6 +288,7 @@ export default function ShowcaseWallEditor({ items, onChange }) {
           <p className="text-xs text-white/40 mt-1 font-mono">
             Bấm để chọn, hoặc kéo thả nhiều ảnh vào đây
           </p>
+          <p className="text-xs text-[#C3EA39]/70 mt-1 font-mono">2000 × 1260 px</p>
         </div>
       ) : (
         <>

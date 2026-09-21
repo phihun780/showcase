@@ -353,6 +353,7 @@ export default function ProfileEditor({ formData, setFormData }) {
                 <div className="w-full h-full flex flex-col items-center justify-center text-white/30 p-4 text-center">
                   <ImageIcon className="w-8 h-8 mb-2" />
                   <span className="text-[11px] font-mono">Chưa có ảnh</span>
+                  <span className="text-[11px] font-mono text-[#C3EA39]/70 mt-1">1040 × 1560 px</span>
                 </div>
               )}
 
