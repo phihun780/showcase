@@ -99,6 +99,18 @@ export default function ClientMemoriesSection() {
   const theRefs = useRef([]);
   const [iGiua, datIGiua] = useState(0);
 
+  // Máy cảm ứng hay máy có chuột. Hai bên dùng hai cách giữ thẻ ở giữa khác
+  // hẳn nhau, xem chú thích ở `cuonRoiDung`.
+  const [camUng, datCamUng] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia('(pointer: coarse)');
+    const capNhat = () => datCamUng(mq.matches);
+    capNhat();
+    mq.addEventListener('change', capNhat);
+    return () => mq.removeEventListener('change', capNhat);
+  }, []);
+
   const giamChuyenDong = () =>
     typeof window !== 'undefined' &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -349,6 +361,19 @@ export default function ClientMemoriesSection() {
   const henDung = useRef(0);
   const cuonRoiDung = useCallback(() => {
     khiCuon();
+
+    // MÁY CẢM ỨNG: để `scroll-snap` của trình duyệt lo việc dừng đúng thẻ.
+    //
+    // Trước đây cả hai loại máy đều chờ 140ms rồi mới tự kéo về giữa. Trên điện
+    // thoại, vuốt xong còn đà trượt cả giây; mỗi nhịp đà lại dời hẹn giờ, đà
+    // hết mới bắt đầu kéo, rồi còn trượt êm thêm một đoạn nữa — nhìn ra thẻ
+    // dừng lệch rồi một lúc sau mới bò về giữa.
+    //
+    // `scroll-snap` thì trình duyệt tính ngay trong lúc hãm đà, thẻ dừng đúng
+    // chỗ luôn. Nhưng KHÔNG dùng được cho chuột: nó ghì thẻ vào vị trí ngay khi
+    // tay vừa rời nên cú búng không có đà.
+    if (camUng) return;
+
     if (keo.current?.daKeo || dangTruot.current) return;
     clearTimeout(henDung.current);
     henDung.current = setTimeout(() => {
@@ -356,7 +381,7 @@ export default function ClientMemoriesSection() {
       if (!bang) return;
       truotToi(viTriCua(veThe(bang.scrollLeft)));
     }, 140);
-  }, [khiCuon, truotToi, viTriCua, veThe]);
+  }, [khiCuon, truotToi, viTriCua, veThe, camUng]);
 
   // Bấm một thẻ: chưa ở giữa thì đưa vào giữa đã; đang ở giữa mới mở bài viết.
   // Vừa kéo xong thì bỏ qua, không thì thả tay là bài viết bật ra.
@@ -452,7 +477,7 @@ export default function ClientMemoriesSection() {
               ref={bangRef}
               onScroll={cuonRoiDung}
               onPointerDown={batKeo}
-              className="flex gap-4 overflow-x-auto py-11 cursor-grab active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
+              className={`flex gap-4 overflow-x-auto py-11 cursor-grab active:cursor-grabbing [&::-webkit-scrollbar]:hidden ${camUng ? 'snap-x snap-mandatory' : ''}`}
               style={{
                 // Đệm trên dưới (`py-11` = 44px) để QUẦNG SÁNG có chỗ toả.
                 //
@@ -487,6 +512,8 @@ export default function ClientMemoriesSection() {
                     aria-label={`Xem ${ten}`}
                     style={{ transformOrigin: 'center center' }}
                     className={`shrink-0 w-[var(--the)] text-left rounded-2xl border p-2 cursor-pointer transition-colors duration-300 ${
+                      camUng ? 'snap-center' : ''
+                    } ${
                       giua ? 'border-white/15 bg-[#18181b]' : 'border-white/8 bg-[#121216]'
                     }`}
                   >
