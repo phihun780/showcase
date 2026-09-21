@@ -17,13 +17,12 @@ export const CAC_MUC = [
   {
     id: 'header',
     ten: 'Thanh đầu trang',
-    mo: 'Chữ ở thanh trên cùng và tên các nút menu',
+    mo: 'Chữ ở thanh trên cùng (tên nút menu lấy theo tiêu đề Nội dung 1–4)',
     truong: [
+      // Tên các nút menu không còn ô riêng ở đây: thanh menu đọc thẳng
+      // "Tiêu đề mục" của Nội dung 1–4, sửa bên đó là menu đổi theo.
       { k: 'headerTitle1', nhan: 'Dòng chữ nhỏ bên trái', vd: 'PORTFOLIO // SHOWCASE', co: 6 },
       { k: 'headerTitle2', nhan: 'Tên hiển thị', vd: 'PHI HÙNG', co: 6 },
-      { k: 'headerNavWork', nhan: 'Nút menu 1', vd: 'Khu trưng bày', co: 4 },
-      { k: 'headerNavClients', nhan: 'Nút menu 2', vd: 'Bạn đồng hành', co: 4 },
-      { k: 'headerNavAbout', nhan: 'Nút menu 3', vd: 'Về tui', co: 4 },
     ],
   },
   {

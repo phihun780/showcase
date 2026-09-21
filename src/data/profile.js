@@ -9,9 +9,6 @@ export const profile = {
   // Header Customization
   headerTitle1: "PORTFOLIO // SHOWCASE",
   headerTitle2: "GRAPHIC DESIGNER",
-  headerNavWork: "Dự án của tui",
-  headerNavClients: "Bạn đồng hành",
-  headerNavAbout: "Về tui",
 
   // Hero Customization
   heroTitleRow1: "SHOW",

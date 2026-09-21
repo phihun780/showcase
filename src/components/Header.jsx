@@ -4,7 +4,7 @@ import { Menu, X } from 'lucide-react';
 import { usePortfolioData } from '../context/PortfolioDataContext';
 
 export default function Header({ activeSection, setActiveSection, onOpenCMS }) {
-  const { projects, clients, profile } = usePortfolioData();
+  const { profile, showcaseWall } = usePortfolioData();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [titleIndex, setTitleIndex] = useState(0);
 
@@ -42,12 +42,22 @@ export default function Header({ activeSection, setActiveSection, onOpenCMS }) {
     return () => clearInterval(interval);
   }, [titles.length]);
 
-  // Xếp đúng thứ tự các mục nằm trên trang: dự án -> bạn đồng hành -> về tui.
+  // Menu lấy thẳng tên của bốn mục nội dung, không có tên riêng nữa.
+  //
+  // Trước đây thanh này có ba trường riêng trong CMS (`headerNavWork`,
+  // `headerNavClients`, `headerNavAbout`). Đổi tiêu đề một mục ngoài trang mà
+  // quên sửa menu là hai nơi gọi một chỗ bằng hai cái tên khác nhau. Giờ đọc
+  // chung một trường với tiêu đề mục, nên sửa một lần là khớp cả hai.
   const navItems = [
-    { label: profile?.headerNavWork || 'Dự án của tui', id: 'work', count: `${projects.length}` },
-    { label: profile?.headerNavClients || 'Bạn đồng hành', id: 'clients', count: `${(clients || []).length}` },
-    { label: profile?.headerNavAbout || 'Về tui', id: 'about' },
-  ];
+    { label: profile?.section01Title || 'Lúc rảnh rỗi', id: 'random' },
+    { label: profile?.section02Title || 'Khu trưng bày', id: 'work' },
+    { label: profile?.sectionClientsTitle || 'Bạn đồng hành', id: 'clients' },
+    { label: profile?.section04Title || 'Về tui', id: 'about' },
+  ].filter(
+    // Mục 01 chưa có tấm ảnh nào thì cả mục không được dựng, bấm vào sẽ không
+    // đi đâu cả — nên giấu luôn nút của nó.
+    (m) => m.id !== 'random' || (Array.isArray(showcaseWall) && showcaseWall.length > 0)
+  );
 
   const scrollToSection = (id) => {
     setActiveSection(id);
@@ -77,7 +87,7 @@ export default function Header({ activeSection, setActiveSection, onOpenCMS }) {
           </span>
 
           {/* Masked Sliding Text Container */}
-          <div className="relative overflow-hidden h-6 flex items-center min-w-[190px] sm:min-w-[220px]">
+          <div className="relative overflow-hidden h-6 flex items-center min-w-[190px] lg:min-w-[220px]">
             <AnimatePresence mode="wait">
               <motion.span
                 key={titleIndex}
@@ -95,7 +105,7 @@ export default function Header({ activeSection, setActiveSection, onOpenCMS }) {
 
         {/* Right: Clean Text Nav Links (No rounded pill containers) */}
         <div className="flex items-center gap-8">
-          <nav className="hidden md:flex items-center gap-8 text-xs sm:text-sm font-mono tracking-wider">
+          <nav className="hidden md:flex items-center gap-5 lg:gap-8 text-xs lg:text-sm font-mono tracking-wider">
             {navItems.map((item) => {
               const isActive = activeSection === item.id;
 
@@ -106,18 +116,13 @@ export default function Header({ activeSection, setActiveSection, onOpenCMS }) {
                   /* `cursor-pointer` phải tự thêm: trình duyệt cho <button> con
                      trỏ mũi tên, chỉ <a href> mới tự thành bàn tay. Logo là thẻ
                      <a> nên có sẵn, mấy nút này thì không. */
-                  className={`relative py-1 transition-colors flex items-center gap-1.5 cursor-pointer ${
+                  className={`relative py-1 whitespace-nowrap transition-colors flex items-center gap-1.5 cursor-pointer ${
                     isActive
                       ? 'text-[#C3EA39] font-bold'
                       : 'text-white/70 hover:text-white'
                   }`}
                 >
                   <span>{item.label}</span>
-                  {item.count && (
-                    <span className={`text-[11px] ${isActive ? 'text-[#C3EA39]/80' : 'text-white/40'}`}>
-                      [{item.count}]
-                    </span>
-                  )}
                   {isActive && (
                     <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#C3EA39] rounded-full animate-fadeIn" />
                   )}
@@ -152,7 +157,6 @@ export default function Header({ activeSection, setActiveSection, onOpenCMS }) {
               }`}
             >
               <span>{item.label}</span>
-              {item.count && <span className="text-xs text-white/40">[{item.count}]</span>}
             </button>
           ))}
         </div>
