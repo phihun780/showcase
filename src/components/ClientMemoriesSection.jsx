@@ -155,7 +155,11 @@ export default function ClientMemoriesSection() {
       // không teo mãi.
       const xa = Math.min(2, d / buoc);
       el.style.transform = `scale(${(1 - 0.13 * xa).toFixed(3)})`;
-      el.style.opacity = (1 - 0.3 * xa).toFixed(3);
+      // Độ mờ theo ba mức: giữa 100%, hai cái kề 80%, hai cái tiếp 50%.
+      // Chia hai đoạn vì bước tụt không đều nhau (0,2 rồi 0,3) — một đường
+      // thẳng duy nhất không đi qua được cả ba mức.
+      const mo = xa <= 1 ? 1 - 0.2 * xa : 0.8 - 0.3 * (xa - 1);
+      el.style.opacity = mo.toFixed(3);
       el.style.zIndex = String(100 - Math.round(xa * 10));
 
       // Quầng sáng màu thương hiệu quanh thẻ ở giữa. Đậm dần theo lúc nó tiến
@@ -448,14 +452,19 @@ export default function ClientMemoriesSection() {
               ref={bangRef}
               onScroll={cuonRoiDung}
               onPointerDown={batKeo}
-              className="flex gap-4 overflow-x-auto pb-2 cursor-grab active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
+              className="flex gap-4 overflow-x-auto py-11 cursor-grab active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
               style={{
-                // Bề ngang một thẻ, tính sao cho thấy đủ NĂM thẻ: cái giữa và
-                // hai cái mỗi bên.
-                // Bề ngang một thẻ. Thẻ ngoài cùng cố tình bị mép khung cắt
-                // bớt, giống mẫu — nhờ vậy biết là còn nữa mà lướt tiếp.
-                // Màn hẹp lấy 54% bề ngang: một thẻ ở giữa, hai bên thò ra
-                // chừng 50px mỗi bên — đủ thấy là còn nữa mà không chật.
+                // Đệm trên dưới (`py-11` = 44px) để QUẦNG SÁNG có chỗ toả.
+                //
+                // `overflow-x: auto` làm trình duyệt tính luôn `overflow-y`
+                // thành `auto`, nên tràn theo chiều DỌC cũng bị chặn — quầng
+                // sáng toả ra 35px mà khung cắt ngay mép thẻ, nhìn như bị xén
+                // một đường thẳng.
+                //
+                // Bề ngang một thẻ: màn rộng 300px thì thấy đủ NĂM thẻ (cái
+                // giữa và hai cái mỗi bên), hai thẻ ngoài cùng cố tình để mép
+                // khung cắt bớt. Màn hẹp lấy 54% bề ngang: một thẻ ở giữa, hai
+                // cánh thò ra chừng 38px mỗi bên.
                 '--the': 'clamp(170px, 54vw, 300px)',
                 // Đệm hai đầu bằng nửa khung trừ nửa thẻ: nhờ vậy thẻ ĐẦU và
                 // thẻ CUỐI cũng đứng được đúng giữa, không kẹt ở mép.
