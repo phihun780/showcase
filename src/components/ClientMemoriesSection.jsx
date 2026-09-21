@@ -170,10 +170,22 @@ export default function ClientMemoriesSection() {
 
     // Gần chạm đầu hay cuối thì dịch đúng một chiều dài danh sách. Gán thẳng
     // `scrollLeft` nên không có hiệu ứng, mắt không kịp thấy.
+    //
+    // PHẢI DỊCH CẢ ĐÍCH ĐẾN của cú trượt đang chạy theo cùng một lượng.
+    //
+    // Không dịch thì: cú trượt nhớ một đích TUYỆT ĐỐI, nhảy vòng làm vị trí hiện
+    // tại lùi đi một chiều dài danh sách, quãng còn lại phình ra đúng bấy nhiêu,
+    // nó lao tiếp, lại chạm ngưỡng, lại nhảy — băng quay tít không bao giờ dừng.
     const dai = daiMotBan();
     if (dai > 0) {
-      if (bang.scrollLeft < dai * 0.5) { bang.scrollLeft += dai; doTamThe(); }
-      else if (bang.scrollLeft > dai * (SO_BAN - 1.5)) { bang.scrollLeft -= dai; doTamThe(); }
+      let doi = 0;
+      if (bang.scrollLeft < dai * 0.5) doi = dai;
+      else if (bang.scrollLeft > dai * (SO_BAN - 1.5)) doi = -dai;
+      if (doi) {
+        bang.scrollLeft += doi;
+        if (dichTruot.current != null) dichTruot.current += doi;
+        doTamThe();
+      }
     }
 
     const tot = veCoThe();
@@ -217,17 +229,27 @@ export default function ClientMemoriesSection() {
   // Trượt êm về một vị trí. Tự chạy chứ không dùng `behavior: 'smooth'`, để nối
   // tiếp được sau cú búng và dừng ngay khi người ta chạm lại.
   const dangTruot = useRef(0);
+  // Đích đến để trong ref chứ không phải biến đóng: cú nhảy vòng trong `khiCuon`
+  // còn phải sửa được nó.
+  const dichTruot = useRef(null);
   const truotToi = useCallback((dich, nhanh = 0.16) => {
     const bang = bangRef.current;
     if (!bang) return;
     if (dangTruot.current) cancelAnimationFrame(dangTruot.current);
     if (giamChuyenDong()) { bang.scrollLeft = dich; khiCuon(); return; }
 
+    dichTruot.current = dich;
+
+    // Chặn số khung hình: dù có gì sai thì cũng tự dừng sau chừng 1,5 giây,
+    // không để băng quay mãi.
+    let conKhung = 90;
+
     const buoc = () => {
-      const con = dich - bang.scrollLeft;
-      if (Math.abs(con) < 0.5) {
-        bang.scrollLeft = dich;
+      const con = (dichTruot.current ?? bang.scrollLeft) - bang.scrollLeft;
+      if (Math.abs(con) < 0.5 || conKhung-- <= 0) {
+        if (dichTruot.current != null) bang.scrollLeft = dichTruot.current;
         dangTruot.current = 0;
+        dichTruot.current = null;
         khiCuon();
         return;
       }
@@ -271,6 +293,7 @@ export default function ClientMemoriesSection() {
     if (!bang) return;
 
     if (dangTruot.current) { cancelAnimationFrame(dangTruot.current); dangTruot.current = 0; }
+    dichTruot.current = null;
     keo.current = { x0: e.clientX, xTruoc: e.clientX, batDau: bang.scrollLeft, daKeo: false, v: 0, luc: e.timeStamp };
 
     const di = (ev) => {
@@ -423,7 +446,9 @@ export default function ClientMemoriesSection() {
                 // hai cái mỗi bên.
                 // Bề ngang một thẻ. Thẻ ngoài cùng cố tình bị mép khung cắt
                 // bớt, giống mẫu — nhờ vậy biết là còn nữa mà lướt tiếp.
-                '--the': 'clamp(210px, 62vw, 300px)',
+                // Màn hẹp lấy 54% bề ngang: một thẻ ở giữa, hai bên thò ra
+                // chừng 50px mỗi bên — đủ thấy là còn nữa mà không chật.
+                '--the': 'clamp(170px, 54vw, 300px)',
                 // Đệm hai đầu bằng nửa khung trừ nửa thẻ: nhờ vậy thẻ ĐẦU và
                 // thẻ CUỐI cũng đứng được đúng giữa, không kẹt ở mép.
                 paddingLeft: 'max(0px, calc(50% - var(--the) / 2))',
