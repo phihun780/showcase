@@ -155,10 +155,10 @@ export default function ClientMemoriesSection() {
       // không teo mãi.
       const xa = Math.min(2, d / buoc);
       el.style.transform = `scale(${(1 - 0.13 * xa).toFixed(3)})`;
-      // Độ mờ theo ba mức: giữa 100%, hai cái kề 80%, hai cái tiếp 50%.
-      // Chia hai đoạn vì bước tụt không đều nhau (0,2 rồi 0,3) — một đường
+      // Độ mờ theo ba mức: giữa 100%, hai cái kề 50%, hai cái tiếp 15%.
+      // Chia hai đoạn vì bước tụt không đều nhau (0,5 rồi 0,35) — một đường
       // thẳng duy nhất không đi qua được cả ba mức.
-      const mo = xa <= 1 ? 1 - 0.2 * xa : 0.8 - 0.3 * (xa - 1);
+      const mo = xa <= 1 ? 1 - 0.5 * xa : 0.5 - 0.35 * (xa - 1);
       el.style.opacity = mo.toFixed(3);
       el.style.zIndex = String(100 - Math.round(xa * 10));
 
