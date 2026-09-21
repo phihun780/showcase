@@ -157,6 +157,14 @@ export default function ClientMemoriesSection() {
       el.style.transform = `scale(${(1 - 0.13 * xa).toFixed(3)})`;
       el.style.opacity = (1 - 0.3 * xa).toFixed(3);
       el.style.zIndex = String(100 - Math.round(xa * 10));
+
+      // Quầng sáng màu thương hiệu quanh thẻ ở giữa. Đậm dần theo lúc nó tiến
+      // vào giữa chứ không bật tắt hai nấc — cùng nhịp với cỡ và độ mờ, nên khi
+      // kéo thì ánh sáng trôi theo tay.
+      const gan = Math.max(0, 1 - xa);
+      el.style.boxShadow = gan > 0.01
+        ? `0 0 ${Math.round(30 * gan)}px ${Math.round(5 * gan)}px rgba(195, 234, 57, ${(0.18 * gan).toFixed(3)})`
+        : 'none';
     });
     return tot;
   }, [doTamThe]);
