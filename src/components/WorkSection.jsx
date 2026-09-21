@@ -121,9 +121,14 @@ export default function WorkSection() {
           className="mb-6 sm:mb-8"
         >
           <div className="flex items-baseline gap-3 sm:gap-4">
-            <span className="text-3xl sm:text-4xl md:text-5xl font-mono font-extrabold text-[#C3EA39]">
-              {profile?.section02Number || '02'}
-            </span>
+            {/* Bỏ trống ô số mục trong CMS thì KHÔNG dựng thẻ này luôn.
+                Nhờ `gap` của flex chỉ ăn giữa hai phần tử, không còn số thì
+                tiêu đề tự dịch sát mép trái, không để lại khoảng trống. */}
+            {(profile?.section02Number || '').trim() && (
+              <span className="text-3xl sm:text-4xl md:text-5xl font-mono font-extrabold text-[#C3EA39]">
+                {profile.section02Number}
+              </span>
+            )}
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight">
               {profile?.section02Title || 'Dự án của tui'}
             </h2>

@@ -430,9 +430,14 @@ export default function ClientMemoriesSection() {
              dòng đó đã gỡ. */
         >
           <div className="flex items-baseline gap-3 sm:gap-4">
-            <span className="text-3xl sm:text-4xl md:text-5xl font-mono font-extrabold text-[#C3EA39]">
-              {profile?.sectionClientsNumber || '03'}
-            </span>
+            {/* Bỏ trống ô số mục trong CMS thì KHÔNG dựng thẻ này luôn.
+                Nhờ `gap` của flex chỉ ăn giữa hai phần tử, không còn số thì
+                tiêu đề tự dịch sát mép trái, không để lại khoảng trống. */}
+            {(profile?.sectionClientsNumber || '').trim() && (
+              <span className="text-3xl sm:text-4xl md:text-5xl font-mono font-extrabold text-[#C3EA39]">
+                {profile.sectionClientsNumber}
+              </span>
+            )}
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight">
               {profile?.sectionClientsTitle || 'Bạn đồng hành'}
             </h2>

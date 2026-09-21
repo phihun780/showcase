@@ -9,7 +9,7 @@
 
 /** Ba ô lặp lại ở đầu mỗi mục: số, tiêu đề, mô tả phụ. */
 const dauMuc = (so, ten, vdSo, vdTen) => [
-  { k: so, nhan: 'Số mục', vd: vdSo, co: 2, kieu: 'ma' },
+  { k: so, nhan: 'Số mục (bỏ trống thì ẩn)', vd: vdSo, co: 2, kieu: 'ma' },
   { k: ten, nhan: 'Tiêu đề mục', vd: vdTen, co: 10, dam: true },
 ];
 
