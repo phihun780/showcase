@@ -201,11 +201,14 @@ export default function ProjectModal({ project, isOpen, onClose, onSelectNextPro
         <div className="p-5 sm:p-10 md:p-14 space-y-6 sm:space-y-10">
           
           {/* Title & Subtitle */}
-          <div className="pr-14 sm:pr-16 space-y-1.5 sm:space-y-2">
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-bold uppercase text-white tracking-tight leading-snug">
+          <div className="space-y-1.5 sm:space-y-2">
+            {/* Lề phải chừa chỗ cho nút đóng chỉ ăn vào dòng tiêu đề — nút nằm
+                ngang hàng với nó. Mô tả nằm dưới nút nên dùng trọn bề ngang,
+                bằng đúng bề ngang mấy tấm ảnh bên dưới. */}
+            <h2 className="pr-14 sm:pr-16 text-xl sm:text-2xl md:text-3xl font-display font-bold uppercase text-white tracking-tight leading-snug">
               {project.title}
             </h2>
-            <p className="text-xs sm:text-sm md:text-base text-white/70 font-light leading-relaxed max-w-3xl">
+            <p className="text-xs sm:text-sm md:text-base text-white/70 font-light leading-relaxed">
               {project.subtitle}
             </p>
           </div>

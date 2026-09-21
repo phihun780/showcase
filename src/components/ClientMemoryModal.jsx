@@ -261,8 +261,11 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
         <div className="p-5 sm:p-10 md:p-14 space-y-6 sm:space-y-10">
 
           {/* Tên brand + dịch vụ + ghi chú */}
-          <div className="pr-14 sm:pr-16 space-y-1.5 sm:space-y-2">
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-display font-bold uppercase text-white tracking-tight leading-snug">
+          <div className="space-y-1.5 sm:space-y-2">
+            {/* Lề phải chừa chỗ cho nút đóng chỉ ăn vào dòng tiêu đề — nút nằm
+                ngang hàng với nó. Mô tả nằm dưới nút nên dùng trọn bề ngang,
+                bằng đúng bề ngang mấy tấm ảnh bên dưới. */}
+            <h2 className="pr-14 sm:pr-16 text-xl sm:text-2xl md:text-3xl font-display font-bold uppercase text-white tracking-tight leading-snug">
               {ten}
             </h2>
 
@@ -272,7 +275,7 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
 
             {/* Mô tả — để trống trong CMS thì ẩn hẳn dòng này */}
             {(client.note || '').trim() && (
-              <p className="text-xs sm:text-sm md:text-base text-white/70 font-light leading-relaxed max-w-3xl">
+              <p className="text-xs sm:text-sm md:text-base text-white/70 font-light leading-relaxed">
                 {client.note}
               </p>
             )}
