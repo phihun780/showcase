@@ -451,7 +451,7 @@ export default function ClientMemoriesSection() {
                       giua ? 'border-white/15 bg-[#18181b]' : 'border-white/8 bg-[#121216]'
                     }`}
                   >
-                    <div className="relative aspect-[6/5] w-full rounded-xl bg-black/50 border border-white/5 overflow-hidden flex items-center justify-center p-5 sm:p-8">
+                    <div className="relative aspect-[16/10] w-full rounded-xl bg-black/50 border border-white/5 overflow-hidden flex items-center justify-center p-5 sm:p-7">
                       {logo ? (
                         <SmartImage
                           src={logo}
@@ -461,7 +461,10 @@ export default function ClientMemoriesSection() {
                           decoding="async"
                           draggable={false}
                           onContextMenu={(e) => e.preventDefault()}
-                          className={`max-w-full max-h-full object-contain select-none transition-all duration-500 ${
+                          /* Bo tròn chính cái logo: nhiều logo là ảnh vuông có
+                             nền riêng, để góc vuông thì nó chọi với khung bo
+                             tròn bao ngoài. */
+                          className={`max-w-full max-h-full object-contain rounded-xl select-none transition-all duration-500 ${
                             giua ? 'grayscale-0' : 'grayscale'
                           }`}
                         />
