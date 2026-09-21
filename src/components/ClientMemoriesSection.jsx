@@ -451,7 +451,7 @@ export default function ClientMemoriesSection() {
                       giua ? 'border-white/15 bg-[#18181b]' : 'border-white/8 bg-[#121216]'
                     }`}
                   >
-                    <div className="relative aspect-[4/5] w-full rounded-xl bg-black/50 border border-white/5 overflow-hidden flex items-center justify-center p-5 sm:p-7">
+                    <div className="relative aspect-square w-full rounded-xl bg-black/50 border border-white/5 overflow-hidden flex items-center justify-center p-5 sm:p-7">
                       {logo ? (
                         <SmartImage
                           src={logo}
