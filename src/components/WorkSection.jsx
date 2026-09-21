@@ -102,7 +102,7 @@ export default function WorkSection() {
   const isScrollable = projects.length > MIN_SLOTS;
 
   return (
-    <section id="work" className="pt-8 sm:pt-16 pb-8 sm:pb-16 scroll-mt-16 relative w-full max-w-full overflow-hidden touch-pan-y">
+    <section id="work" className="pt-6 sm:pt-10 pb-8 sm:pb-10 scroll-mt-16 relative w-full max-w-full overflow-hidden touch-pan-y">
       
       {/* Ambient background glow mapped to stage (GPU Radial Gradient) */}
       <div 

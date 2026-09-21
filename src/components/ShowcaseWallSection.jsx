@@ -22,7 +22,7 @@ export default function ShowcaseWallSection() {
   return (
     <section
       id="random"
-      className="pt-10 sm:pt-16 pb-10 sm:pb-16 scroll-mt-16 relative w-full max-w-full overflow-hidden touch-pan-y"
+      className="pt-6 sm:pt-10 pb-8 sm:pb-10 scroll-mt-16 relative w-full max-w-full overflow-hidden touch-pan-y"
     >
       {/* Quầng sáng nền */}
       <div

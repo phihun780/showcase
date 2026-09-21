@@ -145,7 +145,7 @@ export default function CoverBannerSection() {
   return (
     <section 
       id="cover-banner" 
-      className="pt-8 sm:pt-14 pb-4 sm:pb-8 relative w-full max-w-full overflow-hidden touch-pan-y"
+      className="pt-6 sm:pt-10 pb-8 sm:pb-10 relative w-full max-w-full overflow-hidden touch-pan-y"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >

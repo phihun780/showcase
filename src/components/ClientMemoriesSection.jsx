@@ -394,7 +394,7 @@ export default function ClientMemoriesSection() {
   return (
     <section 
       id="clients" 
-      className="pt-12 sm:pt-20 pb-8 sm:pb-10 scroll-mt-16 relative w-full max-w-full overflow-hidden touch-pan-y"
+      className="pt-6 sm:pt-10 pb-8 sm:pb-10 scroll-mt-16 relative w-full max-w-full overflow-hidden touch-pan-y"
     >
       {/* Vệt sáng nền cho mục có không khí.
           

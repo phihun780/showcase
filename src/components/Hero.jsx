@@ -32,7 +32,7 @@ export default function Hero() {
   }, []);
 
   return (
-    <section className="relative min-h-screen w-full max-w-full flex flex-col justify-between pt-24 sm:pt-28 lg:pt-24 pb-6 sm:pb-8 overflow-hidden touch-pan-y">
+    <section className="relative min-h-screen w-full max-w-full flex flex-col justify-between pt-24 sm:pt-28 lg:pt-24 pb-8 sm:pb-10 overflow-hidden touch-pan-y">
       
       {/* Subtle Ambient Background Lime Glow (GPU Radial Gradient) */}
       <div 

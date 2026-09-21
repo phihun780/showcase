@@ -112,7 +112,7 @@ export default function AboutSection() {
   };
 
   return (
-    <section id="about" className="pt-6 sm:pt-10 pb-16 sm:pb-24 scroll-mt-16 relative w-full max-w-full overflow-hidden touch-pan-y">
+    <section id="about" className="pt-6 sm:pt-10 pb-8 sm:pb-10 scroll-mt-16 relative w-full max-w-full overflow-hidden touch-pan-y">
       
       {/* Background Ambient Glow (GPU Radial Gradient) */}
       <div 
