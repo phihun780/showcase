@@ -10,8 +10,7 @@ import {
   Link as LinkIcon,
   Trash2,
   Sparkles,
-  Loader2,
-  Ruler
+  Loader2
 } from 'lucide-react';
 import { extractEmbedSrc } from '../../utils/juxtaposeUtils';
 import BeforeAfterSlider from '../BeforeAfterSlider';
@@ -231,34 +230,6 @@ export default function JuxtaposeEmbedModal({ isOpen, initialData, onSave, onClo
           {/* 1. DIRECT 2-IMAGE MODE */}
           {activeMode === 'direct' && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-              {/* Kích thước nên xuất — ghi sẵn để khỏi phải mở code ra dò.
-                  Số liệu lấy từ CoverBannerSection: khung rộng tối đa
-                  max-w-7xl (1280px) trừ lề px-8 hai bên = 1216px, và tỷ lệ bị
-                  kẹp trong khoảng RATIO_MIN…RATIO_MAX. */}
-              <div className="sm:col-span-2 p-3.5 rounded-2xl bg-[#C3EA39]/[0.06] border border-[#C3EA39]/25 space-y-2">
-                <span className="font-mono font-bold text-[#C3EA39] text-xs flex items-center gap-1.5">
-                  <Ruler className="w-3.5 h-3.5" />
-                  Kích thước nên xuất
-                </span>
-                <ul className="space-y-1 text-[11px] leading-relaxed text-white/70 font-mono">
-                  <li>
-                    <span className="text-white font-bold">2432 × 900 px</span> (tỷ lệ 2.7 : 1) —
-                    khung rộng nhất trên máy tính là 1216px, xuất gấp đôi cho nét màn Retina.
-                  </li>
-                  <li>
-                    Tỷ lệ ngang/dọc phải nằm trong khoảng{' '}
-                    <span className="text-white font-bold">1.6 đến 3.2</span>. Ra ngoài khoảng này
-                    thì ảnh bị xén bớt cho vừa khung.
-                  </li>
-                  <li>
-                    Hai ảnh Trước và Sau phải{' '}
-                    <span className="text-white font-bold">cùng kích thước</span>, vì khung bám theo
-                    tỷ lệ của ảnh Sau — lệch nhau là kéo thanh trượt sẽ thấy vênh.
-                  </li>
-                  <li>Chừa lề an toàn ~80px hai bên: trên điện thoại banner co lại còn hẹp.</li>
-                </ul>
-              </div>
 
               {/* Image 1: Before */}
               <div className="p-3.5 sm:p-4 rounded-2xl bg-[#16161c]/80 border border-white/5 space-y-3">
@@ -558,9 +529,12 @@ export default function JuxtaposeEmbedModal({ isOpen, initialData, onSave, onClo
                   <div className="absolute bottom-0 right-0 w-28 h-8 bg-[#0a0a0c] z-20 pointer-events-none" />
                 </div>
               ) : (
-                <div className="text-center p-6 text-white/30 space-y-1">
+                <div className="text-center p-6 text-white/30 space-y-1.5">
                   <SlidersHorizontal className="w-7 h-7 mx-auto mb-1.5 text-white/20" />
                   <p className="font-mono text-xs">Chưa có ảnh so sánh</p>
+                  {/* Ô trống là lúc duy nhất còn chỗ để ghi, và cũng là lúc
+                      cần biết nhất: sắp đi làm ảnh thì phải biết làm cỡ nào. */}
+                  <p className="font-mono text-xs text-[#C3EA39]/70">2432 × 900 px</p>
                 </div>
               )}
             </div>
