@@ -4,7 +4,7 @@ import { usePortfolioData } from '../context/PortfolioDataContext';
 import ClientMemoryModal from './ClientMemoryModal';
 import SmartImage from './SmartImage';
 import { clientPath, slugFromLocation, findClientBySlug } from '../utils/clientUrl';
-import { HeartHandshake } from 'lucide-react';
+import { HeartHandshake, ChevronLeft, ChevronRight } from 'lucide-react';
 
 /**
  * MỤC "BẠN ĐỒNG HÀNH" — lưới thẻ.
@@ -87,54 +87,190 @@ export default function ClientMemoriesSection() {
     return () => window.removeEventListener('popstate', dongBo);
   }, [clientList]);
 
+  // ---- BĂNG LƯỚT NGANG ---------------------------------------------------
+  //
+  // Năm thẻ trong tầm nhìn: thẻ giữa to nhất, hai thẻ mỗi bên nhỏ dần. Kéo có
+  // quán tính rồi tự dừng đúng vào một thẻ.
+  //
+  // KHÔNG dùng `scroll-snap` của CSS: nó giật thẻ vào vị trí ngay khi tay vừa
+  // rời, nên cú búng không đi tiếp được. Tự làm thì mới có đà.
+
+  const bangRef = useRef(null);
+  const theRefs = useRef([]);
+  const [iGiua, datIGiua] = useState(0);
+
   const giamChuyenDong = () =>
     typeof window !== 'undefined' &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // Brand đang được rê chuột / đang giữ bàn phím (null = không có cái nào).
-  const [reVao, setReVao] = useState(null);
-  // Bản sao trong ref để hẹn giờ của đèn rọi đọc được giá trị MỚI NHẤT mà không
-  // phải gắn lại hẹn giờ mỗi lần chuột đi qua một brand.
-  const reVaoRef = useRef(null);
-  const datReVao = useCallback((v) => {
-    reVaoRef.current = v;
-    setReVao(v);
+  // Tâm mỗi thẻ, đo sẵn một lần. Trong lúc cuộn các thẻ không xê dịch so với
+  // băng nên không cần đọc lại DOM.
+  const tamThe = useRef([]);
+  const doTamThe = useCallback(() => {
+    tamThe.current = theRefs.current.map(el => (el ? el.offsetLeft + el.offsetWidth / 2 : null));
   }, []);
 
-  const vaoBrand = useCallback((idx) => datReVao(idx), [datReVao]);
-  const roiBrand = useCallback((idx) => {
-    datReVao(reVaoRef.current === idx ? null : reVaoRef.current);
-  }, [datReVao]);
+  // Vẽ lại cỡ và độ mờ từng thẻ theo khoảng cách tới giữa khung.
+  //
+  // Ghi THẲNG vào style, không qua setState: kéo tay là hàng chục lần mỗi giây,
+  // mỗi lần một lượt render React thì giật.
+  const veCoThe = useCallback(() => {
+    const bang = bangRef.current;
+    if (!bang) return 0;
+    if (tamThe.current.length !== theRefs.current.length) doTamThe();
 
-  // ĐÈN RỌI TỰ ĐỔI: cứ một nhịp thì làm nổi một brand ngẫu nhiên.
-  const [noiBat, setNoiBat] = useState(0);
-  const noiBatRef = useRef(0);
+    const giua = bang.scrollLeft + bang.clientWidth / 2;
+    const buoc = (theRefs.current[0]?.offsetWidth || 1) + 16;
+
+    let tot = 0, ganNhat = Infinity;
+    theRefs.current.forEach((el, i) => {
+      const tam = tamThe.current[i];
+      if (!el || tam == null) return;
+
+      const d = Math.abs(tam - giua);
+      if (d < ganNhat) { ganNhat = d; tot = i; }
+
+      // Cách giữa mấy "thẻ", chặn ở 2 — xa hơn thì giữ nguyên cỡ nhỏ nhất chứ
+      // không teo mãi.
+      const xa = Math.min(2, d / buoc);
+      el.style.transform = `scale(${(1 - 0.13 * xa).toFixed(3)})`;
+      el.style.opacity = (1 - 0.3 * xa).toFixed(3);
+      el.style.zIndex = String(100 - Math.round(xa * 10));
+    });
+    return tot;
+  }, [doTamThe]);
+
+  // Tính NGAY trong lúc cuộn, KHÔNG bọc trong requestAnimationFrame: trình
+  // duyệt hãm rAF khi tab không được nhìn, hãm thì chấm chỉ vị trí đứng im ở số
+  // 1 dù đã lướt tới đâu.
+  const khiCuon = useCallback(() => {
+    const tot = veCoThe();
+    datIGiua(truoc => (truoc === tot ? truoc : tot));
+  }, [veCoThe]);
+
   useEffect(() => {
-    const tong = clientList.length;
-    if (tong <= 1) return;
-    if (giamChuyenDong()) return;
+    const t = setTimeout(() => { doTamThe(); khiCuon(); }, 80);
+    const bang = bangRef.current;
+    if (!bang) return () => clearTimeout(t);
+    const ob = new ResizeObserver(() => { doTamThe(); khiCuon(); });
+    ob.observe(bang);
+    return () => { clearTimeout(t); ob.disconnect(); };
+  }, [doTamThe, khiCuon, clientList.length]);
 
-    const t = setInterval(() => {
-      // Đang rê chuột vào một brand thì đứng yên chờ: chuột được ưu tiên,
-      // không giành đèn với người xem.
-      if (reVaoRef.current !== null) return;
+  const viTriCua = useCallback((i) => {
+    const bang = bangRef.current;
+    const el = theRefs.current[i];
+    if (!bang || !el) return 0;
+    const toiDa = bang.scrollWidth - bang.clientWidth;
+    return Math.max(0, Math.min(toiDa, el.offsetLeft + el.offsetWidth / 2 - bang.clientWidth / 2));
+  }, []);
 
-      // Bốc trong (tong - 1) cái RỒI nhảy qua chính nó, để luôn đổi sang brand
-      // khác. Bốc thẳng trong `tong` thì có lúc trúng lại chính nó, người xem
-      // thấy cả khung đứng im một nhịp tưởng bị treo.
-      const hienTai = noiBatRef.current;
-      let k = Math.floor(Math.random() * (tong - 1));
-      if (k >= hienTai) k += 1;
-      noiBatRef.current = k;
-      setNoiBat(k);
-    }, 2800);
-    return () => clearInterval(t);
-  }, [clientList.length]);
+  // Trượt êm về một vị trí. Tự chạy chứ không dùng `behavior: 'smooth'`, để nối
+  // tiếp được sau cú búng và dừng ngay khi người ta chạm lại.
+  const dangTruot = useRef(0);
+  const truotToi = useCallback((dich, nhanh = 0.16) => {
+    const bang = bangRef.current;
+    if (!bang) return;
+    if (dangTruot.current) cancelAnimationFrame(dangTruot.current);
+    if (giamChuyenDong()) { bang.scrollLeft = dich; khiCuon(); return; }
 
-  // Cái nào đang nổi: rê chuột vào cái nào thì cái đó, không thì theo đèn rọi.
-  const iRo = reVao !== null
-    ? reVao
-    : (noiBat < clientList.length ? noiBat : 0);
+    const buoc = () => {
+      const con = dich - bang.scrollLeft;
+      if (Math.abs(con) < 0.5) {
+        bang.scrollLeft = dich;
+        dangTruot.current = 0;
+        khiCuon();
+        return;
+      }
+      bang.scrollLeft += con * nhanh;
+      khiCuon();
+      dangTruot.current = requestAnimationFrame(buoc);
+    };
+    dangTruot.current = requestAnimationFrame(buoc);
+  }, [khiCuon]);
+
+  const veThe = useCallback((viTri) => {
+    let tot = 0, ganNhat = Infinity;
+    for (let i = 0; i < theRefs.current.length; i++) {
+      const d = Math.abs(viTriCua(i) - viTri);
+      if (d < ganNhat) { ganNhat = d; tot = i; }
+    }
+    return tot;
+  }, [viTriCua]);
+
+  const toiThe = useCallback((i) => {
+    if (i < 0 || i >= clientList.length) return;
+    truotToi(viTriCua(i));
+  }, [clientList.length, truotToi, viTriCua]);
+
+  // ---- Kéo tay, có quán tính ----------------------------------------------
+  const keo = useRef(null);
+  const batKeo = useCallback((e) => {
+    if (e.pointerType === 'touch') return;      // cảm ứng: để trình duyệt tự lo
+    if (e.button != null && e.button !== 0) return;
+    const bang = bangRef.current;
+    if (!bang) return;
+
+    if (dangTruot.current) { cancelAnimationFrame(dangTruot.current); dangTruot.current = 0; }
+    keo.current = { x0: e.clientX, xTruoc: e.clientX, batDau: bang.scrollLeft, daKeo: false, v: 0, luc: e.timeStamp };
+
+    const di = (ev) => {
+      const k = keo.current;
+      if (!k) return;
+      const dx = ev.clientX - k.x0;
+      if (!k.daKeo && Math.abs(dx) < 5) return;
+      k.daKeo = true;
+      bang.scrollLeft = k.batDau - dx;
+
+      // Vận tốc theo thời gian thật, không theo số lần gọi — máy yếu hay máy
+      // khoẻ thì cú búng cũng đi xa như nhau.
+      const dt = Math.max(1, ev.timeStamp - k.luc);
+      k.v = ((ev.clientX - k.xTruoc) / dt) * 16;
+      k.xTruoc = ev.clientX;
+      k.luc = ev.timeStamp;
+      khiCuon();
+    };
+
+    const tha = () => {
+      window.removeEventListener('pointermove', di);
+      window.removeEventListener('pointerup', tha);
+      window.removeEventListener('pointercancel', tha);
+
+      const k = keo.current;
+      if (k?.daKeo) {
+        // Búng thì đi thêm một đoạn theo đà rồi mới chọn thẻ gần nhất mà dừng.
+        // `v` là px mỗi khung hình; nhân 9 là quãng ước chừng của đà còn lại.
+        truotToi(viTriCua(veThe(bang.scrollLeft - k.v * 9)));
+      }
+      setTimeout(() => { keo.current = null; }, 0);
+    };
+
+    window.addEventListener('pointermove', di);
+    window.addEventListener('pointerup', tha);
+    window.addEventListener('pointercancel', tha);
+  }, [khiCuon, truotToi, viTriCua, veThe]);
+
+  // Vuốt trên cảm ứng: trình duyệt tự cuộn, mình chờ nó dừng rồi kéo thẻ gần
+  // nhất vào giữa.
+  const henDung = useRef(0);
+  const cuonRoiDung = useCallback(() => {
+    khiCuon();
+    if (keo.current?.daKeo || dangTruot.current) return;
+    clearTimeout(henDung.current);
+    henDung.current = setTimeout(() => {
+      const bang = bangRef.current;
+      if (!bang) return;
+      truotToi(viTriCua(veThe(bang.scrollLeft)));
+    }, 140);
+  }, [khiCuon, truotToi, viTriCua, veThe]);
+
+  // Bấm một thẻ: chưa ở giữa thì đưa vào giữa đã; đang ở giữa mới mở bài viết.
+  // Vừa kéo xong thì bỏ qua, không thì thả tay là bài viết bật ra.
+  const bamThe = useCallback((client, idx) => {
+    if (keo.current?.daKeo) return;
+    if (idx !== iGiua) { toiThe(idx); return; }
+    handleOpenLightbox(client, 0);
+  }, [iGiua, toiThe, handleOpenLightbox]);
 
   return (
     <section 
@@ -207,88 +343,125 @@ export default function ClientMemoriesSection() {
             </h3>
           </motion.div>
         ) : (
-          /* LƯỚI THẺ.
-             Mỗi brand một thẻ: khung ảnh bên trong chứa logo, dưới là tên và
-             một dòng thông tin. Thay cho cách rải tự do trước đây — cách đó
-             nhìn thì vui nhưng đọc tên brand thì khó, và không có chỗ cho
-             thông tin công ty. */
+          /* BĂNG THẺ LƯỚT NGANG.
+             Năm thẻ trong tầm nhìn: cái giữa to nhất, hai cái mỗi bên nhỏ dần.
+             Cỡ và độ mờ do JS ghi thẳng vào style theo khoảng cách tới giữa
+             khung, nên mượt theo từng pixel kéo chứ không nhảy nấc. */
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true, margin: '-60px' }}
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5"
+            className="relative"
           >
-            {clientList.map((client, idx) => {
-              const ten = client.clientName || 'Brand';
-              const logo = client.logo || client.coverImage;
-              // Dòng thông tin: ưu tiên ghi chú, không có thì ghép năm và dịch vụ.
-              const thongTin =
-                (client.note || '').trim() ||
-                [client.year, client.service].filter(Boolean).join(' · ');
-              const roi = idx === iRo;         // đang tới lượt được làm nổi
+            <div
+              ref={bangRef}
+              onScroll={cuonRoiDung}
+              onPointerDown={batKeo}
+              className="flex gap-4 overflow-x-auto pb-2 cursor-grab active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
+              style={{
+                // Bề ngang một thẻ, tính sao cho thấy đủ NĂM thẻ: cái giữa và
+                // hai cái mỗi bên.
+                '--the': 'clamp(170px, 40vw, 216px)',
+                // Đệm hai đầu bằng nửa khung trừ nửa thẻ: nhờ vậy thẻ ĐẦU và
+                // thẻ CUỐI cũng đứng được đúng giữa, không kẹt ở mép.
+                paddingLeft: 'max(0px, calc(50% - var(--the) / 2))',
+                paddingRight: 'max(0px, calc(50% - var(--the) / 2))',
+                scrollbarWidth: 'none',
+              }}
+            >
+              {clientList.map((client, idx) => {
+                const ten = client.clientName || 'Brand';
+                const logo = client.logo || client.coverImage;
+                const thongTin =
+                  (client.note || '').trim() ||
+                  [client.year, client.service].filter(Boolean).join(' · ');
+                const giua = idx === iGiua;
 
-              return (
-                <motion.button
-                  key={client.id || idx}
-                  type="button"
-                  initial={{ opacity: 0, y: 24 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: '-40px' }}
-                  transition={{ duration: 0.5, delay: Math.min(idx, 7) * 0.05, ease: [0.16, 1, 0.3, 1] }}
-                  onClick={() => handleOpenLightbox(client, 0)}
-                  onPointerEnter={() => vaoBrand(idx)}
-                  onPointerLeave={() => roiBrand(idx)}
-                  onFocus={() => vaoBrand(idx)}
-                  onBlur={() => roiBrand(idx)}
-                  aria-label={`Xem ${ten}`}
-                  className={`group text-left rounded-2xl sm:rounded-3xl border p-2 sm:p-2.5 transition-all duration-300 cursor-pointer ${
-                    roi
-                      ? 'border-[#C3EA39]/60 bg-[#15151a] -translate-y-1 shadow-xl shadow-[#C3EA39]/5'
-                      : 'border-white/10 bg-[#121216] hover:border-[#C3EA39]/40 hover:-translate-y-1'
-                  }`}
-                >
-                  {/* Khung ảnh: logo nằm giữa, không cắt xén. */}
-                  <div className="relative aspect-[4/3] w-full rounded-xl sm:rounded-2xl bg-black/50 border border-white/5 overflow-hidden flex items-center justify-center p-4 sm:p-6">
-                    {logo ? (
-                      <SmartImage
-                        src={logo}
-                        sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 22vw"
-                        alt={ten}
-                        loading="lazy"
-                        decoding="async"
-                        draggable={false}
-                        onContextMenu={(e) => e.preventDefault()}
-                        className={`max-w-full max-h-full object-contain select-none transition-all duration-500 ${
-                          roi
-                            ? 'grayscale-0 opacity-100 scale-[1.04]'
-                            : 'grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-[1.04]'
-                        }`}
-                      />
-                    ) : (
-                      <span className="text-xs font-mono text-white/25">{ten}</span>
-                    )}
-                  </div>
+                return (
+                  <button
+                    key={client.id || idx}
+                    ref={el => { theRefs.current[idx] = el; }}
+                    type="button"
+                    onClick={() => bamThe(client, idx)}
+                    aria-label={`Xem ${ten}`}
+                    style={{ transformOrigin: 'center center' }}
+                    className={`shrink-0 w-[var(--the)] text-left rounded-2xl border p-2 cursor-pointer transition-colors duration-300 ${
+                      giua ? 'border-white/15 bg-[#18181b]' : 'border-white/8 bg-[#121216]'
+                    }`}
+                  >
+                    <div className="relative aspect-[4/3] w-full rounded-xl bg-black/50 border border-white/5 overflow-hidden flex items-center justify-center p-4 sm:p-6">
+                      {logo ? (
+                        <SmartImage
+                          src={logo}
+                          sizes="216px"
+                          alt={ten}
+                          loading="lazy"
+                          decoding="async"
+                          draggable={false}
+                          onContextMenu={(e) => e.preventDefault()}
+                          className={`max-w-full max-h-full object-contain select-none transition-all duration-500 ${
+                            giua ? 'grayscale-0' : 'grayscale'
+                          }`}
+                        />
+                      ) : (
+                        <span className="text-xs font-mono text-white/25">{ten}</span>
+                      )}
+                    </div>
 
-                  {/* Tên + một dòng thông tin công ty. */}
-                  <div className="px-1.5 pt-2.5 pb-1 space-y-0.5">
-                    {/* `line-clamp-2` chứ không `truncate`: màn hẹp thẻ chỉ rộng
-                        162px, cắt một dòng là mất nửa tên brand — mà tên mới là
-                        thứ chính. Cho xuống hai dòng rồi mới thôi. */}
-                    <h3 className={`text-sm sm:text-base font-display font-bold line-clamp-2 leading-snug transition-colors ${
-                      roi ? 'text-[#C3EA39]' : 'text-white group-hover:text-[#C3EA39]'
-                    }`}>
-                      {ten}
-                    </h3>
-                    {thongTin && (
-                      <p className="text-[11px] sm:text-xs font-mono text-white/40 line-clamp-1">
-                        {thongTin}
-                      </p>
-                    )}
-                  </div>
-                </motion.button>
-              );
-            })}
+                    <div className="px-1 pt-2.5 pb-0.5 space-y-0.5">
+                      <h3 className={`text-sm font-display font-bold line-clamp-2 leading-snug transition-colors ${
+                        giua ? 'text-white' : 'text-white/70'
+                      }`}>
+                        {ten}
+                      </h3>
+                      {thongTin && (
+                        <p className="text-[11px] font-mono text-white/40 line-clamp-1">
+                          {thongTin}
+                        </p>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Chấm chỉ vị trí + hai nút lướt. Bấm chấm nào thì nhảy tới thẻ đó. */}
+            <div className="flex items-center justify-center gap-4 pt-4">
+              <button
+                type="button"
+                onClick={() => toiThe(iGiua - 1)}
+                disabled={iGiua <= 0}
+                aria-label="Thẻ trước"
+                className="p-2 rounded-full border border-white/10 text-white/60 hover:text-black hover:bg-[#C3EA39] hover:border-[#C3EA39] disabled:opacity-25 disabled:pointer-events-none transition-colors cursor-pointer"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              <div className="flex items-center gap-1.5">
+                {clientList.map((c, i) => (
+                  <button
+                    key={c.id || i}
+                    type="button"
+                    onClick={() => toiThe(i)}
+                    aria-label={`Tới thẻ ${i + 1}`}
+                    className={`h-1.5 rounded-full transition-all cursor-pointer ${
+                      i === iGiua ? 'w-5 bg-[#C3EA39]' : 'w-1.5 bg-white/20 hover:bg-white/40'
+                    }`}
+                  />
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => toiThe(iGiua + 1)}
+                disabled={iGiua >= clientList.length - 1}
+                aria-label="Thẻ sau"
+                className="p-2 rounded-full border border-white/10 text-white/60 hover:text-black hover:bg-[#C3EA39] hover:border-[#C3EA39] disabled:opacity-25 disabled:pointer-events-none transition-colors cursor-pointer"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
           </motion.div>
         )}
 
