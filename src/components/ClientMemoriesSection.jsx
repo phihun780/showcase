@@ -4,7 +4,7 @@ import { usePortfolioData } from '../context/PortfolioDataContext';
 import ClientMemoryModal from './ClientMemoryModal';
 import SmartImage from './SmartImage';
 import { clientPath, slugFromLocation, findClientBySlug } from '../utils/clientUrl';
-import { HeartHandshake, ChevronLeft, ChevronRight } from 'lucide-react';
+import { HeartHandshake } from 'lucide-react';
 
 /**
  * MỤC "BẠN ĐỒNG HÀNH" — lưới thẻ.
@@ -103,6 +103,27 @@ export default function ClientMemoriesSection() {
     typeof window !== 'undefined' &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  // ---- VÒNG VÔ TẬN --------------------------------------------------------
+  //
+  // Dựng BA bản danh sách nối nhau rồi bắt đầu ở bản giữa. Lướt gần chạm đầu
+  // hay cuối thì nhảy đúng một chiều dài danh sách — nhảy không có hiệu ứng nên
+  // mắt không thấy, mà hai bên lúc nào cũng còn thẻ để lướt tiếp.
+  //
+  // Cách này nhẹ hơn là dựng vô số thẻ, và cũng không phải tính chỉ số vòng
+  // tròn cho từng khung hình.
+  const SO_BAN = 3;
+  const danhSachLap = useMemo(
+    () => Array.from({ length: SO_BAN }, () => clientList).flat(),
+    [clientList]
+  );
+  const n = clientList.length;
+
+  // Chiều dài đúng MỘT bản: khoảng cách từ thẻ đầu bản 1 tới thẻ đầu bản 2.
+  const daiMotBan = useCallback(() => {
+    const a = theRefs.current[0], b = theRefs.current[n];
+    return a && b ? b.offsetLeft - a.offsetLeft : 0;
+  }, [n]);
+
   // Tâm mỗi thẻ, đo sẵn một lần. Trong lúc cuộn các thẻ không xê dịch so với
   // băng nên không cần đọc lại DOM.
   const tamThe = useRef([]);
@@ -144,12 +165,41 @@ export default function ClientMemoriesSection() {
   // duyệt hãm rAF khi tab không được nhìn, hãm thì chấm chỉ vị trí đứng im ở số
   // 1 dù đã lướt tới đâu.
   const khiCuon = useCallback(() => {
+    const bang = bangRef.current;
+    if (!bang) return;
+
+    // Gần chạm đầu hay cuối thì dịch đúng một chiều dài danh sách. Gán thẳng
+    // `scrollLeft` nên không có hiệu ứng, mắt không kịp thấy.
+    const dai = daiMotBan();
+    if (dai > 0) {
+      if (bang.scrollLeft < dai * 0.5) { bang.scrollLeft += dai; doTamThe(); }
+      else if (bang.scrollLeft > dai * (SO_BAN - 1.5)) { bang.scrollLeft -= dai; doTamThe(); }
+    }
+
     const tot = veCoThe();
-    datIGiua(truoc => (truoc === tot ? truoc : tot));
-  }, [veCoThe]);
+    const thuc = n > 0 ? ((tot % n) + n) % n : 0;   // chỉ số trong danh sách GỐC
+    datIGiua(truoc => (truoc === thuc ? truoc : thuc));
+  }, [veCoThe, daiMotBan, doTamThe, n]);
+
+  // Vào trang: đặt ngay ở bản GIỮA để hai phía đều còn thẻ mà lướt.
+  const daDatChoDau = useRef(false);
+  useEffect(() => {
+    daDatChoDau.current = false;
+  }, [n]);
 
   useEffect(() => {
-    const t = setTimeout(() => { doTamThe(); khiCuon(); }, 80);
+    const t = setTimeout(() => {
+      doTamThe();
+      const bang = bangRef.current;
+      if (bang && !daDatChoDau.current && n > 0) {
+        const el = theRefs.current[n];            // thẻ đầu của bản giữa
+        if (el) {
+          bang.scrollLeft = el.offsetLeft + el.offsetWidth / 2 - bang.clientWidth / 2;
+          daDatChoDau.current = true;
+        }
+      }
+      khiCuon();
+    }, 80);
     const bang = bangRef.current;
     if (!bang) return () => clearTimeout(t);
     const ob = new ResizeObserver(() => { doTamThe(); khiCuon(); });
@@ -161,8 +211,7 @@ export default function ClientMemoriesSection() {
     const bang = bangRef.current;
     const el = theRefs.current[i];
     if (!bang || !el) return 0;
-    const toiDa = bang.scrollWidth - bang.clientWidth;
-    return Math.max(0, Math.min(toiDa, el.offsetLeft + el.offsetWidth / 2 - bang.clientWidth / 2));
+    return el.offsetLeft + el.offsetWidth / 2 - bang.clientWidth / 2;
   }, []);
 
   // Trượt êm về một vị trí. Tự chạy chứ không dùng `behavior: 'smooth'`, để nối
@@ -198,10 +247,20 @@ export default function ClientMemoriesSection() {
     return tot;
   }, [viTriCua]);
 
+  // Tới brand thứ `i` trong danh sách GỐC: chọn bản gần chỗ đang đứng nhất, để
+  // nó lướt một đoạn ngắn chứ không chạy ngược cả danh sách.
   const toiThe = useCallback((i) => {
-    if (i < 0 || i >= clientList.length) return;
-    truotToi(viTriCua(i));
-  }, [clientList.length, truotToi, viTriCua]);
+    const bang = bangRef.current;
+    if (!bang || n <= 0) return;
+    const hienTai = bang.scrollLeft;
+    let tot = null, ganNhat = Infinity;
+    for (let b = 0; b < SO_BAN; b++) {
+      const v = viTriCua(b * n + i);
+      const d = Math.abs(v - hienTai);
+      if (d < ganNhat) { ganNhat = d; tot = v; }
+    }
+    if (tot != null) truotToi(tot);
+  }, [n, truotToi, viTriCua]);
 
   // ---- Kéo tay, có quán tính ----------------------------------------------
   const keo = useRef(null);
@@ -362,7 +421,9 @@ export default function ClientMemoriesSection() {
               style={{
                 // Bề ngang một thẻ, tính sao cho thấy đủ NĂM thẻ: cái giữa và
                 // hai cái mỗi bên.
-                '--the': 'clamp(170px, 40vw, 216px)',
+                // Bề ngang một thẻ. Thẻ ngoài cùng cố tình bị mép khung cắt
+                // bớt, giống mẫu — nhờ vậy biết là còn nữa mà lướt tiếp.
+                '--the': 'clamp(210px, 62vw, 300px)',
                 // Đệm hai đầu bằng nửa khung trừ nửa thẻ: nhờ vậy thẻ ĐẦU và
                 // thẻ CUỐI cũng đứng được đúng giữa, không kẹt ở mép.
                 paddingLeft: 'max(0px, calc(50% - var(--the) / 2))',
@@ -370,31 +431,31 @@ export default function ClientMemoriesSection() {
                 scrollbarWidth: 'none',
               }}
             >
-              {clientList.map((client, idx) => {
+              {danhSachLap.map((client, idx) => {
                 const ten = client.clientName || 'Brand';
                 const logo = client.logo || client.coverImage;
                 const thongTin =
                   (client.note || '').trim() ||
                   [client.year, client.service].filter(Boolean).join(' · ');
-                const giua = idx === iGiua;
+                const giua = n > 0 && idx % n === iGiua;
 
                 return (
                   <button
-                    key={client.id || idx}
+                    key={`${client.id || 'b'}-${idx}`}
                     ref={el => { theRefs.current[idx] = el; }}
                     type="button"
-                    onClick={() => bamThe(client, idx)}
+                    onClick={() => bamThe(client, n > 0 ? idx % n : idx)}
                     aria-label={`Xem ${ten}`}
                     style={{ transformOrigin: 'center center' }}
                     className={`shrink-0 w-[var(--the)] text-left rounded-2xl border p-2 cursor-pointer transition-colors duration-300 ${
                       giua ? 'border-white/15 bg-[#18181b]' : 'border-white/8 bg-[#121216]'
                     }`}
                   >
-                    <div className="relative aspect-[4/3] w-full rounded-xl bg-black/50 border border-white/5 overflow-hidden flex items-center justify-center p-4 sm:p-6">
+                    <div className="relative aspect-[6/5] w-full rounded-xl bg-black/50 border border-white/5 overflow-hidden flex items-center justify-center p-5 sm:p-8">
                       {logo ? (
                         <SmartImage
                           src={logo}
-                          sizes="216px"
+                          sizes="300px"
                           alt={ten}
                           loading="lazy"
                           decoding="async"
@@ -426,41 +487,21 @@ export default function ClientMemoriesSection() {
               })}
             </div>
 
-            {/* Chấm chỉ vị trí + hai nút lướt. Bấm chấm nào thì nhảy tới thẻ đó. */}
-            <div className="flex items-center justify-center gap-4 pt-4">
-              <button
-                type="button"
-                onClick={() => toiThe(iGiua - 1)}
-                disabled={iGiua <= 0}
-                aria-label="Thẻ trước"
-                className="p-2 rounded-full border border-white/10 text-white/60 hover:text-black hover:bg-[#C3EA39] hover:border-[#C3EA39] disabled:opacity-25 disabled:pointer-events-none transition-colors cursor-pointer"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-
-              <div className="flex items-center gap-1.5">
-                {clientList.map((c, i) => (
-                  <button
-                    key={c.id || i}
-                    type="button"
-                    onClick={() => toiThe(i)}
-                    aria-label={`Tới thẻ ${i + 1}`}
-                    className={`h-1.5 rounded-full transition-all cursor-pointer ${
-                      i === iGiua ? 'w-5 bg-[#C3EA39]' : 'w-1.5 bg-white/20 hover:bg-white/40'
-                    }`}
-                  />
-                ))}
-              </div>
-
-              <button
-                type="button"
-                onClick={() => toiThe(iGiua + 1)}
-                disabled={iGiua >= clientList.length - 1}
-                aria-label="Thẻ sau"
-                className="p-2 rounded-full border border-white/10 text-white/60 hover:text-black hover:bg-[#C3EA39] hover:border-[#C3EA39] disabled:opacity-25 disabled:pointer-events-none transition-colors cursor-pointer"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
+            {/* Chấm chỉ vị trí. Bấm chấm nào thì lướt tới brand đó.
+                Bỏ hai nút mũi tên: kéo tay, vuốt và lăn ngang đều đi được rồi,
+                thêm nút chỉ làm rối chân khung. */}
+            <div className="flex items-center justify-center gap-1.5 pt-4">
+              {clientList.map((c, i) => (
+                <button
+                  key={c.id || i}
+                  type="button"
+                  onClick={() => toiThe(i)}
+                  aria-label={`Tới ${c.clientName || `brand ${i + 1}`}`}
+                  className={`h-1.5 rounded-full transition-all cursor-pointer ${
+                    i === iGiua ? 'w-5 bg-[#C3EA39]' : 'w-1.5 bg-white/20 hover:bg-white/40'
+                  }`}
+                />
+              ))}
             </div>
           </motion.div>
         )}
