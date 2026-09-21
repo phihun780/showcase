@@ -434,9 +434,6 @@ export default function ClientMemoriesSection() {
               {danhSachLap.map((client, idx) => {
                 const ten = client.clientName || 'Brand';
                 const logo = client.logo || client.coverImage;
-                const thongTin =
-                  (client.note || '').trim() ||
-                  [client.year, client.service].filter(Boolean).join(' · ');
                 const giua = n > 0 && idx % n === iGiua;
 
                 return (
@@ -473,17 +470,15 @@ export default function ClientMemoriesSection() {
                       )}
                     </div>
 
-                    <div className="px-1 pt-2.5 pb-0.5 space-y-0.5">
+                    {/* Chỉ tên brand. Năm, dịch vụ và ghi chú để dành cho bài
+                        viết — nhét vào đây thì thẻ rối mà chữ cũng quá nhỏ để
+                        đọc cho ra. */}
+                    <div className="px-1 pt-2.5 pb-0.5">
                       <h3 className={`text-sm font-display font-bold line-clamp-2 leading-snug transition-colors ${
                         giua ? 'text-white' : 'text-white/70'
                       }`}>
                         {ten}
                       </h3>
-                      {thongTin && (
-                        <p className="text-[11px] font-mono text-white/40 line-clamp-1">
-                          {thongTin}
-                        </p>
-                      )}
                     </div>
                   </button>
                 );
