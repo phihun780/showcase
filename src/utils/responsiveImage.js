@@ -92,3 +92,56 @@ export function anhXemToiDa(url, tran = 1440) {
   if (vua.length === 0) return url;
   return variantUrl(url, Math.max(...vua));
 }
+
+const LA_GIF = /\.gif(\?|#|$)/i;
+
+/**
+ * Thuộc tính tải cho một tấm ảnh: tải ngay hay chờ, và giành đường truyền tới
+ * mức nào.
+ *
+ * VÌ SAO KHÔNG CHỈ DỰA VÀO VỊ TRÍ:
+ * Ảnh nằm đầu thì tải ngay là đúng — khách mở ra thấy liền, không phải nhìn ô
+ * trống. Nhưng luật đó chỉ đúng khi mọi tấm nặng xấp xỉ nhau.
+ *
+ * GIF không được nén (nén là mất ảnh động) nên nặng hơn ảnh thường hàng chục
+ * lần — trang này có tấm 21 MB và tấm 48 MB. Một tấm như vậy mà được xếp cùng
+ * hạng ưu tiên với ảnh thường thì nó chiếm sạch đường truyền, 90 tấm nhẹ phía
+ * sau xếp hàng chờ theo, và khách ngồi nhìn lưới trống.
+ *
+ * NÓI RÕ GIỚI HẠN — `lazy` KHÔNG chặn được ảnh ở đầu trang:
+ * Trình duyệt chỉ hoãn những tấm nằm hẳn dưới màn hình. Tấm GIF 21 MB của brand
+ * An Khang Foods nằm ở ô thứ 2, ngay trong màn hình đầu, nên vẫn tải. `low` chỉ
+ * làm nó xuống hàng CUỐI, không làm nó biến mất.
+ *
+ * Nghĩa là: cách này giúp 90 tấm còn lại hiện ra trước thay vì chờ nhau, chứ
+ * KHÔNG làm trang nhẹ đi. Muốn nhẹ thật thì phải đổi GIF sang video.
+ *
+ * KHÔNG đụng gì tới file ảnh: GIF vẫn nguyên si, nét y như cũ.
+ */
+export function thuocTinhTai(url, uuTien) {
+  if (typeof url === 'string' && LA_GIF.test(url)) {
+    return { loading: 'lazy', fetchPriority: 'low' };
+  }
+  return { loading: uuTien ? 'eager' : 'lazy', fetchPriority: uuTien ? 'high' : 'auto' };
+}
+
+/**
+ * Chọn ra những tấm được ưu tiên tải ngay — BỎ QUA GIF.
+ *
+ * Dùng cùng với thuocTinhTai. Nếu cứ ưu tiên theo vị trí thuần tuý thì bài nào
+ * mở đầu bằng GIF (dự án BLOOMORY chẳng hạn) sẽ không còn tấm nào được ưu tiên,
+ * vì GIF luôn bị đẩy xuống hàng cuối — mở ra là một khoảng trống chờ.
+ *
+ * Nên suất ưu tiên nhảy qua GIF và rơi vào tấm nhẹ kế tiếp. Khách vẫn thấy ảnh
+ * ngay, còn GIF thong thả về sau.
+ */
+export function chonAnhUuTien(danhSach, soLuong) {
+  const uuTien = new Set();
+  if (!Array.isArray(danhSach)) return uuTien;
+  for (let i = 0; i < danhSach.length && uuTien.size < soLuong; i++) {
+    const url = danhSach[i];
+    if (typeof url === 'string' && LA_GIF.test(url)) continue;
+    uuTien.add(i);
+  }
+  return uuTien;
+}

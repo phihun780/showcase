@@ -5,6 +5,7 @@ import { usePortfolioData } from '../context/PortfolioDataContext';
 import { X, ArrowLeft, ArrowUp, Share2, Check } from 'lucide-react';
 import { clientUrl } from '../utils/clientUrl';
 import { chepVaoBoNhoTam } from '../utils/clipboard';
+import { thuocTinhTai, chonAnhUuTien } from '../utils/responsiveImage';
 import SmartImage from './SmartImage';
 import ImageViewer from './ImageViewer';
 
@@ -60,6 +61,9 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
     ...(Array.isArray(client?.gallery) ? client.gallery : []),
     client?.coverImage,
   ].filter(Boolean))), [client]);
+
+  // Chín suất tải ngay, dành cho những tấm đầu KHÔNG phải GIF.
+  const anhUuTien = useMemo(() => chonAnhUuTien(images, 9), [images]);
 
   // Ghi vào ref trong effect chứ không ghi thẳng lúc dựng — ghi lúc dựng là
   // việc phụ ngoài luồng, React có thể dựng thử rồi bỏ.
@@ -318,7 +322,7 @@ export default function ClientMemoryModal({ client, isOpen, initialIndex = 0, on
                           draggable={false}
                           onContextMenu={(e) => e.preventDefault()}
                           onDragStart={(e) => e.preventDefault()}
-                          loading={idx < 9 ? 'eager' : 'lazy'}
+                          {...thuocTinhTai(url, anhUuTien.has(idx))}
                           decoding="async"
                           className={`select-none transition-[opacity,transform] duration-500 group-hover/a:scale-[1.03] ${
                             xong ? 'w-full h-auto opacity-100' : 'absolute inset-0 w-full h-full object-cover opacity-0'

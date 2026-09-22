@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { projectUrl } from '../utils/projectUrl';
 import { chepVaoBoNhoTam } from '../utils/clipboard';
-import { anhXemToiDa } from '../utils/responsiveImage';
+import { anhXemToiDa, thuocTinhTai, chonAnhUuTien } from '../utils/responsiveImage';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePortfolioData } from '../context/PortfolioDataContext';
 import { X, ArrowRight, ArrowLeft, ArrowUp, Layers, Share2, Check } from 'lucide-react';
@@ -22,6 +22,8 @@ export default function ProjectModal({ project, isOpen, onClose, onSelectNextPro
 
   const gallery = project?.gallery || [];
   const galleryCount = gallery.length;
+  // Mot suat tai ngay, danh cho tam dau KHONG phai GIF.
+  const anhUuTien = chonAnhUuTien(gallery, 1);
 
   // Reset scroll to top whenever the project changes
   useEffect(() => {
@@ -231,7 +233,7 @@ export default function ProjectModal({ project, isOpen, onClose, onSelectNextPro
                     draggable={false}
                     onContextMenu={(e) => e.preventDefault()}
                     onDragStart={(e) => e.preventDefault()}
-                    loading={idx === 0 ? 'eager' : 'lazy'}
+                    {...thuocTinhTai(imgUrl, anhUuTien.has(idx))}
                     decoding="async"
                     className="w-full h-auto object-cover select-none group-hover:scale-[1.01] transition-transform duration-500"
                   />
