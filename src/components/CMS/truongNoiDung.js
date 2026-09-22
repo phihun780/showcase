@@ -90,6 +90,19 @@ export const CAC_MUC = [
     ],
   },
   {
+    id: 'vibecode',
+    ten: 'Ứng dụng tự viết',
+    mo: 'Mục giới thiệu app nằm dưới "Về tui" — logo, diễn giải, nút tải',
+    khoiAnh: 'vibecode',
+    truong: [
+      ...dauMuc('vibecodeNumber', 'vibecodeTitle', '05', '#Vibecode vui vẻ'),
+      { k: 'vibecodeAppName', nhan: 'Tên ứng dụng', vd: 'Tên app của bạn', co: 6, dam: true },
+      { k: 'vibecodeTagline', nhan: 'Một dòng ngắn dưới tên (bỏ trống thì ẩn)', vd: 'Viết cho vui, xài thiệt', co: 6 },
+      { k: 'vibecodeDesc', nhan: 'Diễn giải app', vd: 'App này làm gì, cho ai, hay ở chỗ nào…', co: 12, dong: 4 },
+      { k: 'vibecodeButtonText', nhan: 'Chữ trên nút tải', vd: 'TẢI VỀ', co: 12 },
+    ],
+  },
+  {
     id: 'baiViet',
     ten: 'Trong bài viết',
     mo: 'Các nút khi khách mở một dự án hay một brand',

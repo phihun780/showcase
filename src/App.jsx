@@ -6,6 +6,7 @@ import CoverBannerSection from './components/CoverBannerSection';
 import ShowcaseWallSection from './components/ShowcaseWallSection';
 import WorkSection from './components/WorkSection';
 import AboutSection from './components/AboutSection';
+import VibecodeSection from './components/VibecodeSection';
 import ClientMemoriesSection from './components/ClientMemoriesSection';
 import Footer from './components/Footer';
 import CursorSpotlight from './components/CursorSpotlight';
@@ -304,6 +305,7 @@ function PortfolioApp() {
         <WorkSection />
         <ClientMemoriesSection />
         <AboutSection />
+        <VibecodeSection />
       </main>
 
       {/* Footer */}

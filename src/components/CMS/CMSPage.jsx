@@ -6,6 +6,7 @@ import DanhSachBrand from './DanhSachBrand';
 import { CAC_MUC } from './truongNoiDung';
 import { ONhap, Khoi, LuoiO } from './ONhap';
 import ProfileEditor from './ProfileEditor';
+import VibecodeEditor from './VibecodeEditor';
 import ImageCropModal from './ImageCropModal';
 import JuxtaposeEmbedModal from './JuxtaposeEmbedModal';
 import MediaItemEditorModal from './MediaItemEditorModal';
@@ -1662,6 +1663,10 @@ export default function CMSPage({ onBackToPortfolio }) {
 
           {mucHienTai?.khoiAnh === 'veTui' && (
             <ProfileEditor formData={hoSo} setFormData={datHoSo} />
+          )}
+
+          {mucHienTai?.khoiAnh === 'vibecode' && (
+            <VibecodeEditor formData={hoSo} setFormData={datHoSo} />
           )}
 
           <StickySaveBar
