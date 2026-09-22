@@ -1,9 +1,10 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Download, ArrowUpRight, Code2 } from 'lucide-react';
 import { usePortfolioData } from '../context/PortfolioDataContext';
 import SmartImage from './SmartImage';
-import { thuocTinhTai } from '../utils/responsiveImage';
+import { thuocTinhTai, chonAnhUuTien } from '../utils/responsiveImage';
+import ImageViewer from './ImageViewer';
 
 /**
  * Mục giới thiệu ứng dụng tự viết.
@@ -29,6 +30,55 @@ export default function VibecodeSection() {
   const chuNut = (profile?.vibecodeButtonText || '').trim() || 'TẢI VỀ';
   const soMuc = (profile?.vibecodeNumber || '').trim();
   const tieuDe = (profile?.vibecodeTitle || '').trim() || '#Vibecode vui vẻ';
+
+  // Ảnh chụp màn hình app. Lọc bỏ ô rỗng ngay ở đây để mọi chỗ bên dưới đếm
+  // được cùng một con số — số tấm vẽ ra phải khớp với số tấm nút qua lại trong
+  // khung xem lớn đi qua, không thì bấm mũi tên rơi vào ô trống.
+  //
+  // KHÔNG bọc useMemo: đây là một cái lọc trên vài phần tử, rẻ hơn nhiều so với
+  // việc giữ bộ nhớ đệm, mà useMemo ở đây còn làm React Compiler bỏ qua không
+  // tối ưu cả component.
+  const anh = (Array.isArray(profile?.vibecodeGallery) ? profile.vibecodeGallery : [])
+    .filter(u => typeof u === 'string' && u.trim());
+
+  // Ba tấm đầu được ưu tiên tải, còn lại chờ cuộn tới. Suất ưu tiên nhảy qua
+  // GIF vì GIF nặng gấp hàng chục lần — xem ghi chú ở chonAnhUuTien.
+  const anhUuTien = chonAnhUuTien(anh, 3);
+
+  const [anhDangXem, datAnhDangXem] = useState(null);
+  const dangMoAnh = anhDangXem !== null;
+  const soAnh = anh.length;
+
+  // Nhận bước nhảy chứ không nhận chỉ số đích, và cập nhật theo kiểu hàm, nên
+  // không cần biết tấm nào đang mở. Nhờ vậy dùng được cả ngoài JSX lẫn trong
+  // effect bắt phím mà không kéo theo phụ thuộc nào.
+  const doiAnh = (buoc) => {
+    if (!soAnh) return;
+    datAnhDangXem(i => (i + buoc + soAnh) % soAnh);
+  };
+
+  // ImageViewer CỐ Ý không tự bắt phím (xem ghi chú trong file đó): ở những chỗ
+  // khác nó nằm trong một bài viết đã có sẵn bộ bắt phím. Mục này không có thẻ
+  // cha nào như vậy nên phải tự lo, không thì mở ảnh lên bấm Esc không đóng.
+  useEffect(() => {
+    if (!dangMoAnh) return;
+
+    const batPhim = (e) => {
+      if (e.key === 'Escape') datAnhDangXem(null);
+      else if (e.key === 'ArrowLeft') datAnhDangXem(i => (i - 1 + soAnh) % soAnh);
+      else if (e.key === 'ArrowRight') datAnhDangXem(i => (i + 1) % soAnh);
+    };
+    window.addEventListener('keydown', batPhim);
+
+    // Khoá cuộn nền: không khoá thì lăn chuột lúc đang xem ảnh làm trang chạy
+    // ngầm phía sau, đóng ra là lạc mất chỗ cũ.
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      window.removeEventListener('keydown', batPhim);
+      document.body.style.overflow = 'unset';
+    };
+  }, [dangMoAnh, soAnh]);
 
   // Chưa điền gì thì coi như mục này không tồn tại.
   if (!tenApp && !dienGiai) return null;
@@ -131,6 +181,41 @@ export default function VibecodeSection() {
                 </p>
               )}
 
+              {/* Dải ảnh chụp app — vuông nhỏ, nằm giữa phần mô tả và nút tải.
+                  Bấm một tấm là mở khung xem lớn.
+
+                  Vuông chứ không theo tỉ lệ thật của ảnh: đây là dải xem trước,
+                  mọi ô bằng nhau thì hàng mới thẳng. Tấm nào cao hay ngang thì
+                  `object-cover` cắt bớt cho vừa ô, bấm vào vẫn thấy nguyên tấm.
+
+                  Căn giữa trên điện thoại cho khớp với chữ (cột này đang
+                  `text-center md:text-left`). */}
+              {anh.length > 0 && (
+                <div className="mt-4 sm:mt-5 flex flex-wrap justify-center md:justify-start gap-2 sm:gap-2.5">
+                  {anh.map((url, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => datAnhDangXem(idx)}
+                      aria-label={`Xem lớn ảnh ${idx + 1} của ${tenApp || 'ứng dụng'}`}
+                      className="group/a relative block w-16 h-16 sm:w-[72px] sm:h-[72px] shrink-0 overflow-hidden rounded-xl border border-white/10 bg-black/40 cursor-zoom-in transition-all duration-300 hover:border-[#C3EA39]/60 focus-visible:outline-none focus-visible:border-[#C3EA39] focus-visible:ring-2 focus-visible:ring-[#C3EA39]/60"
+                    >
+                      <SmartImage
+                        src={url}
+                        alt={`${tenApp || 'Ứng dụng'} — ảnh ${idx + 1}`}
+                        sizes="72px"
+                        {...thuocTinhTai(url, anhUuTien.has(idx))}
+                        decoding="async"
+                        draggable={false}
+                        onContextMenu={(e) => e.preventDefault()}
+                        onDragStart={(e) => e.preventDefault()}
+                        className="w-full h-full object-cover select-none transition-transform duration-500 group-hover/a:scale-[1.08]"
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
+
               {/* Chưa dán link thì không dựng nút: nút bấm không đi đâu còn tệ
                   hơn là không có nút. */}
               {diaChi && (
@@ -150,9 +235,24 @@ export default function VibecodeSection() {
             </div>
 
           </div>
+
         </motion.div>
 
       </div>
+
+      <AnimatePresence>
+        {dangMoAnh && (
+          <ImageViewer
+            src={anh[anhDangXem]}
+            alt={`${tenApp || 'Ứng dụng'} — ảnh ${anhDangXem + 1}`}
+            index={anhDangXem}
+            total={anh.length}
+            onClose={() => datAnhDangXem(null)}
+            onPrev={() => doiAnh(-1)}
+            onNext={() => doiAnh(1)}
+          />
+        )}
+      </AnimatePresence>
     </section>
   );
 }

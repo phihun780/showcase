@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Upload, Loader2, Trash2, ArrowUpRight, Code2 } from 'lucide-react';
+import { Upload, Loader2, Trash2, ArrowUpRight, Code2, ChevronLeft, ChevronRight, ImagePlus } from 'lucide-react';
 import { optimizeAndUploadToR2 } from '../../utils/imageOptimizer';
 import { deleteFromR2 } from '../../utils/r2Storage';
 
@@ -49,6 +49,63 @@ export default function VibecodeEditor({ formData, setFormData }) {
       setDangTai(false);
       if (logoInputRef.current) logoInputRef.current.value = '';
     }
+  };
+
+  // ---- Ảnh chụp màn hình app ----
+  const anhInputRef = useRef(null);
+  const [dangTaiAnh, setDangTaiAnh] = useState(false);
+  const [loiAnh, setLoiAnh] = useState('');
+
+  const anh = Array.isArray(formData.vibecodeGallery) ? formData.vibecodeGallery : [];
+
+  const themAnh = async (files) => {
+    const chonDuoc = files.filter(f => f.type.startsWith('image/'));
+    if (!chonDuoc.length) return;
+
+    setLoiAnh('');
+    setDangTaiAnh(true);
+    try {
+      const ketQua = await Promise.all(chonDuoc.map(f => optimizeAndUploadToR2(f, 'profile')));
+      const diaChiMoi = ketQua.filter(r => r && r.url).map(r => r.url);
+      if (diaChiMoi.length) {
+        // Ảnh mới nối vào ĐUÔI chứ không chen lên đầu: đây là ảnh minh hoạ app,
+        // thứ tự kể chuyện do người viết sắp, thêm tấm mới không có lý do gì để
+        // nó nhảy lên trước mấy tấm đã sắp xong.
+        setFormData(prev => ({
+          ...prev,
+          vibecodeGallery: [...(Array.isArray(prev.vibecodeGallery) ? prev.vibecodeGallery : []), ...diaChiMoi],
+        }));
+      }
+    } catch (err) {
+      setLoiAnh('Tải ảnh thất bại: ' + (err.message || ''));
+    } finally {
+      setDangTaiAnh(false);
+    }
+  };
+
+  const chonAnh = async (e) => {
+    await themAnh(Array.from(e.target.files || []));
+    if (anhInputRef.current) anhInputRef.current.value = '';
+  };
+
+  const boAnh = (idx) => {
+    const bo = anh[idx];
+    if (bo) deleteFromR2(bo);
+    setFormData(prev => ({
+      ...prev,
+      vibecodeGallery: (prev.vibecodeGallery || []).filter((_, i) => i !== idx),
+    }));
+  };
+
+  const doiCho = (idx, huong) => {
+    const dich = huong === 'trai' ? idx - 1 : idx + 1;
+    setFormData(prev => {
+      const ds = [...(prev.vibecodeGallery || [])];
+      if (dich < 0 || dich >= ds.length) return prev;
+      const [nhac] = ds.splice(idx, 1);
+      ds.splice(dich, 0, nhac);
+      return { ...prev, vibecodeGallery: ds };
+    });
   };
 
   const xoaLogo = () => {
@@ -150,6 +207,93 @@ export default function VibecodeEditor({ formData, setFormData }) {
       </div>
 
       {loi && <p className="text-xs font-mono text-red-400">{loi}</p>}
+
+      {/* Ảnh chụp màn hình app */}
+      <div className="pt-4 border-t border-white/10 space-y-3">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <label className="text-xs font-mono text-white/70 uppercase">
+            Ảnh chụp app {anh.length > 0 && <span className="text-[#C3EA39]">({anh.length})</span>}
+          </label>
+
+          <input
+            type="file"
+            ref={anhInputRef}
+            accept="image/*"
+            multiple
+            onChange={chonAnh}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => anhInputRef.current?.click()}
+            disabled={dangTaiAnh}
+            className="px-3.5 py-2 rounded-xl bg-[#C3EA39] hover:bg-[#d4f854] text-black font-mono text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+          >
+            {dangTaiAnh
+              ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /><span>Đang tải...</span></>
+              : <><ImagePlus className="w-3.5 h-3.5" /><span>Thêm ảnh</span></>}
+          </button>
+        </div>
+
+        {anh.length === 0 ? (
+          <p className="text-[11px] font-mono text-white/40">
+            Chọn được nhiều tấm một lúc. Chưa có tấm nào thì cụm ảnh không hiện ngoài trang.
+          </p>
+        ) : (
+          <>
+            <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-6 gap-2.5">
+              {anh.map((url, idx) => (
+                <div
+                  key={idx}
+                  className="relative group aspect-[3/4] rounded-xl overflow-hidden border border-white/10 bg-black/60"
+                >
+                  <img src={url} alt={`Ảnh app ${idx + 1}`} className="w-full h-full object-cover" />
+
+                  {/* Số thứ tự — ngoài trang ảnh xếp đúng theo thứ tự này */}
+                  <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded-md bg-black/75 text-[10px] font-mono text-white/80">
+                    {idx + 1}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => boAnh(idx)}
+                    aria-label={`Xoá ảnh ${idx + 1}`}
+                    className="absolute top-1 right-1 w-6 h-6 rounded-md bg-black/75 text-white/70 hover:bg-red-500 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+
+                  <div className="absolute bottom-1 inset-x-1 flex justify-between">
+                    <button
+                      type="button"
+                      onClick={() => doiCho(idx, 'trai')}
+                      disabled={idx === 0}
+                      aria-label={`Đưa ảnh ${idx + 1} lên trước`}
+                      className="w-6 h-6 rounded-md bg-black/75 text-white/70 hover:bg-[#C3EA39] hover:text-black flex items-center justify-center transition-colors cursor-pointer disabled:opacity-25 disabled:cursor-default disabled:hover:bg-black/75 disabled:hover:text-white/70"
+                    >
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => doiCho(idx, 'phai')}
+                      disabled={idx === anh.length - 1}
+                      aria-label={`Đưa ảnh ${idx + 1} xuống sau`}
+                      className="w-6 h-6 rounded-md bg-black/75 text-white/70 hover:bg-[#C3EA39] hover:text-black flex items-center justify-center transition-colors cursor-pointer disabled:opacity-25 disabled:cursor-default disabled:hover:bg-black/75 disabled:hover:text-white/70"
+                    >
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="text-[11px] font-mono text-white/40">
+              Xoá ở đây là xoá luôn khỏi kho R2, không lấy lại được.
+            </p>
+          </>
+        )}
+
+        {loiAnh && <p className="text-xs font-mono text-red-400">{loiAnh}</p>}
+      </div>
     </div>
   );
 }
