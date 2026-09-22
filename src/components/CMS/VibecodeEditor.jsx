@@ -65,9 +65,6 @@ export default function VibecodeEditor({ formData, setFormData }) {
           </div>
           <div>
             <h3 className="text-sm sm:text-base font-display font-bold text-white">Logo & link tải</h3>
-            <p className="text-[11px] font-mono text-white/50 mt-0.5">
-              Chưa điền tên app và diễn giải thì cả mục này chưa hiện ngoài trang
-            </p>
           </div>
         </div>
       </div>
@@ -147,7 +144,6 @@ export default function VibecodeEditor({ formData, setFormData }) {
           <p className="text-[11px] font-mono text-white/40 pt-1">
             Dùng <span className="text-white/60">/releases/latest</span> thì ra bản mới
             chỉ cần đăng release trên GitHub, không phải vào đây sửa lại.
-            Bỏ trống thì nút tải không hiện.
           </p>
         </div>
 

@@ -9,7 +9,7 @@
 
 /** Ba ô lặp lại ở đầu mỗi mục: số, tiêu đề, mô tả phụ. */
 const dauMuc = (so, ten, vdSo, vdTen) => [
-  { k: so, nhan: 'Số mục (bỏ trống thì ẩn)', vd: vdSo, co: 2, kieu: 'ma' },
+  { k: so, nhan: 'Số mục', vd: vdSo, co: 2, kieu: 'ma' },
   { k: ten, nhan: 'Tiêu đề mục', vd: vdTen, co: 10, dam: true },
 ];
 
@@ -51,8 +51,8 @@ export const CAC_MUC = [
     khoiAnh: 'tuongAnh',
     truong: [
       ...dauMuc('section01Number', 'section01Title', '01', 'Lúc rảnh rỗi'),
-      { k: 'section01Subtitle', nhan: 'Mô tả phụ (bỏ trống thì ẩn)', vd: '', co: 12, dong: 2 },
-      { k: 'showcaseWallHint', nhan: 'Dòng gợi ý dưới cụm ảnh (bỏ trống thì ẩn)', vd: 'Kéo để xoay · Bấm để xem lớn', co: 12 },
+      { k: 'section01Subtitle', nhan: 'Mô tả phụ', vd: '', co: 12, dong: 2 },
+      { k: 'showcaseWallHint', nhan: 'Dòng gợi ý dưới cụm ảnh', vd: 'Kéo để xoay · Bấm để xem lớn', co: 12 },
     ],
   },
   {
@@ -62,7 +62,7 @@ export const CAC_MUC = [
     khoiAnh: 'duAn',
     truong: [
       ...dauMuc('section02Number', 'section02Title', '02', 'Khu trưng bày'),
-      { k: 'section02Subtitle', nhan: 'Mô tả phụ (bỏ trống thì ẩn)', vd: '', co: 12, dong: 2 },
+      { k: 'section02Subtitle', nhan: 'Mô tả phụ', vd: '', co: 12, dong: 2 },
       { k: 'emptyProjects', nhan: 'Chữ hiện khi chưa có dự án nào', vd: 'Chưa có dự án nào', co: 12 },
     ],
   },
@@ -73,7 +73,7 @@ export const CAC_MUC = [
     khoiAnh: 'brand',
     truong: [
       ...dauMuc('sectionClientsNumber', 'sectionClientsTitle', '03', 'Bạn đồng hành'),
-      { k: 'sectionClientsSubtitle', nhan: 'Mô tả phụ (bỏ trống thì ẩn)', vd: '', co: 12, dong: 2 },
+      { k: 'sectionClientsSubtitle', nhan: 'Mô tả phụ', vd: '', co: 12, dong: 2 },
       { k: 'emptyClients', nhan: 'Chữ hiện khi chưa có brand nào', vd: 'Chưa có bạn đồng hành nào', co: 12 },
     ],
   },
@@ -85,7 +85,7 @@ export const CAC_MUC = [
     truong: [
       ...dauMuc('section04Number', 'section04Title', '04', 'Về tui'),
       { k: 'email', nhan: 'Email liên hệ', vd: 'ten@example.com', co: 6 },
-      { k: 'status', nhan: 'Trạng thái (bỏ trống thì ẩn)', vd: 'Đang nhận dự án', co: 6 },
+      { k: 'status', nhan: 'Trạng thái', vd: 'Đang nhận dự án', co: 6 },
       { k: 'emptyAvatar', nhan: 'Chữ hiện khi chưa có ảnh đại diện', vd: 'Chưa có ảnh đại diện', co: 12 },
     ],
   },
@@ -97,7 +97,7 @@ export const CAC_MUC = [
     truong: [
       ...dauMuc('vibecodeNumber', 'vibecodeTitle', '05', '#Vibecode vui vẻ'),
       { k: 'vibecodeAppName', nhan: 'Tên ứng dụng', vd: 'Tên app của bạn', co: 6, dam: true },
-      { k: 'vibecodeTagline', nhan: 'Một dòng ngắn dưới tên (bỏ trống thì ẩn)', vd: 'Viết cho vui, xài thiệt', co: 6 },
+      { k: 'vibecodeTagline', nhan: 'Một dòng ngắn dưới tên', vd: 'Viết cho vui, xài thiệt', co: 6 },
       { k: 'vibecodeDesc', nhan: 'Diễn giải app', vd: 'App này làm gì, cho ai, hay ở chỗ nào…', co: 12, dong: 4 },
       { k: 'vibecodeButtonText', nhan: 'Chữ trên nút tải', vd: 'TẢI VỀ', co: 12 },
     ],
