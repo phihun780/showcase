@@ -91,8 +91,8 @@ export const CAC_MUC = [
   },
   {
     id: 'vibecode',
-    ten: 'Ứng dụng tự viết',
-    mo: 'Mục giới thiệu app nằm dưới "Về tui" — logo, diễn giải, nút tải',
+    ten: 'Nội dung 5',
+    mo: 'Tiêu đề mục, logo app, diễn giải và nút tải',
     khoiAnh: 'vibecode',
     truong: [
       ...dauMuc('vibecodeNumber', 'vibecodeTitle', '05', '#Vibecode vui vẻ'),
