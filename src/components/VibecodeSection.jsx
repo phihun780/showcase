@@ -73,8 +73,17 @@ export default function VibecodeSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-50px' }}
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="rounded-3xl border border-white/10 bg-[#121216] p-6 sm:p-8 md:p-10"
+          className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#121216] p-6 sm:p-8 md:p-10"
         >
+          {/* Vệt sáng quét ngang. Nằm TRÊN nội dung nên chữ cũng sáng lên một
+              nhịp khi vệt đi qua — đó mới giống ánh sáng lướt qua mặt thẻ. Để
+              dưới thì chỉ thấy nền nhấp nháy, chữ đứng im, nhìn rời rạc.
+              `pointer-events-none` để nó không nuốt cú bấm vào nút Tải về. */}
+          <div
+            aria-hidden="true"
+            className="vet-sang pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-white/10 to-transparent z-20"
+          />
+
           <div className="flex flex-col md:flex-row md:items-center gap-6 sm:gap-8 md:gap-10">
 
             {/* TRÁI: logo app */}

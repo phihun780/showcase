@@ -265,6 +265,40 @@
   }
 }
 
+/* Vệt sáng quét ngang mục Nội dung 5, 5 giây một lần.
+ *
+ * Cả vòng là 5s nhưng vệt chỉ chạy trong ~1,1s đầu (0% → 22%), quãng còn lại
+ * nó nằm im ngoài khung. Cố ý làm vậy thay vì cho nó bò đều suốt 5 giây: quét
+ * nhanh rồi nghỉ mới ra cảm giác ÁNH SÁNG LƯỚT QUA. Bò chậm thì thành một mảng
+ * sáng trôi ngang, nhìn như lỗi hiển thị.
+ *
+ * Dịch bằng transform chứ không phải `left`: transform chạy trên card đồ hoạ,
+ * không bắt trình duyệt tính lại bố cục mỗi khung hình.
+ *
+ * ĐỘ NGHIÊNG PHẢI NẰM NGAY TRONG KEYFRAME, không đặt bằng lớp `-skew-x-12` bên
+ * ngoài: `transform` chỉ có MỘT giá trị, keyframe ghi đè là mất sạch phần khai
+ * ở lớp kia. Trước đó vệt chạy đúng nhưng thẳng đứng chứ không nghiêng, vì lý
+ * do này.
+ */
+@keyframes quet-sang {
+  0%        { transform: translate3d(-150%, 0, 0) skewX(-12deg); }
+  22%, 100% { transform: translate3d(320%, 0, 0) skewX(-12deg); }
+}
+.vet-sang {
+  animation: quet-sang 5s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* Ai bật "Giảm chuyển động" trong hệ điều hành thì tắt hẳn. Đây là chuyển động
+   lặp vô hạn nên tôn trọng cài đặt đó là bắt buộc, không phải tuỳ chọn. */
+@media (prefers-reduced-motion: reduce) {
+  .vet-sang {
+    animation: none;
+    opacity: 0;
+    will-change: auto;
+  }
+}
+
 /* Selection */
 ::selection {
   background-color: #C3EA39;
