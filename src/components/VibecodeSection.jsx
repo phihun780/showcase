@@ -45,6 +45,15 @@ export default function VibecodeSection() {
   // GIF vì GIF nặng gấp hàng chục lần — xem ghi chú ở chonAnhUuTien.
   const anhUuTien = chonAnhUuTien(anh, 3);
 
+  // Dải xem trước chỉ bày 3 tấm. Nhiều hơn thì tấm thứ 3 làm mờ và đè con số
+  // lên, bấm vào vẫn mở được cả bộ trong khung xem lớn.
+  //
+  // Ba tấm là vừa: đủ để hình dung app trông ra sao, mà chưa biến khối giới
+  // thiệu thành một album. Ai muốn xem hết thì bấm vào là có hết.
+  const SO_O_BAY = 3;
+  const anhBay = anh.slice(0, SO_O_BAY);
+  const soConLai = Math.max(0, anh.length - SO_O_BAY);
+
   const [anhDangXem, datAnhDangXem] = useState(null);
   const dangMoAnh = anhDangXem !== null;
   const soAnh = anh.length;
@@ -196,55 +205,81 @@ export default function VibecodeSection() {
                 </p>
               )}
 
-              {/* Dải ảnh chụp app — vuông nhỏ, nằm giữa phần mô tả và nút tải.
-                  Bấm một tấm là mở khung xem lớn.
+              {/* HÀNG CUỐI: dải ảnh xem trước bên trái, nút tải bên phải.
+                  Hai thứ này nằm CÙNG một hàng chứ không xếp chồng, để dải ảnh
+                  có chỗ cao lên cho bằng đáy logo. Tách làm hai dòng thì ô ảnh
+                  chỉ còn một nửa chiều cao đó.
 
-                  Vuông chứ không theo tỉ lệ thật của ảnh: đây là dải xem trước,
-                  mọi ô bằng nhau thì hàng mới thẳng. Tấm nào cao hay ngang thì
-                  `object-cover` cắt bớt cho vừa ô, bấm vào vẫn thấy nguyên tấm.
+                  `items-end` để đáy hai bên thẳng nhau, và cùng thẳng với đáy
+                  logo. Dưới lg thì xếp dọc và căn giữa cho khớp với chữ. */}
+              {(anh.length > 0 || diaChi) && (
+                <div className="mt-4 sm:mt-5 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 sm:gap-5">
 
-                  Căn giữa trên điện thoại cho khớp với chữ (cột này đang
-                  `text-center md:text-left`). */}
-              {anh.length > 0 && (
-                <div className="mt-4 sm:mt-5 flex flex-wrap justify-center lg:justify-start gap-2 sm:gap-2.5">
-                  {anh.map((url, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => datAnhDangXem(idx)}
-                      aria-label={`Xem lớn ảnh ${idx + 1} của ${tenApp || 'ứng dụng'}`}
-                      className="group/a relative block w-16 h-16 sm:w-[72px] sm:h-[72px] shrink-0 overflow-hidden rounded-xl border border-white/10 bg-black/40 cursor-zoom-in transition-all duration-300 hover:border-[#C3EA39]/60 focus-visible:outline-none focus-visible:border-[#C3EA39] focus-visible:ring-2 focus-visible:ring-[#C3EA39]/60"
-                    >
-                      <SmartImage
-                        src={url}
-                        alt={`${tenApp || 'Ứng dụng'} — ảnh ${idx + 1}`}
-                        sizes="72px"
-                        {...thuocTinhTai(url, anhUuTien.has(idx))}
-                        decoding="async"
-                        draggable={false}
-                        onContextMenu={(e) => e.preventDefault()}
-                        onDragStart={(e) => e.preventDefault()}
-                        className="w-full h-full object-cover select-none transition-transform duration-500 group-hover/a:scale-[1.08]"
-                      />
-                    </button>
-                  ))}
-                </div>
-              )}
+                  {/* Ô vuông chứ không theo tỉ lệ thật của ảnh: đây là dải xem
+                      trước, mọi ô bằng nhau thì hàng mới thẳng. Tấm nào cao hay
+                      ngang thì `object-cover` cắt bớt cho vừa ô — bấm vào vẫn
+                      thấy nguyên tấm trong khung xem lớn. */}
+                  {anh.length > 0 && (
+                    <div className="flex justify-center lg:justify-start gap-2.5 sm:gap-3">
+                      {anhBay.map((url, idx) => {
+                        const oCuoiConNua = soConLai > 0 && idx === SO_O_BAY - 1;
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => datAnhDangXem(idx)}
+                            aria-label={
+                              oCuoiConNua
+                                ? `Xem toàn bộ ${anh.length} ảnh của ${tenApp || 'ứng dụng'}`
+                                : `Xem lớn ảnh ${idx + 1} của ${tenApp || 'ứng dụng'}`
+                            }
+                            className="group/a relative block w-20 h-20 sm:w-28 sm:h-28 lg:w-[140px] lg:h-[140px] shrink-0 overflow-hidden rounded-xl sm:rounded-2xl border border-white/10 bg-black/40 cursor-zoom-in transition-all duration-300 hover:border-[#C3EA39]/60 focus-visible:outline-none focus-visible:border-[#C3EA39] focus-visible:ring-2 focus-visible:ring-[#C3EA39]/60"
+                          >
+                            <SmartImage
+                              src={url}
+                              alt={`${tenApp || 'Ứng dụng'} — ảnh ${idx + 1}`}
+                              sizes="(min-width: 1024px) 140px, (min-width: 640px) 112px, 80px"
+                              {...thuocTinhTai(url, anhUuTien.has(idx))}
+                              decoding="async"
+                              draggable={false}
+                              onContextMenu={(e) => e.preventDefault()}
+                              onDragStart={(e) => e.preventDefault()}
+                              className={`w-full h-full object-cover select-none transition-transform duration-500 group-hover/a:scale-[1.08] ${
+                                oCuoiConNua ? 'opacity-35' : ''
+                              }`}
+                            />
 
-              {/* Chưa dán link thì không dựng nút: nút bấm không đi đâu còn tệ
-                  hơn là không có nút. */}
-              {diaChi && (
-                <div className="mt-5 sm:mt-6 flex justify-center lg:justify-end">
-                  <a
-                    href={diaChi}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-6 py-3 rounded-full bg-[#C3EA39] hover:bg-[#d4f854] text-black font-display font-bold text-xs sm:text-sm uppercase tracking-wider inline-flex items-center gap-2 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-[1.02] cursor-pointer"
-                  >
-                    <Download className="w-4 h-4" />
-                    <span>{chuNut}</span>
-                    <ArrowUpRight className="w-3.5 h-3.5" />
-                  </a>
+                            {/* Ô cuối: làm mờ ảnh rồi đè số còn lại lên. Vẫn để
+                                thấy ảnh mờ phía sau chứ không phủ kín — có vậy
+                                mới đọc ra là "còn ảnh nữa" thay vì một ô trống. */}
+                            {oCuoiConNua && (
+                              <span className="absolute inset-0 flex items-center justify-center bg-black/45 text-white font-display font-extrabold text-base sm:text-xl lg:text-2xl">
+                                +{soConLai}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Chưa dán link thì không dựng nút: nút bấm không đi đâu còn
+                      tệ hơn là không có nút. */}
+                  {diaChi && (
+                    <div className="flex justify-center lg:justify-end shrink-0">
+                      <a
+                        href={diaChi}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-6 py-3 rounded-full bg-[#C3EA39] hover:bg-[#d4f854] text-black font-display font-bold text-xs sm:text-sm uppercase tracking-wider inline-flex items-center gap-2 transition-all shadow-md shadow-[#C3EA39]/15 hover:scale-[1.02] cursor-pointer"
+                      >
+                        <Download className="w-4 h-4" />
+                        <span>{chuNut}</span>
+                        <ArrowUpRight className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
+                  )}
+
                 </div>
               )}
             </div>
