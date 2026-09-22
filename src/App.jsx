@@ -28,80 +28,46 @@ function CMSLoadingScreen() {
   );
 }
 
-// Multi-layer Anti-Theft & Content Protection Shield (Active on live production domains)
+// Chan luu anh kieu tien tay.
+//
+// GIU: chan chuot phai va chan keo tha anh. Khong ngan duoc nguoi quyet tam
+// (mo tab Network la thay het file), nhung chan duoc kieu tien tay "luu anh
+// thanh..." — voi mot trang portfolio thi bay nhieu la du va dang gia.
+//
+// DA BO: phan chan ban phim (F12, Ctrl+Shift+I/J/C, Ctrl+U, Ctrl+S, Ctrl+P).
+// Ly do bo:
+//   - Khong chan duoc gi that: DevTools va Save Page van mo duoc tu menu trinh
+//     duyet, chi mat them mot cu bam.
+//   - Ma lai chan dung nguoi dung that: Ctrl+P la khach khong in noi trang
+//     portfolio de gui di, Ctrl+S la khong luu lai xem sau. Nguoi muon lay anh
+//     thi khong vuong, nguoi muon xem tu te thi vuong.
+//
+// Tat o localhost/mang noi bo de con bam F12 thu giao dien dien thoai.
 function SecurityShield() {
   useEffect(() => {
-    // Tự động bỏ chặn khi đang chạy dev mode hoặc trên localhost / 127.0.0.1 / mạng nội bộ để thoải mái bấm F12 test mobile
-    const isDev = import.meta.env.DEV || 
-                  window.location.hostname === 'localhost' || 
+    const isDev = import.meta.env.DEV ||
+                  window.location.hostname === 'localhost' ||
                   window.location.hostname === '127.0.0.1' ||
                   window.location.hostname.startsWith('192.168.') ||
                   window.location.hostname.endsWith('.local');
     if (isDev) return;
 
-    // 1. Disable Right-Click Context Menu
     const handleContextMenu = (e) => {
       e.preventDefault();
       return false;
     };
 
-    // 2. Disable Drag & Drop of Images
     const handleDragStart = (e) => {
       e.preventDefault();
       return false;
     };
 
-    // 3. Block Developer Shortcuts: F12, Ctrl+Shift+I/J/C, Ctrl+U, Ctrl+S, Ctrl+P
-    const handleKeyDown = (e) => {
-      const isCtrlOrCmd = e.ctrlKey || e.metaKey;
-      const isShift = e.shiftKey;
-      const key = e.key ? e.key.toUpperCase() : '';
-      const keyCode = e.keyCode || e.which;
-
-      // F12
-      if (key === 'F12' || keyCode === 123) {
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-      }
-
-      // Ctrl + Shift + I / J / C (DevTools & Element Inspector)
-      if (isCtrlOrCmd && isShift && (key === 'I' || key === 'J' || key === 'C' || keyCode === 73 || keyCode === 74 || keyCode === 67)) {
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-      }
-
-      // Ctrl + U (View Source)
-      if (isCtrlOrCmd && (key === 'U' || keyCode === 85)) {
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-      }
-
-      // Ctrl + S (Save Page)
-      if (isCtrlOrCmd && (key === 'S' || keyCode === 83)) {
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-      }
-
-      // Ctrl + P (Print Page)
-      if (isCtrlOrCmd && (key === 'P' || keyCode === 80)) {
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-      }
-    };
-
     window.addEventListener('contextmenu', handleContextMenu, true);
     window.addEventListener('dragstart', handleDragStart, true);
-    window.addEventListener('keydown', handleKeyDown, true);
 
     return () => {
       window.removeEventListener('contextmenu', handleContextMenu, true);
       window.removeEventListener('dragstart', handleDragStart, true);
-      window.removeEventListener('keydown', handleKeyDown, true);
     };
   }, []);
 
