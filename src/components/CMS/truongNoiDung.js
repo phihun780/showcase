@@ -92,14 +92,13 @@ export const CAC_MUC = [
   {
     id: 'vibecode',
     ten: 'Nội dung 5',
-    mo: 'Tiêu đề mục, logo app, diễn giải và nút tải',
+    mo: 'Tiêu đề mục và danh sách app tự viết',
     khoiAnh: 'vibecode',
+    // Chỉ còn hai ô của MỤC. Ô chữ của TỪNG APP (tên, diễn giải, chữ nút...)
+    // nằm trong VibecodeEditor: số app thay đổi được nên không khai sẵn thành
+    // trường cố định ở đây được.
     truong: [
       ...dauMuc('vibecodeNumber', 'vibecodeTitle', '05', '#Vibecode vui vẻ'),
-      { k: 'vibecodeAppName', nhan: 'Tên ứng dụng', vd: 'Tên app của bạn', co: 6, dam: true },
-      { k: 'vibecodeTagline', nhan: 'Một dòng ngắn dưới tên', vd: 'Viết cho vui, xài thiệt', co: 6 },
-      { k: 'vibecodeDesc', nhan: 'Diễn giải app', vd: 'App này làm gì, cho ai, hay ở chỗ nào…', co: 12, dong: 4 },
-      { k: 'vibecodeButtonText', nhan: 'Chữ trên nút tải', vd: 'TẢI VỀ', co: 12 },
     ],
   },
   {
