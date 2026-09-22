@@ -1,8 +1,82 @@
 @import "tailwindcss";
 
+/* Font tự host, không gọi sang Google nữa.
+ *
+ * File .woff2 trong public/fonts/ do scripts/dung-font.py dựng ra từ .ttf trong
+ * font-web/ — đã cắt bỏ chữ không dùng (Hy Lạp, Cyrillic...) và chỉ giữ đúng
+ * bảy độ đậm trang gọi tới. Trang không dùng chữ nghiêng nên không có bản Italic.
+ *
+ * font-display: swap — chữ hiện ngay bằng font hệ thống rồi đổi sang font thật
+ * khi tải xong, thay vì để trống một nhịp.
+ */
+
+@font-face {
+  font-family: 'Be Vietnam Pro';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('/fonts/be-vietnam-pro-300.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Be Vietnam Pro';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/be-vietnam-pro-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Be Vietnam Pro';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/be-vietnam-pro-500.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Be Vietnam Pro';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/be-vietnam-pro-600.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Be Vietnam Pro';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/be-vietnam-pro-700.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Be Vietnam Pro';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url('/fonts/be-vietnam-pro-800.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Be Vietnam Pro';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url('/fonts/be-vietnam-pro-900.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url('/fonts/jetbrains-mono-var.woff2') format('woff2-variations');
+}
+
 @theme {
-  --font-sans: 'Be Vietnam Pro', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-display: 'Be Vietnam Pro', 'Space Grotesk', sans-serif;
+  --font-sans: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
 
@@ -16,8 +90,8 @@
     --border-subtle: rgba(255, 255, 255, 0.08);
     --border-lime: rgba(195, 234, 57, 0.4);
     
-    --font-sans: 'Be Vietnam Pro', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    --font-display: 'Be Vietnam Pro', 'Space Grotesk', sans-serif;
+    --font-sans: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-display: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
   }
 

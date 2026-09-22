@@ -86,11 +86,20 @@ src/
     CMS/              trang quản trị
   utils/              R2, tối ưu ảnh, đường dẫn, bộ nhớ tạm
   context/            nơi giữ dữ liệu cho cả trang
+public/
+  fonts/              font .woff2 trang thật dùng (do scripts/dung-font.py dựng)
+  robots.txt          cho phép Google đọc, chỉ chỗ sitemap
+  _headers            bảo trình duyệt giữ font lại một năm
 functions/            chạy trên máy chủ Cloudflare
-  _middleware.js      chèn thẻ preview cho Zalo/Facebook (chúng không chạy JS)
+  _middleware.js      chèn thẻ preview cho Zalo/Facebook, và trả /sitemap.xml
+  _noi-dung.js        đọc nội dung CMS + dựng slug (dùng chung, đừng chép ra)
   api/                đăng nhập CMS, đọc/ghi dữ liệu, tải lên, xoá, tải ảnh về
 scripts/sao-luu.mjs   sao lưu nội dung
+scripts/dung-font.py  dựng font .woff2 từ .ttf trong font-web/
 ```
+
+`/sitemap.xml` được dựng ngay lúc có người hỏi, từ chính nội dung trong CMS —
+thêm một dự án là nó tự có thêm dòng mới, không phải sửa tay.
 
 Đường dẫn riêng: `/du-an/<tên-dự-án>` và `/brand/<tên-brand>` — copy gửi được,
 mở ra đúng bài viết đó.
@@ -107,3 +116,18 @@ mở ra đúng bài viết đó.
   Functions. `vite.config.js` có bản mô phỏng riêng cho lúc chạy ở máy, nên sửa
   API là phải sửa **cả hai chỗ**.
 - **Thẻ preview mạng xã hội** chỉ kiểm được trên trang thật, localhost không chạy.
+  Riêng `/sitemap.xml` thì `vite.config.js` có mô phỏng, xem thử được ở máy.
+- **Font nằm trong `public/fonts/`, không gọi sang Google nữa.** Muốn đổi font
+  hoặc thêm độ đậm thì sửa `scripts/dung-font.py` rồi chạy lại:
+
+  ```bash
+  pip install fonttools brotli
+  python scripts/dung-font.py
+  ```
+
+  Thư mục nguồn `font-web/` **không** nằm trong git — máy mới phải tải lại từ
+  Google Fonts trước khi chạy script. File `.woff2` dựng xong thì có trong git,
+  nên chỉ việc `npm run dev` là chạy được, không cần bước nào cả.
+
+  `public/_headers` bảo trình duyệt giữ font lại một năm, nên **đổi ruột font mà
+  giữ nguyên tên file là máy khách cũ vẫn dùng bản cũ**. Đổi font thì đổi cả tên.

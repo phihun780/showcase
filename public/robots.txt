@@ -1,0 +1,14 @@
+# Cho phep moi cong cu tim kiem doc toan bo trang.
+#
+# Chu thich o day viet KHONG DAU la co y: file .txt tinh duoc gui di ma khong
+# kem charset, trinh duyet doan sai la chu co dau hien ra thanh mot mo ky tu la.
+#
+# Co tinh KHONG viet "Disallow: /cms": file nay ai mo cung doc duoc, ghi duong
+# dan trang quan tri vao la chi duong cho nguoi to mo thay vi giau di. Trang
+# /cms da duoc gan the noindex ngay tren may chu (functions/_middleware.js),
+# kin dao hon ma van dat dung muc dich.
+
+User-agent: *
+Allow: /
+
+Sitemap: https://phihun.pages.dev/sitemap.xml

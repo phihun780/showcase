@@ -72,6 +72,27 @@ function r2DevPlugin() {
         });
       }
 
+      // Ban do trang cho Google. Tren Cloudflare viec nay do
+      // functions/_middleware.js lo, nhung `npm run dev` khong chay functions —
+      // nen dung chung ham buildSitemap o day de xem thu duoc ngay o may.
+      server.middlewares.use(async (req, res, next) => {
+        if (!req.url || req.url.split('?')[0] !== '/sitemap.xml') return next();
+        try {
+          const { loadData, buildSitemap } = await import('./functions/_noi-dung.js');
+          const data = await loadData({});
+          if (!data) {
+            res.statusCode = 503;
+            res.end('Chua doc duoc noi dung trang');
+            return;
+          }
+          res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+          res.end(buildSitemap(data, `http://${req.headers.host}`));
+        } catch (e) {
+          res.statusCode = 500;
+          res.end(String(e && e.message ? e.message : e));
+        }
+      });
+
       server.middlewares.use(async (req, res, next) => {
         if (!req.url || !req.url.startsWith('/api/')) return next();
 

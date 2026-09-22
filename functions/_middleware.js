@@ -11,11 +11,15 @@
 // rồi thay thẳng vào HTML TRƯỚC KHI gửi đi. Nhờ vậy thứ bạn chỉnh trong CMS
 // chính là thứ hiện ra khi chia sẻ link.
 
-const CACHE_MS = 60 * 1000; // đọc lại nội dung CMS tối đa 1 phút/lần
-
-// Giữ DỮ LIỆU THÔ chứ không giữ SEO đã dựng sẵn: cùng một lần đọc phải phục vụ
-// được cả trang chủ lẫn từng trang dự án.
-let cache = { at: 0, data: null };
+import {
+  PROJECT_ROUTE,
+  CLIENT_ROUTE,
+  loadData,
+  projectSlug,
+  clientSlug,
+  slugFromPath,
+  buildSitemap,
+} from './_noi-dung.js';
 
 const IMAGE_TYPES = {
   png: 'image/png',
@@ -50,44 +54,6 @@ function buildSeo(profile, origin) {
   const favicon = usableImage(profile.favicon) || `${origin}/favicon.png`;
 
   return { title, description, image, imageType: imageTypeOf(image), favicon, origin, url: `${origin}/` };
-}
-
-// Đường dẫn riêng của dự án và của brand.
-const PROJECT_ROUTE = '/du-an';
-const CLIENT_ROUTE = '/brand';
-
-// PHẢI khớp từng ký tự với slugifyTitle trong src/utils/projectUrl.js (brand
-// cũng dùng chung hàm đó). Lệch một chút là link chia sẻ không tìm ra và rơi về
-// thẻ mặc định.
-function slugifyTitle(text) {
-  if (!text) return '';
-  return text
-    .toString()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/[đĐ]/g, 'd')
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
-
-function projectSlug(project) {
-  if (!project) return '';
-  return slugifyTitle(project.title) || String(project.id || '');
-}
-
-function clientSlug(client) {
-  if (!client) return '';
-  return slugifyTitle(client.clientName) || String(client.id || '');
-}
-
-// Lấy slug từ đường dẫn theo một tiền tố cho trước, trả null nếu không khớp.
-function slugFromPath(pathname, route) {
-  const clean = (pathname || '').replace(/\/+$/, '');
-  if (!clean.toLowerCase().startsWith(`${route}/`)) return null;
-  const slug = clean.slice(route.length + 1);
-  return slug ? decodeURIComponent(slug).toLowerCase() : null;
 }
 
 // Thẻ preview riêng cho một dự án: tiêu đề dự án + ảnh cover của chính nó.
@@ -130,53 +96,6 @@ function buildClientSeo(client, profile, origin) {
   };
 }
 
-const PUBLIC_R2_URL = 'https://pub-0ad262edfb6a4345a3bd61b2110c549c.r2.dev';
-
-function getBucket(env) {
-  return env.PORTFOLIO_ASSETS || env.showcase || env.BUCKET || env.R2 || env.SHOWCASE || null;
-}
-
-async function loadData(env) {
-  if (cache.data && Date.now() - cache.at < CACHE_MS) {
-    return cache.data;
-  }
-
-  const bucket = getBucket(env);
-  let rawJson = null;
-
-  if (bucket) {
-    try {
-      const object = await bucket.get('data/portfolio.json');
-      if (object) {
-        rawJson = await object.text();
-      }
-    } catch (e) {
-      console.error('Middleware bucket get error:', e);
-    }
-  }
-
-  if (!rawJson) {
-    try {
-      const res = await fetch(`${PUBLIC_R2_URL}/data/portfolio.json?t=${Date.now()}`);
-      if (res.ok) {
-        rawJson = await res.text();
-      }
-    } catch (e) {
-      console.error('Middleware fallback fetch error:', e);
-    }
-  }
-
-  if (!rawJson) return null;
-
-  try {
-    const parsed = JSON.parse(rawJson);
-    cache = { at: Date.now(), data: parsed };
-    return parsed;
-  } catch {
-    return null; // hỏng thì cứ dùng thẻ mặc định trong index.html
-  }
-}
-
 class MetaRewriter {
   constructor(values) {
     this.values = values;
@@ -212,14 +131,43 @@ class IconRewriter {
 }
 
 export async function onRequest(context) {
+  const { origin, pathname } = new URL(context.request.url);
+
+  // BAN DO TRANG cho Google: /sitemap.xml
+  //
+  // Danh sach du an va brand nam trong CMS nen thay doi luon — khong the viet
+  // san mot file tinh trong public/. Dung o day thi them mot du an la sitemap
+  // tu co them dong moi, khong phai nho gi ca.
+  //
+  // VI SAO NAM TRONG _middleware CHU KHONG PHAI functions/sitemap.xml.js:
+  // middleware chac chan chay truoc moi thu, con public/_redirects dang co luat
+  // `/* /index.html 200` nuot sach duong dan la. Dat o day la khong phai doan
+  // xem luat nao thang.
+  if (pathname === '/sitemap.xml') {
+    const data = await loadData(context.env);
+    if (data) {
+      return new Response(buildSitemap(data, origin), {
+        headers: {
+          'content-type': 'application/xml; charset=utf-8',
+          // Google khong can ban moi tinh tung phut; mot gio la du.
+          'cache-control': 'public, max-age=3600',
+        },
+      });
+    }
+    // Doc noi dung that bai thi bao 503 de Google quay lai sau, chu khong tra
+    // ve sitemap rong — rong nghia la "trang khong co gi", sai han su that.
+    return new Response('Chua doc duoc noi dung trang', {
+      status: 503,
+      headers: { 'content-type': 'text/plain; charset=utf-8' },
+    });
+  }
+
   const response = await context.next();
 
   // Chỉ đụng vào trang HTML — ảnh, JS, CSS và các đường /api/* đi thẳng qua.
   if (!(response.headers.get('content-type') || '').includes('text/html')) {
     return response;
   }
-
-  const { origin, pathname } = new URL(context.request.url);
 
   // Trang CMS: bao Google dung dua vao ket qua tim kiem.
   //

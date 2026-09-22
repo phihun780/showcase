@@ -1,0 +1,8 @@
+# Font tự host: tên file cố định theo độ đậm (be-vietnam-pro-700.woff2...) và
+# nội dung không bao giờ đổi, nên cho trình duyệt giữ luôn một năm. Khách quay
+# lại là chữ hiện ra ngay, không tải lại gì.
+#
+# LƯU Ý: đổi sang bộ font khác thì phải ĐỔI LUÔN TÊN FILE. Giữ nguyên tên mà
+# thay ruột thì máy khách cũ vẫn dùng bản cũ suốt một năm.
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
