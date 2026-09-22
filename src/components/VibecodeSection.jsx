@@ -134,33 +134,48 @@ export default function VibecodeSection() {
             className="vet-sang pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-white/10 to-transparent z-20"
           />
 
-          <div className="flex flex-col md:flex-row md:items-center gap-6 sm:gap-8 md:gap-10">
+          <div className="flex flex-col lg:flex-row lg:items-center gap-6 sm:gap-8 lg:gap-10">
 
             {/* TRÁI: logo app */}
-            <div className="shrink-0 mx-auto md:mx-0">
-              <div className="w-28 h-28 sm:w-32 sm:h-32 md:w-40 md:h-40 rounded-3xl border border-white/10 bg-black/40 overflow-hidden flex items-center justify-center">
-                {logo ? (
-                  <SmartImage
-                    src={logo}
-                    alt={tenApp ? `Logo ${tenApp}` : 'Logo ứng dụng'}
-                    sizes="160px"
-                    {...thuocTinhTai(logo, false)}
-                    decoding="async"
-                    draggable={false}
-                    onContextMenu={(e) => e.preventDefault()}
-                    onDragStart={(e) => e.preventDefault()}
-                    className="w-full h-full object-contain select-none"
-                  />
-                ) : (
-                  /* Chưa tải logo thì để một icon thay chỗ, không để ô trống
-                     rỗng trông như ảnh vỡ. */
-                  <Code2 className="w-10 h-10 sm:w-12 sm:h-12 text-[#C3EA39]/60" />
-                )}
-              </div>
+            {/* TRÁI: logo app — 290px, đúng bằng chiều cao của cả cột phải
+                (tên app + dòng ngắn + diễn giải + dải ảnh + nút tải), nên hai
+                bên bằng nhau đúng bằng vạch trên và vạch dưới.
+
+                VÌ SAO CỐ ĐỊNH CHỨ KHÔNG ĐO THEO CỘT PHẢI:
+                CSS không làm được. Trong flex, bề rộng được tính TRƯỚC rồi mới
+                kéo giãn chiều cao, nên `aspect-square` + `self-stretch` cho ra
+                ô cao 256px mà rộng 2px — đã thử, đo được đúng như vậy.
+                Đo bằng JavaScript thì lại thành vòng lặp: logo rộng ra -> cột
+                phải hẹp lại -> chữ xuống dòng nhiều hơn -> cột phải cao lên ->
+                logo lại rộng ra nữa.
+                Một con số cố định vừa đứng yên vừa ra đúng kết quả cần.
+
+                CHIA HAI CỘT TỪ lg (1024px) CHỨ KHÔNG PHẢI md (768px):
+                ở 768px, ô logo 290px còn rộng hơn cả cột chữ bên cạnh (287px) —
+                chữ bị ép thành một dải hẹp, đọc rất mệt. Đo được đúng như vậy.
+                Tablet xếp dọc thì cả logo lẫn chữ đều có chỗ tử tế. */}
+            <div className="shrink-0 mx-auto lg:mx-0 w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-[290px] lg:h-[290px] rounded-3xl border border-white/10 bg-black/40 overflow-hidden flex items-center justify-center">
+              {logo ? (
+                <SmartImage
+                  src={logo}
+                  alt={tenApp ? `Logo ${tenApp}` : 'Logo ứng dụng'}
+                  sizes="(min-width: 1024px) 290px, (min-width: 768px) 192px, 160px"
+                  {...thuocTinhTai(logo, false)}
+                  decoding="async"
+                  draggable={false}
+                  onContextMenu={(e) => e.preventDefault()}
+                  onDragStart={(e) => e.preventDefault()}
+                  className="w-full h-full object-contain select-none"
+                />
+              ) : (
+                /* Chưa tải logo thì để một icon thay chỗ, không để ô trống rỗng
+                   trông như ảnh vỡ. */
+                <Code2 className="w-10 h-10 sm:w-12 sm:h-12 text-[#C3EA39]/60" />
+              )}
             </div>
 
             {/* PHẢI: diễn giải + nút tải */}
-            <div className="flex-1 min-w-0 text-center md:text-left">
+            <div className="flex-1 min-w-0 text-center lg:text-left">
               {tenApp && (
                 <h3 className="text-2xl sm:text-3xl font-display font-extrabold text-white tracking-tight">
                   {tenApp}
@@ -191,7 +206,7 @@ export default function VibecodeSection() {
                   Căn giữa trên điện thoại cho khớp với chữ (cột này đang
                   `text-center md:text-left`). */}
               {anh.length > 0 && (
-                <div className="mt-4 sm:mt-5 flex flex-wrap justify-center md:justify-start gap-2 sm:gap-2.5">
+                <div className="mt-4 sm:mt-5 flex flex-wrap justify-center lg:justify-start gap-2 sm:gap-2.5">
                   {anh.map((url, idx) => (
                     <button
                       key={idx}
@@ -219,7 +234,7 @@ export default function VibecodeSection() {
               {/* Chưa dán link thì không dựng nút: nút bấm không đi đâu còn tệ
                   hơn là không có nút. */}
               {diaChi && (
-                <div className="mt-5 sm:mt-6 flex justify-center md:justify-start">
+                <div className="mt-5 sm:mt-6 flex justify-center lg:justify-end">
                   <a
                     href={diaChi}
                     target="_blank"
