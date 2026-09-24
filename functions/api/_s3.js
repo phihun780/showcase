@@ -219,7 +219,10 @@ export async function s3DeleteFolder(env, prefix) {
           return false;
         }
       }));
-      for (const ok of kq) ok ? daXoa++ : loi++;
+      for (const ok of kq) {
+        if (ok) daXoa++;
+        else loi++;
+      }
     }
 
     const conTiep = /<IsTruncated>true<\/IsTruncated>/i.test(xml);
