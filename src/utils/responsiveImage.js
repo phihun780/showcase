@@ -22,7 +22,19 @@
 
 // Các cỡ sẽ tạo khi tải ảnh lên. Chỉ tạo bản NHỎ HƠN ảnh gốc — phóng to ảnh
 // lên chỉ làm file nặng thêm mà không nét hơn.
-export const RESPONSIVE_WIDTHS = [480, 960, 1440];
+//
+// HAI CỠ, KHÔNG PHẢI BA: 480 cho điện thoại, 1440 cho màn hình lớn.
+//
+// VÌ SAO BỎ 960 CHỨ KHÔNG BỎ 1440:
+// Khung ảnh rộng nhất trên trang là 1280px (băng ảnh đầu trang). Giữ 480+960
+// thì khung đó không có bản nào vừa, trình duyệt đành lấy ẢNH GỐC 2560px —
+// nặng hơn hẳn hiện tại, tức là làm hỏng chứ không phải tối ưu. Còn bỏ 960 thì
+// mấy khung cỡ vừa (520–740px) nhận bản 1440: hơi thừa, nhưng vẫn nhẹ hơn ảnh
+// gốc nhiều và không có chỗ nào tệ đi.
+//
+// Ảnh cũ đã có đủ ba bản vẫn chạy nguyên: phần đánh dấu trong tên file tự khai
+// nó có sẵn những cỡ nào, nên đổi danh sách này chỉ ảnh hưởng ảnh tải lên MỚI.
+export const RESPONSIVE_WIDTHS = [480, 1440];
 
 const MARKER = /\.rs([\d-]+)\.([a-zA-Z0-9]+)$/;
 
