@@ -21,10 +21,59 @@ import { getCmsToken } from '../../utils/r2Storage';
  * chậm vừa tốn lượt gọi (Cloudflare tính tiền theo lượt). Đếm một lần lúc mở
  * CMS, muốn cập nhật thì bấm nút làm mới.
  */
+// Kết quả dùng CHUNG cho mọi bản của ô này.
+//
+// Ô được dựng ở HAI chỗ — một trong thanh bên cho desktop, một ở cuối trang cho
+// điện thoại — nhưng mỗi lúc chỉ một chỗ hiện (chỗ kia bị CSS giấu đi). Không
+// gom lại thì cả hai cùng gọi API, mà mỗi lần gọi là máy chủ đi hết danh sách
+// file của cả tài khoản: tốn gấp đôi mà chẳng được gì.
+//
+// PHẢI KHOÁ THEO LẦN GỌI ĐANG CHẠY, KHÔNG PHẢI THEO KẾT QUẢ:
+// Hai ô dựng lên cùng một nhịp, nên nếu chỉ hỏi "đã có kết quả chưa" thì lúc
+// đó cả hai đều thấy chưa có và cùng lao đi gọi. Đã đo: 4 lần gọi trong cùng
+// 0,01 giây (hai ô, nhân đôi vì React chạy effect hai lần lúc phát triển).
+// Giữ lại chính cái lời hứa đang chạy dở thì ai tới sau bám vào đó mà chờ.
+let boNhoChung = null;
+let dangGoiDo = null;
+const nguoiNghe = new Set();
+
+async function docTuMayChu() {
+  const token = getCmsToken();
+  const res = await fetch('/api/dung-luong', {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  const d = await res.json();
+  if (!res.ok || !d.success) throw new Error(d.error || `Lỗi ${res.status}`);
+  return d;
+}
+
+/** Đọc dung lượng, gom mọi lời gọi trùng nhau về một lần. */
+function docDungLuong(batBuocDocLai = false) {
+  if (!batBuocDocLai && boNhoChung) return Promise.resolve(boNhoChung);
+  if (dangGoiDo) return dangGoiDo;
+
+  dangGoiDo = docTuMayChu()
+    .then(d => {
+      boNhoChung = d;
+      // Bản nào đọc xong thì phát cho bản kia, nên bấm nút làm mới ở một chỗ
+      // là cả hai cùng cập nhật.
+      nguoiNghe.forEach(f => f(d));
+      return d;
+    })
+    .finally(() => { dangGoiDo = null; });
+
+  return dangGoiDo;
+}
+
 export default function DungLuongKho() {
-  const [soLieu, datSoLieu] = useState(null);
-  const [dangDoc, datDangDoc] = useState(true);
+  const [soLieu, datSoLieu] = useState(boNhoChung);
+  const [dangDoc, datDangDoc] = useState(!boNhoChung);
   const [loi, datLoi] = useState('');
+
+  useEffect(() => {
+    nguoiNghe.add(datSoLieu);
+    return () => { nguoiNghe.delete(datSoLieu); };
+  }, []);
 
   // `lamMoi` phân biệt lần đọc đầu (lúc mở CMS) với lần bấm nút làm mới.
   // Lần đầu KHÔNG đặt lại trạng thái trước khi gọi: state vốn đã là "đang đọc"
@@ -35,13 +84,7 @@ export default function DungLuongKho() {
       datLoi('');
     }
     try {
-      const token = getCmsToken();
-      const res = await fetch('/api/dung-luong', {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      const d = await res.json();
-      if (!res.ok || !d.success) throw new Error(d.error || `Lỗi ${res.status}`);
-      datSoLieu(d);
+      await docDungLuong(lamMoi);
     } catch (e) {
       datLoi(e.message || 'Không đọc được dung lượng');
     } finally {
@@ -49,7 +92,8 @@ export default function DungLuongKho() {
     }
   };
 
-  useEffect(() => { doc(); }, []);
+  // Đã có sẵn kết quả từ bản kia thì không gọi lại.
+  useEffect(() => { if (!boNhoChung) doc(); }, []);
 
   return (
     <div className="mt-3 p-3 rounded-2xl bg-[#121216] border border-white/10 shadow-lg">
