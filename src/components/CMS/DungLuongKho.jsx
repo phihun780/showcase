@@ -3,7 +3,12 @@ import { HardDrive, RefreshCw, Loader2, AlertTriangle } from 'lucide-react';
 import { getCmsToken } from '../../utils/r2Storage';
 
 /**
- * Ô hiển thị dung lượng đang dùng trên kho R2, so với mức 10 GB miễn phí.
+ * Ô hiển thị dung lượng đang dùng trên R2, so với mức 10 GB miễn phí.
+ *
+ * HẠN MỨC 10 GB TÍNH CHO CẢ TÀI KHOẢN, không phải từng kho. Tài khoản còn kho
+ * của webapp khác, nên chỉ đếm kho của trang này là nhìn thấy còn nhiều hơn
+ * thực tế. Máy chủ cố đếm cả tài khoản; khoá R2 nào chỉ có quyền trên một kho
+ * thì nó lùi về đếm kho đó và báo lại qua `phamVi`, giao diện nói rõ ra.
  *
  * VÌ SAO ĐẾM CHỨ KHÔNG HỎI CLOUDFLARE:
  * R2 không có API trả về tổng dung lượng của một bucket. Máy chủ phải đi hết
@@ -52,7 +57,7 @@ export default function DungLuongKho() {
         <div className="flex items-center gap-2 min-w-0">
           <HardDrive className="w-3.5 h-3.5 text-[#C3EA39] shrink-0" />
           <span className="text-[11px] font-mono uppercase tracking-wider text-white/70 truncate">
-            Kho ảnh
+            {soLieu?.phamVi === 'taiKhoan' ? 'R2 — cả tài khoản' : 'Kho ảnh'}
           </span>
         </div>
 
@@ -149,16 +154,50 @@ function ThongSo({ soLieu }) {
         </p>
       )}
 
-      {/* Nặng nhất lên đầu — cần dọn kho thì nhìn phát biết dọn chỗ nào. */}
-      {Array.isArray(soLieu.theoThuMuc) && soLieu.theoThuMuc.length > 0 && (
+      {/* Đếm được cả tài khoản: liệt kê từng kho, nặng nhất lên đầu. Kho của
+          chính trang này tô sáng để phân biệt với kho của webapp khác. */}
+      {soLieu.phamVi === 'taiKhoan' && Array.isArray(soLieu.cacKho) && (
         <div className="mt-2.5 pt-2.5 border-t border-white/8 space-y-1">
-          {soLieu.theoThuMuc.slice(0, 4).map(t => (
-            <div key={t.ten} className="flex items-center justify-between gap-2">
-              <span className="text-[10px] font-mono text-white/45 truncate">{t.ten}</span>
-              <span className="text-[10px] font-mono text-white/35 shrink-0">{coChu(t.bytes)}</span>
-            </div>
-          ))}
+          {soLieu.cacKho.slice(0, 6).map(k => {
+            const cuaTrangNay = soLieu.khoTrang && k.ten === soLieu.khoTrang.ten;
+            return (
+              <div key={k.ten} className="flex items-center justify-between gap-2">
+                <span className={`text-[10px] font-mono truncate ${
+                  cuaTrangNay ? 'text-[#C3EA39]' : 'text-white/45'
+                }`}>
+                  {k.ten}
+                </span>
+                <span className="text-[10px] font-mono text-white/35 shrink-0">{coChu(k.bytes)}</span>
+              </div>
+            );
+          })}
         </div>
+      )}
+
+      {/* Chỉ đếm được một kho: liệt kê theo thư mục trong kho đó, kèm một dòng
+          nói rõ đây chưa phải tổng của cả tài khoản — không nói thì nhìn vào
+          tưởng còn nhiều chỗ hơn thực tế. */}
+      {soLieu.phamVi !== 'taiKhoan' && (
+        <>
+          {Array.isArray(soLieu.theoThuMuc) && soLieu.theoThuMuc.length > 0 && (
+            <div className="mt-2.5 pt-2.5 border-t border-white/8 space-y-1">
+              {soLieu.theoThuMuc.slice(0, 4).map(t => (
+                <div key={t.ten} className="flex items-center justify-between gap-2">
+                  <span className="text-[10px] font-mono text-white/45 truncate">{t.ten}</span>
+                  <span className="text-[10px] font-mono text-white/35 shrink-0">{coChu(t.bytes)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <p className="mt-2 text-[10px] font-mono text-white/35 leading-relaxed flex items-start gap-1">
+            <AlertTriangle className="w-3 h-3 shrink-0 mt-px text-amber-400/70" />
+            <span>
+              Mới tính kho của trang này. Hạn mức 10 GB tính cho cả tài khoản —
+              muốn thấy tổng thì cấp cho khoá R2 quyền đọc mọi kho.
+            </span>
+          </p>
+        </>
       )}
     </>
   );

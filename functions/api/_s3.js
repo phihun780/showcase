@@ -65,12 +65,22 @@ function buildCanonicalQuery(queryParams = {}) {
     .join('&');
 }
 
-export async function s3Request({ method = 'GET', key = '', queryParams = null, body = null, contentType = 'application/json', env = {} }) {
-  const { accId, accKey, secretKey, bucket } = dayDuKhoa(env);
+/**
+ * Gọi S3 API của R2, đã ký sẵn.
+ *
+ * `kho` để nhắm sang một kho KHÁC kho mặc định — cần khi đếm dung lượng của cả
+ * tài khoản. Đặt `goc: true` thì gọi vào gốc tài khoản (không kho nào), dùng
+ * cho lệnh liệt kê danh sách kho.
+ */
+export async function s3Request({ method = 'GET', key = '', queryParams = null, body = null, contentType = 'application/json', env = {}, kho = null, goc = false }) {
+  const { accId, accKey, secretKey, bucket: khoMacDinh } = dayDuKhoa(env);
+  const bucket = kho || khoMacDinh;
 
   const host = `${accId}.r2.cloudflarestorage.com`;
   const cleanKey = key.replace(/^\/+/, '');
-  const path = cleanKey ? `/${bucket}/${cleanKey.split('/').map(rfc3986).join('/')}` : `/${bucket}`;
+  const path = goc
+    ? '/'
+    : cleanKey ? `/${bucket}/${cleanKey.split('/').map(rfc3986).join('/')}` : `/${bucket}`;
   const canonicalQuery = queryParams ? buildCanonicalQuery(queryParams) : '';
   const url = `https://${host}${path}${canonicalQuery ? '?' + canonicalQuery : ''}`;
 
@@ -145,4 +155,23 @@ export async function s3DeleteFolder(env, prefix) {
   }
 
   return { success: true, count: keys.length };
+}
+
+/**
+ * Danh sách mọi kho trong tài khoản.
+ *
+ * Trả về null nếu khoá không có quyền — khoá R2 tạo riêng cho MỘT kho thì gọi
+ * lệnh này bị từ chối, và đó là chuyện bình thường chứ không phải hỏng. Bên gọi
+ * tự quyết làm gì tiếp.
+ */
+export async function s3ListBuckets(env) {
+  const res = await s3Request({ method: 'GET', goc: true, env });
+  if (!res.ok) return null;
+
+  const xml = await res.text();
+  const ten = [];
+  const re = /<Bucket>[\s\S]*?<Name>([\s\S]*?)<\/Name>[\s\S]*?<\/Bucket>/g;
+  let m;
+  while ((m = re.exec(xml)) !== null) ten.push(m[1]);
+  return ten;
 }

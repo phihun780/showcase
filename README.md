@@ -34,6 +34,19 @@ git, nên máy mới là phải lấy lại:
 | `VITE_R2_SECRET_ACCESS_KEY` | như trên (chỉ hiện đúng một lần lúc tạo) |
 | `VITE_R2_BUCKET_NAME` | tên bucket, hiện đang là `showcase` |
 
+Hai biến nữa **không bắt buộc**, chỉ cho ô "dung lượng R2" trong CMS:
+`VITE_R2_READ_ALL_ACCESS_KEY_ID` và `VITE_R2_READ_ALL_SECRET_ACCESS_KEY`.
+
+Hạn mức 10 GB miễn phí tính cho **cả tài khoản** chứ không phải từng kho. Muốn
+ô đó hiện tổng của mọi kho thì tạo thêm một khoá R2 **chỉ đọc**, cấp trên **mọi
+kho** (Cloudflare → R2 → Manage API Tokens → Create → "Object Read only" →
+Apply to all buckets), rồi điền vào hai biến đó — ở `.env.local` cho máy, và ở
+Settings → Variables and Secrets trên Cloudflare cho trang thật (bỏ tiền tố
+`VITE_`). Không điền thì ô đó chỉ đếm kho của trang này và nói rõ ra.
+
+Cố ý tách khỏi khoá chính: khoá chính có quyền ghi và xoá, nới nó ra mọi kho là
+CMS đụng được cả dữ liệu của webapp khác.
+
 Trên Cloudflare Pages còn hai biến nữa, đặt ở Settings → Variables and Secrets:
 `CMS_PASSWORD` (mã PIN vào CMS) và `CMS_TOKEN_SECRET` (chuỗi bí mật dài, dùng để
 ký vé đăng nhập).

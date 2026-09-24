@@ -1,7 +1,7 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
-import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, ListObjectsV2Command, DeleteObjectsCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, ListObjectsV2Command, ListBucketsCommand, DeleteObjectsCommand } from '@aws-sdk/client-s3';
 
 function parseMultipart(buffer, boundary) {
   const boundaryBuf = Buffer.from('--' + boundary);
@@ -39,6 +39,7 @@ function parseMultipart(buffer, boundary) {
 
 function r2DevPlugin() {
   let s3 = null;
+  let s3Dem = null;   // khoa chi-doc, dung cho /api/dung-luong
   let bucket = 'showcase';
   let publicUrl = 'https://pub-0ad262edfb6a4345a3bd61b2110c549c.r2.dev';
 
@@ -69,6 +70,19 @@ function r2DevPlugin() {
           region: 'auto',
           endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
           credentials: { accessKeyId, secretAccessKey },
+        });
+      }
+
+      // Khoa RIENG chi de DEM dung luong ca tai khoan. Co y tach khoi khoa
+      // chinh: khoa chinh co quyen ghi va xoa, noi no ra moi kho la CMS dung
+      // duoc ca du lieu cua webapp khac. Khong dat thi dem moi kho cua trang.
+      const docHetKey = doc('VITE_R2_READ_ALL_ACCESS_KEY_ID');
+      const docHetSecret = doc('VITE_R2_READ_ALL_SECRET_ACCESS_KEY');
+      if (accountId && docHetKey && docHetSecret) {
+        s3Dem = new S3Client({
+          region: 'auto',
+          endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+          credentials: { accessKeyId: docHetKey, secretAccessKey: docHetSecret },
         });
       }
 
@@ -111,32 +125,70 @@ function r2DevPlugin() {
         // /api/dung-luong — dung luong dang dung tren R2
         //
         // Ban chay that do functions/api/dung-luong.js lo. O may thi dung
-        // chinh S3 client san co, di het danh sach file roi cong co tung cai.
+        // chinh S3 client san co. Thu dem ca tai khoan truoc; khoa nao chi
+        // thay mot kho thi lui ve dem kho cua trang nay.
         if (req.url && req.url.split('?')[0] === '/api/dung-luong' && req.method === 'GET') {
           res.setHeader('Content-Type', 'application/json');
           if (!s3) {
             res.statusCode = 503;
             return res.end(JSON.stringify({ success: false, error: 'Thieu khoa R2 trong .env.local' }));
           }
-          try {
+
+          // 1000 chu khong phai 1024 — khop cach Cloudflare hien thi.
+          const MUC = 10 * 1000 * 1000 * 1000;
+
+          // Co khoa chi-doc thi dung no, khong thi dung khoa chinh.
+          const may = s3Dem || s3;
+
+          const demKho = async (ten) => {
             const files = [];
             let token;
-            // Chan 50 vong (50.000 file) cho khop voi ban chay that.
             for (let vong = 0; vong < 50; vong++) {
-              const kq = await s3.send(new ListObjectsV2Command({
-                Bucket: bucket, MaxKeys: 1000, ContinuationToken: token,
+              const kq = await may.send(new ListObjectsV2Command({
+                Bucket: ten, MaxKeys: 1000, ContinuationToken: token,
               }));
               for (const o of kq.Contents || []) files.push({ key: o.Key, size: o.Size || 0 });
-              if (!kq.IsTruncated) break;
+              if (!kq.IsTruncated) return { files, dayDu: true };
               token = kq.NextContinuationToken;
             }
+            return { files, dayDu: false };
+          };
 
-            // 1000 chu khong phai 1024 — khop cach Cloudflare hien thi.
-            const MUC = 10 * 1000 * 1000 * 1000;
-            let tong = 0;
+          try {
+            let tenCacKho = null;
+            try {
+              const r = await may.send(new ListBucketsCommand({}));
+              tenCacKho = (r.Buckets || []).map(b => b.Name);
+            } catch {
+              tenCacKho = null; // khoa chi co quyen tren mot kho
+            }
+
+            if (tenCacKho && tenCacKho.length) {
+              const cacKho = [];
+              let tong = 0, dayDu = true;
+              for (const ten of tenCacKho) {
+                const kq = await demKho(ten);
+                const bytes = kq.files.reduce((t, f) => t + f.size, 0);
+                tong += bytes;
+                if (!kq.dayDu) dayDu = false;
+                cacKho.push({ ten, bytes, soFile: kq.files.length });
+              }
+              cacKho.sort((a, b) => b.bytes - a.bytes);
+
+              return res.end(JSON.stringify({
+                success: true, phamVi: 'taiKhoan', tong,
+                soFile: cacKho.reduce((t, k) => t + k.soFile, 0),
+                mucMienPhi: MUC, conLai: Math.max(0, MUC - tong),
+                phanTram: (tong / MUC) * 100,
+                cacKho, khoTrang: cacKho.find(k => k.ten === bucket) || null,
+                demDayDu: dayDu,
+              }));
+            }
+
+            const kq = await demKho(bucket);
+            const tong = kq.files.reduce((t, f) => t + f.size, 0);
             const nhom = new Map();
-            for (const f of files) {
-              tong += f.size;
+            for (const f of kq.files) {
               const i = f.key.indexOf('/');
               const ten = i === -1 ? '(ngoai thu muc)' : f.key.slice(0, i);
               const cu = nhom.get(ten) || { ten, bytes: 0, soFile: 0 };
@@ -145,10 +197,11 @@ function r2DevPlugin() {
             }
 
             return res.end(JSON.stringify({
-              success: true, tong, soFile: files.length, mucMienPhi: MUC,
-              conLai: Math.max(0, MUC - tong), phanTram: (tong / MUC) * 100,
+              success: true, phamVi: 'motKho', tong, soFile: kq.files.length,
+              mucMienPhi: MUC, conLai: Math.max(0, MUC - tong),
+              phanTram: (tong / MUC) * 100,
               theoThuMuc: [...nhom.values()].sort((a, b) => b.bytes - a.bytes),
-              demDayDu: files.length < 50000,
+              demDayDu: kq.dayDu,
             }));
           } catch (e) {
             res.statusCode = 500;
