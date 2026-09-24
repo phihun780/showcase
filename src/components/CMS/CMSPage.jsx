@@ -896,7 +896,9 @@ export default function CMSPage({ onBackToPortfolio }) {
     <div className="min-h-screen bg-[#08080A] text-[#EDEDED] font-sans antialiased selection:bg-[#C3EA39] selection:text-black relative">
       
       {/* Live Seasonal Atmosphere Overlay */}
-      <SeasonalAtmosphere effectOverride={localSeasonalEffect} />
+      {/* `phiaTren` vì trong CMS mọi bảng đều có nền đục — để hiệu ứng nằm sau
+          như ngoài trang thì bấm chọn xong không thấy gì. */}
+      <SeasonalAtmosphere effectOverride={localSeasonalEffect} phiaTren />
 
       {/* Topbar */}
       <header className="sticky top-0 z-40 bg-[#08080A]/95 backdrop-blur-xl border-b border-white/10 py-2.5 sm:py-3">

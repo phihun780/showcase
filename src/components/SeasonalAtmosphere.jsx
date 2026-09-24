@@ -37,7 +37,7 @@ import { usePortfolioData } from '../context/PortfolioDataContext';
  * 0,28). Nhưng cả hai đều chưa tới 1 ms trong ngân sách 16,7 ms của một khung
  * hình 60Hz, nên đổi lấy hình thức đẹp hơn là đáng.
  */
-export default function SeasonalAtmosphere({ effectOverride } = {}) {
+export default function SeasonalAtmosphere({ effectOverride, phiaTren = false } = {}) {
   const { seasonalEffect: contextEffect } = usePortfolioData();
   const seasonalEffect = effectOverride !== undefined ? effectOverride : contextEffect;
   const canvasRef = useRef(null);
@@ -134,7 +134,7 @@ export default function SeasonalAtmosphere({ effectOverride } = {}) {
     // 1. TUYẾT
     // ==========================================
     const taoTuyet = () => {
-      const soLuong = dayDac ? Math.min(Math.floor(width / 13), 110) : 34;
+      const soLuong = dayDac ? Math.min(Math.floor(width / 42), 34) : 12;
       return Array.from({ length: soLuong }, () => {
         const z = Math.random();
         return {
@@ -145,7 +145,7 @@ export default function SeasonalAtmosphere({ effectOverride } = {}) {
           // không tăng đều — như vậy mới ra lớp trước lớp sau rõ rệt.
           co: 0.9 + Math.pow(z, 1.6) * 5.2,
           roi: 0.28 + Math.pow(z, 1.4) * 1.5,
-          dam: 0.16 + z * 0.62,
+          dam: 0.1 + z * 0.4,
           lac: Math.random() * Math.PI * 2,
           nhipLac: 0.004 + Math.random() * 0.012,
           bienLac: 0.3 + z * 1.1,
@@ -186,7 +186,7 @@ export default function SeasonalAtmosphere({ effectOverride } = {}) {
     ];
 
     const taoTet = () => {
-      const soLuong = dayDac ? Math.min(Math.floor(width / 22), 62) : 20;
+      const soLuong = dayDac ? Math.min(Math.floor(width / 65), 22) : 8;
       return Array.from({ length: soLuong }, () => {
         const z = Math.random();
         const m = MAU_TET[Math.floor(Math.random() * MAU_TET.length)];
@@ -200,7 +200,7 @@ export default function SeasonalAtmosphere({ effectOverride } = {}) {
           nhipXoay: (Math.random() * 0.022 - 0.011),
           lat: Math.random() * Math.PI * 2,
           nhipLat: 0.012 + Math.random() * 0.026,
-          dam: 0.25 + z * 0.55,
+          dam: 0.18 + z * 0.38,
           mau: m,
         };
       });
@@ -261,62 +261,19 @@ export default function SeasonalAtmosphere({ effectOverride } = {}) {
     // ==========================================
     // 3. TRUNG THU — trăng, sao, lá, đèn lồng
     // ==========================================
-    let anhTrang = null;
+    // KHÔNG CÓ MẶT TRĂNG. Đã thử vẽ một cái có quầng sáng và vết rỗ, nhưng nó
+    // là vật đứng yên, to và sáng nhất màn hình — mục này nằm sau nội dung nên
+    // trăng chỉ tổ chọi với chữ. Trung thu để cho đèn lồng và lá kể là đủ.
     let quangDen = null;
 
     const dungAnhTrungThu = () => {
       quangDen = veChamSang(22, '255, 170, 60', 0.75);
-
-      // Mặt trăng: vẽ một lần rồi dán, vì nó đứng yên.
-      const r = Math.max(46, Math.min(width, height) * 0.085);
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const le = r * 1.5;
-      const co = Math.ceil((r + le) * 2 * dpr);
-      const c = document.createElement('canvas');
-      c.width = c.height = co;
-      const g = c.getContext('2d');
-      g.scale(dpr, dpr);
-      const tam = co / (2 * dpr);
-
-      // Quầng sáng quanh trăng
-      const halo = g.createRadialGradient(tam, tam, r * 0.8, tam, tam, r + le);
-      halo.addColorStop(0, 'rgba(255, 238, 190, 0.32)');
-      halo.addColorStop(0.45, 'rgba(255, 226, 150, 0.10)');
-      halo.addColorStop(1, 'rgba(255, 210, 120, 0)');
-      g.fillStyle = halo;
-      g.beginPath();
-      g.arc(tam, tam, r + le, 0, Math.PI * 2);
-      g.fill();
-
-      // Đĩa trăng, sáng lệch về một bên cho có khối
-      const dia = g.createRadialGradient(tam - r * 0.28, tam - r * 0.3, r * 0.1, tam, tam, r);
-      dia.addColorStop(0, 'rgba(255, 252, 235, 0.97)');
-      dia.addColorStop(0.7, 'rgba(255, 240, 200, 0.9)');
-      dia.addColorStop(1, 'rgba(250, 220, 160, 0.82)');
-      g.fillStyle = dia;
-      g.beginPath();
-      g.arc(tam, tam, r, 0, Math.PI * 2);
-      g.fill();
-
-      // Vài vết rỗ mờ. Không có thì đĩa trăng phẳng lì như một chấm tròn.
-      const vet = [
-        [-0.30, -0.16, 0.21], [0.22, -0.30, 0.13], [0.10, 0.28, 0.17],
-        [-0.34, 0.30, 0.10], [0.38, 0.12, 0.09],
-      ];
-      g.fillStyle = 'rgba(214, 186, 138, 0.26)';
-      for (const [dx, dy, dr] of vet) {
-        g.beginPath();
-        g.arc(tam + dx * r, tam + dy * r, dr * r, 0, Math.PI * 2);
-        g.fill();
-      }
-
-      anhTrang = { anh: c, nua: tam, r };
     };
 
     const taoTrungThu = () => {
-      const soDen = dayDac ? Math.min(Math.floor(width / 110), 12) : 5;
-      const soLa = dayDac ? Math.min(Math.floor(width / 48), 30) : 10;
-      const soSao = dayDac ? Math.min(Math.floor(width / 26), 70) : 26;
+      const soDen = dayDac ? Math.min(Math.floor(width / 280), 5) : 2;
+      const soLa = dayDac ? Math.min(Math.floor(width / 130), 11) : 4;
+      const soSao = dayDac ? Math.min(Math.floor(width / 60), 30) : 12;
 
       const den = Array.from({ length: soDen }, () => {
         const z = Math.random();
@@ -328,7 +285,7 @@ export default function SeasonalAtmosphere({ effectOverride } = {}) {
           bay: -(0.14 + Math.pow(z, 1.3) * 0.5),
           lac: Math.random() * Math.PI * 2,
           nhipLac: 0.005 + Math.random() * 0.012,
-          dam: 0.3 + z * 0.55,
+          dam: 0.22 + z * 0.4,
           // Nhịp lửa riêng của từng chiếc, để cả đàn không nhấp nháy cùng lúc.
           lua: Math.random() * Math.PI * 2,
           nhipLua: 0.03 + Math.random() * 0.05,
@@ -349,7 +306,7 @@ export default function SeasonalAtmosphere({ effectOverride } = {}) {
           lat: Math.random() * Math.PI * 2,
           nhipLat: 0.01 + Math.random() * 0.022,
           mau: mauLa[Math.floor(Math.random() * mauLa.length)],
-          dam: 0.22 + z * 0.5,
+          dam: 0.16 + z * 0.34,
         };
       });
 
@@ -367,19 +324,11 @@ export default function SeasonalAtmosphere({ effectOverride } = {}) {
     const veTrungThu = (gio, nhip) => {
       const { den, la, sao } = trungThu;
 
-      // A. Trăng — nằm sau tất cả
-      if (anhTrang) {
-        const tx = width * 0.82;
-        const ty = height * 0.18;
-        const n = anhTrang.nua;
-        ctx.drawImage(anhTrang.anh, tx - n, ty - n, n * 2, n * 2);
-      }
-
-      // B. Sao nhấp nháy
+      // A. Sao nhấp nháy
       for (let i = 0; i < sao.length; i++) {
         const s = sao[i];
         s.pha += s.nhip * nhip;
-        ctx.globalAlpha = Math.abs(Math.sin(s.pha)) * 0.7 + 0.12;
+        ctx.globalAlpha = Math.abs(Math.sin(s.pha)) * 0.45 + 0.08;
         ctx.beginPath();
         ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
         ctx.fillStyle = 'rgb(255, 238, 180)';
@@ -387,7 +336,7 @@ export default function SeasonalAtmosphere({ effectOverride } = {}) {
       }
       ctx.globalAlpha = 1;
 
-      // C. Lá rơi
+      // B. Lá rơi
       for (let i = 0; i < la.length; i++) {
         const l = la[i];
         l.goc += l.nhipXoay * nhip;
@@ -426,7 +375,7 @@ export default function SeasonalAtmosphere({ effectOverride } = {}) {
       }
       ctx.globalAlpha = 1;
 
-      // D. Đèn lồng bay lên
+      // C. Đèn lồng bay lên
       for (let i = 0; i < den.length; i++) {
         const d = den[i];
         d.lac += d.nhipLac * nhip;
@@ -548,7 +497,14 @@ export default function SeasonalAtmosphere({ effectOverride } = {}) {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-20 w-full h-full"
+      /* MẶC ĐỊNH NẰM SAU NỘI DUNG (z-0).
+         Phần thân trang là z-10, nên hạt lọt xuống dưới chữ và dưới các thẻ —
+         nhìn ra không khí phía sau thay vì có thứ gì đó bay trước mặt. Trước
+         đây để z-20, tức là nằm ĐÈ lên cả bài viết.
+
+         Riêng CMS truyền `phiaTren` để giữ lớp trên: ở đó các bảng đều có nền
+         đục, hạt chui xuống dưới là không còn thấy gì để mà chọn. */
+      className={`fixed inset-0 pointer-events-none w-full h-full ${phiaTren ? 'z-20' : 'z-0'}`}
       style={{ pointerEvents: 'none' }}
     />
   );
