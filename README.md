@@ -49,6 +49,11 @@ Cloudflare, chỉ quyền Admin mới *liệt kê được danh sách bucket*; q
 chỉ đọc được object trong những bucket đã chỉ định sẵn — mà muốn tính tổng thì
 trước hết phải biết tài khoản có những bucket nào.
 
+> **Thêm biến trên Cloudflare xong phải TRIỂN KHAI LẠI.** Biến môi trường chỉ
+> được nạp vào lúc dựng bản mới, nên thêm xong mà không đẩy commit hay bấm
+> *Retry deployment* thì trang thật vẫn chạy bằng bộ biến cũ — nhìn vào tưởng
+> khoá sai. Áp dụng cho **mọi** biến, không riêng hai biến này.
+
 Cố ý tách khỏi khoá chính: khoá chính có quyền ghi và xoá, nới nó ra mọi kho là
 CMS đụng được cả dữ liệu của webapp khác.
 
