@@ -131,7 +131,8 @@ function r2DevPlugin() {
               token = kq.NextContinuationToken;
             }
 
-            const MUC = 10 * 1024 * 1024 * 1024;
+            // 1000 chu khong phai 1024 — khop cach Cloudflare hien thi.
+            const MUC = 10 * 1000 * 1000 * 1000;
             let tong = 0;
             const nhom = new Map();
             for (const f of files) {

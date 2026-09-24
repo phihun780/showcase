@@ -80,14 +80,21 @@ export default function DungLuongKho() {
   );
 }
 
-/** Đổi byte sang chữ người đọc được. */
+/**
+ * Đổi byte sang chữ người đọc được.
+ *
+ * Chia cho 1000 chứ không phải 1024, để khớp với cách Cloudflare hiển thị.
+ * Lấy 1024 thì cùng một kho mà ô này báo 281 MB còn trang R2 báo 294 MB — nhìn
+ * vào tưởng một trong hai đếm sai, trong khi cả hai đều đúng, chỉ là hai cây
+ * thước khác nhau.
+ */
 function coChu(bytes) {
   if (!bytes) return '0 MB';
-  const gb = bytes / 1073741824;
+  const gb = bytes / 1e9;
   if (gb >= 1) return `${gb.toFixed(2)} GB`;
-  const mb = bytes / 1048576;
+  const mb = bytes / 1e6;
   if (mb >= 1) return `${mb.toFixed(0)} MB`;
-  return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / 1e3).toFixed(0)} KB`;
 }
 
 function ThongSo({ soLieu }) {

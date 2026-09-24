@@ -5,7 +5,12 @@ import { s3Request } from './_s3.js';
 //
 // Đây là con số của CLOUDFLARE, không phải của trang này — họ đổi thì phải sửa
 // ở đây. Để một chỗ duy nhất nên sửa một dòng là xong.
-const MUC_MIEN_PHI = 10 * 1024 * 1024 * 1024;
+//
+// DÙNG 1000 CHỨ KHÔNG PHẢI 1024: Cloudflare tính 1 MB = 1.000.000 byte. Lấy
+// 1024 thì cùng một kho mà CMS báo 281 MB còn trang của họ báo 294 MB, nhìn
+// vào tưởng một trong hai đếm sai. Mục đích của ô này là đối chiếu với hạn mức
+// của Cloudflare, nên phải đo bằng đúng cây thước của họ.
+const MUC_MIEN_PHI = 10 * 1000 * 1000 * 1000;
 
 // Một lần liệt kê trả tối đa 1000 file. Kho ảnh của trang nhiều hơn thế nên
 // phải đi tiếp bằng "thẻ đánh dấu" (continuation token) cho tới khi hết.
