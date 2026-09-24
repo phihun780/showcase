@@ -431,20 +431,197 @@ export default function SeasonalAtmosphere({ effectOverride, phiaTren = false } 
     };
 
     // ==========================================
+    // 4. MƯA
+    // ==========================================
+    const taoMua = () => {
+      const soLuong = dayDac ? Math.min(Math.floor(width / 26), 58) : 22;
+      return Array.from({ length: soLuong }, () => {
+        const z = Math.random();
+        return {
+          x: Math.random() * width,
+          y: Math.random() * height,
+          z,
+          // Hạt mưa gần thì vạch dài và rơi nhanh hẳn. Mưa rơi nhanh hơn tuyết
+          // nhiều lần — để chậm là ra tuyết trắng xanh chứ không ra mưa.
+          dai: 7 + Math.pow(z, 1.4) * 24,
+          roi: 5 + Math.pow(z, 1.3) * 13,
+          day: 0.5 + z * 1.1,
+          dam: 0.08 + z * 0.22,
+        };
+      });
+    };
+
+    const veMua = (gio, nhip) => {
+      // Độ nghiêng dùng CHUNG cho mọi hạt trong một khung hình. Mưa thật cùng
+      // một cơn thì nghiêng như nhau; mỗi hạt một hướng là ra tuyết bay loạn.
+      const nghieng = gio * 0.55;
+
+      ctx.lineCap = 'round';
+      for (let i = 0; i < mua.length; i++) {
+        const m = mua[i];
+        m.x += nghieng * (0.4 + m.z) * nhip;
+        m.y += m.roi * nhip;
+
+        if (m.y > height + 40) { m.y = -40; m.x = Math.random() * width; }
+        if (m.x > width + 60) m.x = -60;
+        if (m.x < -60) m.x = width + 60;
+
+        // Vạch vẽ theo đúng hướng đang rơi, nên nghiêng bao nhiêu thì vạch
+        // ngả bấy nhiêu — không thì hạt đi chéo mà vạch vẫn dựng đứng.
+        const lech = nghieng * (0.4 + m.z) * (m.dai / m.roi);
+        ctx.globalAlpha = m.dam;
+        ctx.strokeStyle = 'rgb(200, 224, 255)';
+        ctx.lineWidth = m.day;
+        ctx.beginPath();
+        ctx.moveTo(m.x, m.y);
+        ctx.lineTo(m.x + lech, m.y + m.dai);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    };
+
+    // ==========================================
+    // 5. GIÁNG SINH — đốm sáng dây đèn
+    // ==========================================
+    // Cố ý KHÔNG có tuyết ở đây: đã có sẵn mục "Tuyết rơi" riêng. Mục này là
+    // hơi ấm của dây đèn nhoè trong đêm — thứ mà tuyết trắng không nói được.
+    const MAU_NOEL = ['235, 70, 70', '80, 190, 110', '255, 205, 90', '255, 240, 215'];
+    let domNoel = [];
+
+    const dungDomNoel = () => {
+      domNoel = MAU_NOEL.map(m => veChamSang(16, m, 0.82));
+    };
+
+    const taoNoel = () => {
+      const soLuong = dayDac ? Math.min(Math.floor(width / 52), 28) : 10;
+      return Array.from({ length: soLuong }, () => {
+        const z = Math.random();
+        return {
+          x: Math.random() * width,
+          y: Math.random() * height,
+          z,
+          co: 2 + Math.pow(z, 1.5) * 9,
+          roi: 0.1 + Math.pow(z, 1.4) * 0.42,
+          dam: 0.12 + z * 0.34,
+          lac: Math.random() * Math.PI * 2,
+          nhipLac: 0.003 + Math.random() * 0.008,
+          // Nhịp nháy riêng từng bóng, nên cả dây không sáng tắt cùng lúc.
+          nhay: Math.random() * Math.PI * 2,
+          nhipNhay: 0.012 + Math.random() * 0.03,
+          mau: Math.floor(Math.random() * MAU_NOEL.length),
+        };
+      });
+    };
+
+    const veNoel = (gio, nhip) => {
+      for (let i = 0; i < noel.length; i++) {
+        const d = noel[i];
+        d.lac += d.nhipLac * nhip;
+        d.nhay += d.nhipNhay * nhip;
+        d.x += ((gio * (0.12 + d.z * 0.3)) + Math.sin(d.lac) * (0.15 + d.z * 0.3)) * nhip;
+        d.y += d.roi * nhip;
+
+        if (d.y > height + 30) { d.y = -30; d.x = Math.random() * width; }
+        if (d.x > width + 40) d.x = -40;
+        if (d.x < -40) d.x = width + 40;
+
+        const sang = 0.55 + Math.abs(Math.sin(d.nhay)) * 0.45;
+        const cham = domNoel[d.mau];
+        const ve = d.co * 3.2;
+        ctx.globalAlpha = d.dam * sang;
+        ctx.drawImage(cham.anh, d.x - ve, d.y - ve, ve * 2, ve * 2);
+      }
+      ctx.globalAlpha = 1;
+    };
+
+    // ==========================================
+    // 6. QUỐC KHÁNH 2/9
+    // ==========================================
+    // Bay LÊN chứ không rơi xuống, chậm và thưa — như tàn lửa ấm. Cố ý không
+    // làm pháo hoa: pháo hoa nổ từng chùm, mắt bị kéo theo mỗi lần nổ, mà mục
+    // này nằm sau bài viết nên chỉ tổ giật khỏi phần đang đọc.
+    let domQuocKhanh = [];
+
+    const dungDomQuocKhanh = () => {
+      domQuocKhanh = ['255, 80, 60', '255, 190, 60'].map(m => veChamSang(16, m, 0.7));
+    };
+
+    const taoQuocKhanh = () => {
+      const soLuong = dayDac ? Math.min(Math.floor(width / 44), 32) : 12;
+      return Array.from({ length: soLuong }, () => {
+        const z = Math.random();
+        return {
+          x: Math.random() * width,
+          y: Math.random() * height,
+          z,
+          co: 1.6 + Math.pow(z, 1.5) * 7,
+          bay: -(0.15 + Math.pow(z, 1.3) * 0.55),
+          dam: 0.12 + z * 0.36,
+          lac: Math.random() * Math.PI * 2,
+          nhipLac: 0.006 + Math.random() * 0.014,
+          nhay: Math.random() * Math.PI * 2,
+          nhipNhay: 0.02 + Math.random() * 0.04,
+          // Vàng ít hơn đỏ, đúng tỉ lệ của lá cờ: nền đỏ, sao vàng.
+          mau: Math.random() < 0.3 ? 1 : 0,
+        };
+      });
+    };
+
+    const veQuocKhanh = (gio, nhip) => {
+      for (let i = 0; i < quocKhanh.length; i++) {
+        const h = quocKhanh[i];
+        h.lac += h.nhipLac * nhip;
+        h.nhay += h.nhipNhay * nhip;
+        h.x += ((gio * (0.15 + h.z * 0.4)) + Math.sin(h.lac) * (0.2 + h.z * 0.45)) * nhip;
+        h.y += h.bay * nhip;
+
+        if (h.y < -30) { h.y = height + 30; h.x = Math.random() * width; }
+        if (h.x > width + 40) h.x = -40;
+        if (h.x < -40) h.x = width + 40;
+
+        const sang = 0.6 + Math.abs(Math.sin(h.nhay)) * 0.4;
+        const cham = domQuocKhanh[h.mau];
+        const ve = h.co * 3.2;
+        ctx.globalAlpha = h.dam * sang;
+        ctx.drawImage(cham.anh, h.x - ve, h.y - ve, ve * 2, ve * 2);
+      }
+      ctx.globalAlpha = 1;
+    };
+
+    // ==========================================
     // DỰNG & CHẠY
     // ==========================================
     let tuyet = [];
     let tet = [];
     let trungThu = null;
+    let mua = [];
+    let noel = [];
+    let quocKhanh = [];
 
     const dungHat = () => {
       tuyet = seasonalEffect === 'snow' ? taoTuyet() : [];
       tet = seasonalEffect === 'tet' ? taoTet() : [];
+      mua = seasonalEffect === 'rain' ? taoMua() : [];
+
       if (seasonalEffect === 'mid_autumn') {
         dungAnhTrungThu();
         trungThu = taoTrungThu();
       } else {
         trungThu = null;
+      }
+
+      if (seasonalEffect === 'christmas') {
+        dungDomNoel();
+        noel = taoNoel();
+      } else {
+        noel = [];
+      }
+
+      if (seasonalEffect === 'national_day') {
+        dungDomQuocKhanh();
+        quocKhanh = taoQuocKhanh();
+      } else {
+        quocKhanh = [];
       }
     };
     dungHat();
@@ -479,6 +656,9 @@ export default function SeasonalAtmosphere({ effectOverride, phiaTren = false } 
       if (seasonalEffect === 'snow') veTuyet(gio, nhip);
       else if (seasonalEffect === 'tet') veTet(gio, nhip);
       else if (seasonalEffect === 'mid_autumn' && trungThu) veTrungThu(gio, nhip);
+      else if (seasonalEffect === 'rain') veMua(gio, nhip);
+      else if (seasonalEffect === 'christmas') veNoel(gio, nhip);
+      else if (seasonalEffect === 'national_day') veQuocKhanh(gio, nhip);
 
       idKhung = requestAnimationFrame(veKhung);
     };

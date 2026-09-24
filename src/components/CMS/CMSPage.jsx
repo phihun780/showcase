@@ -1611,6 +1611,27 @@ export default function CMSPage({ onBackToPortfolio }) {
                     icon: '🥮',
                     badge: 'Rằm Tháng 8',
                   },
+                  {
+                    id: 'rain',
+                    title: 'Mưa',
+                    desc: 'Vạch mưa mảnh rơi chéo theo gió, thưa và êm',
+                    icon: '🌧️',
+                    badge: 'Mùa Mưa',
+                  },
+                  {
+                    id: 'christmas',
+                    title: 'Giáng Sinh',
+                    desc: 'Đốm sáng dây đèn đỏ – lục – vàng nhoè trong đêm',
+                    icon: '🎄',
+                    badge: 'Tháng 12',
+                  },
+                  {
+                    id: 'national_day',
+                    title: 'Quốc Khánh',
+                    desc: 'Tàn lửa đỏ và vàng bay lên chậm rãi',
+                    icon: '🇻🇳',
+                    badge: '02.09',
+                  },
                 ].map((opt) => {
                   const isSelected = localSeasonalEffect === opt.id;
 
