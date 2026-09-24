@@ -694,8 +694,14 @@ export default function SeasonalAtmosphere({ effectOverride, phiaTren = false } 
         const x = (CO - w) / 2, y = (CO - h) / 2;
         g.fillStyle = DO_CO;
         g.fillRect(x, y, w, h);
-        // Sao chiếm 2/5 chiều cao lá cờ, nằm đúng tâm.
-        veSaoNamCanh(g, { x: CO / 2, y: CO / 2 }, h * 0.2, VANG_SAO);
+        // Sao nằm đúng tâm, bán kính bằng 0,3 chiều cao lá cờ.
+        //
+        // CỐ Ý TO HƠN CHUẨN: quốc kỳ quy định bán kính sao bằng 1/5 chiều cao
+        // (tức 0,2). Nhưng ở đây lá cờ chỉ vẽ ra chừng 30–55 pixel trên màn
+        // hình, mà lại nằm sau nội dung và khá mờ — theo đúng 0,2 thì ngôi sao
+        // còn vài pixel, nhìn ra một chấm vàng chứ không ra ngôi sao, hỏng mất
+        // thứ khiến người ta nhận ra đó là cờ Việt Nam.
+        veSaoNamCanh(g, { x: CO / 2, y: CO / 2 }, h * 0.3, VANG_SAO);
       } else {
         veSaoNamCanh(g, { x: CO / 2, y: CO / 2 }, 42, VANG_SAO);
       }
