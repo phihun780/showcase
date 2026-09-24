@@ -647,32 +647,85 @@ export default function SeasonalAtmosphere({ effectOverride, phiaTren = false } 
     // ==========================================
     // 6. QUỐC KHÁNH 2/9
     // ==========================================
-    // Bay LÊN chứ không rơi xuống, chậm và thưa — như tàn lửa ấm. Cố ý không
-    // làm pháo hoa: pháo hoa nổ từng chùm, mắt bị kéo theo mỗi lần nổ, mà mục
-    // này nằm sau bài viết nên chỉ tổ giật khỏi phần đang đọc.
-    let domQuocKhanh = [];
+    // Lá cờ Tổ quốc và ngôi sao vàng, bay lên rất chậm và rất thưa.
+    //
+    // ĐÂY LÀ QUỐC KỲ, KHÔNG PHẢI MỘT HẠT TRANG TRÍ. Ba điều bắt buộc:
+    //   - Đúng tỉ lệ 2:3, sao năm cánh vàng nằm chính giữa nền đỏ.
+    //   - LUÔN DỰNG THẲNG, một cánh sao chỉ lên trên. Cho lá cờ xoay vòng như
+    //     cánh hoa hay quay lật như chiếc lá là không được.
+    //   - Không nhấp nháy, không mờ tỏ thất thường.
+    // Nên thay vì xoay, lá cờ chỉ hơi nghiêng qua lại trong một biên độ nhỏ,
+    // như đang phất trong gió nhẹ.
+    //
+    // Cố ý không làm pháo hoa: pháo hoa nổ từng chùm, mắt bị kéo theo mỗi lần
+    // nổ, mà mục này nằm sau bài viết nên chỉ tổ giật khỏi phần đang đọc.
+    const DO_CO = '#DA251D';
+    const VANG_SAO = '#FFFF00';
+    let hinhQuocKhanh = [];
 
-    const dungDomQuocKhanh = () => {
-      domQuocKhanh = ['255, 80, 60', '255, 190, 60'].map(m => veChamSang(16, m, 0.7));
+    /** Vẽ một ngôi sao năm cánh, đỉnh chỉ thẳng lên. */
+    const veSaoNamCanh = (g, tam, banKinh, mau) => {
+      const trong = banKinh * 0.382; // tỉ lệ chuẩn của sao năm cánh
+      g.beginPath();
+      for (let i = 0; i < 10; i++) {
+        const bk = i % 2 === 0 ? banKinh : trong;
+        const a = -Math.PI / 2 + (i * Math.PI) / 5;
+        const px = tam.x + Math.cos(a) * bk;
+        const py = tam.y + Math.sin(a) * bk;
+        if (i === 0) g.moveTo(px, py);
+        else g.lineTo(px, py);
+      }
+      g.closePath();
+      g.fillStyle = mau;
+      g.fill();
+    };
+
+    const veMonQuocKhanh = (kieu) => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const CO = 100;
+      const c = document.createElement('canvas');
+      c.width = c.height = Math.ceil(CO * dpr);
+      const g = c.getContext('2d');
+      g.scale(dpr, dpr);
+
+      if (kieu === 'co') {
+        // Tỉ lệ 2:3 — cao 66, rộng 99, đặt giữa khung 100×100.
+        const w = 96, h = 64;
+        const x = (CO - w) / 2, y = (CO - h) / 2;
+        g.fillStyle = DO_CO;
+        g.fillRect(x, y, w, h);
+        // Sao chiếm 2/5 chiều cao lá cờ, nằm đúng tâm.
+        veSaoNamCanh(g, { x: CO / 2, y: CO / 2 }, h * 0.2, VANG_SAO);
+      } else {
+        veSaoNamCanh(g, { x: CO / 2, y: CO / 2 }, 42, VANG_SAO);
+      }
+
+      return { anh: c };
+    };
+
+    const dungHinhQuocKhanh = () => {
+      hinhQuocKhanh = ['co', 'sao'].map(veMonQuocKhanh);
     };
 
     const taoQuocKhanh = () => {
-      const soLuong = dayDac ? Math.min(Math.floor(width / 44), 32) : 12;
+      // Thưa nhất trong các hiệu ứng. Lá cờ là hình có ý nghĩa, rải đầy màn
+      // hình thì thành hoa văn nền, mất hẳn sức nặng của nó.
+      const soLuong = dayDac ? Math.min(Math.floor(width / 150), 10) : 4;
       return Array.from({ length: soLuong }, () => {
         const z = Math.random();
         return {
           x: Math.random() * width,
           y: Math.random() * height,
           z,
-          co: 1.6 + Math.pow(z, 1.5) * 7,
-          bay: -(0.15 + Math.pow(z, 1.3) * 0.55),
-          dam: 0.12 + z * 0.36,
+          co: 11 + Math.pow(z, 1.4) * 17,
+          bay: -(0.1 + Math.pow(z, 1.3) * 0.35),
+          dam: 0.2 + z * 0.42,
           lac: Math.random() * Math.PI * 2,
-          nhipLac: 0.006 + Math.random() * 0.014,
-          nhay: Math.random() * Math.PI * 2,
-          nhipNhay: 0.02 + Math.random() * 0.04,
-          // Vàng ít hơn đỏ, đúng tỉ lệ của lá cờ: nền đỏ, sao vàng.
-          mau: Math.random() < 0.3 ? 1 : 0,
+          nhipLac: 0.004 + Math.random() * 0.009,
+          // Biên độ nghiêng nhỏ, chừng 7 độ đổ lại.
+          nghieng: 0.06 + Math.random() * 0.06,
+          // Cờ ít hơn sao: cờ là hình nặng, nhiều quá thì rối.
+          mon: Math.random() < 0.38 ? 0 : 1,
         };
       });
     };
@@ -681,19 +734,23 @@ export default function SeasonalAtmosphere({ effectOverride, phiaTren = false } 
       for (let i = 0; i < quocKhanh.length; i++) {
         const h = quocKhanh[i];
         h.lac += h.nhipLac * nhip;
-        h.nhay += h.nhipNhay * nhip;
-        h.x += ((gio * (0.15 + h.z * 0.4)) + Math.sin(h.lac) * (0.2 + h.z * 0.45)) * nhip;
+        h.x += ((gio * (0.12 + h.z * 0.3)) + Math.sin(h.lac) * (0.15 + h.z * 0.35)) * nhip;
         h.y += h.bay * nhip;
 
-        if (h.y < -30) { h.y = height + 30; h.x = Math.random() * width; }
-        if (h.x > width + 40) h.x = -40;
-        if (h.x < -40) h.x = width + 40;
+        if (h.y < -40) { h.y = height + 40; h.x = Math.random() * width; }
+        if (h.x > width + 50) h.x = -50;
+        if (h.x < -50) h.x = width + 50;
 
-        const sang = 0.6 + Math.abs(Math.sin(h.nhay)) * 0.4;
-        const cham = domQuocKhanh[h.mau];
-        const ve = h.co * 3.2;
-        ctx.globalAlpha = h.dam * sang;
-        ctx.drawImage(cham.anh, h.x - ve, h.y - ve, ve * 2, ve * 2);
+        const m = hinhQuocKhanh[h.mon];
+        if (!m) continue;
+
+        ctx.save();
+        ctx.translate(h.x, h.y);
+        // Nghiêng qua lại quanh phương thẳng đứng, không xoay tròn.
+        ctx.rotate(Math.sin(h.lac) * h.nghieng);
+        ctx.globalAlpha = h.dam;
+        ctx.drawImage(m.anh, -h.co, -h.co, h.co * 2, h.co * 2);
+        ctx.restore();
       }
       ctx.globalAlpha = 1;
     };
@@ -728,7 +785,7 @@ export default function SeasonalAtmosphere({ effectOverride, phiaTren = false } 
       }
 
       if (seasonalEffect === 'national_day') {
-        dungDomQuocKhanh();
+        dungHinhQuocKhanh();
         quocKhanh = taoQuocKhanh();
       } else {
         quocKhanh = [];

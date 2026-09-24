@@ -1628,7 +1628,7 @@ export default function CMSPage({ onBackToPortfolio }) {
                   {
                     id: 'national_day',
                     title: 'Quốc Khánh',
-                    desc: 'Tàn lửa đỏ và vàng bay lên chậm rãi',
+                    desc: 'Lá cờ Tổ quốc & ngôi sao vàng bay lên nhẹ nhàng',
                     icon: '🇻🇳',
                     badge: '02.09',
                   },
