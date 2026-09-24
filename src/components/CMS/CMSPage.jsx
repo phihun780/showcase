@@ -7,6 +7,7 @@ import { CAC_MUC } from './truongNoiDung';
 import { ONhap, Khoi, LuoiO } from './ONhap';
 import ProfileEditor from './ProfileEditor';
 import VibecodeEditor from './VibecodeEditor';
+import DungLuongKho from './DungLuongKho';
 import ImageCropModal from './ImageCropModal';
 import JuxtaposeEmbedModal from './JuxtaposeEmbedModal';
 import MediaItemEditorModal from './MediaItemEditorModal';
@@ -1008,6 +1009,12 @@ export default function CMSPage({ onBackToPortfolio }) {
                 );
               })}
             </div>
+
+            {/* Dung lượng kho — đặt ngay dưới danh sách mục nên lúc nào cũng
+                thấy trong khi làm việc. Để trong "Cài đặt chung" thì chỉ thấy
+                khi chủ động mở mục đó, mà lúc cần biết nhất lại là lúc đang
+                tải ảnh lên ở mục khác. */}
+            <DungLuongKho />
 
           {/* Hidden File Inputs for Direct Actions */}
           <input

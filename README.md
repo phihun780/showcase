@@ -94,6 +94,7 @@ functions/            chạy trên máy chủ Cloudflare
   _middleware.js      chèn thẻ preview cho Zalo/Facebook, và trả /sitemap.xml
   _noi-dung.js        đọc nội dung CMS + dựng slug (dùng chung, đừng chép ra)
   api/                đăng nhập CMS, đọc/ghi dữ liệu, tải lên, xoá, tải ảnh về
+  api/dung-luong.js   đếm dung lượng kho R2, hiện trong thanh bên của CMS
 scripts/sao-luu.mjs   sao lưu nội dung
 scripts/dung-font.py  dựng font .woff2 từ .ttf trong font-web/
 ```

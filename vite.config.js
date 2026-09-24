@@ -108,6 +108,53 @@ function r2DevPlugin() {
           return res.end(JSON.stringify({ success: true, token: 'dev-token' }));
         }
 
+        // /api/dung-luong — dung luong dang dung tren R2
+        //
+        // Ban chay that do functions/api/dung-luong.js lo. O may thi dung
+        // chinh S3 client san co, di het danh sach file roi cong co tung cai.
+        if (req.url && req.url.split('?')[0] === '/api/dung-luong' && req.method === 'GET') {
+          res.setHeader('Content-Type', 'application/json');
+          if (!s3) {
+            res.statusCode = 503;
+            return res.end(JSON.stringify({ success: false, error: 'Thieu khoa R2 trong .env.local' }));
+          }
+          try {
+            const files = [];
+            let token;
+            // Chan 50 vong (50.000 file) cho khop voi ban chay that.
+            for (let vong = 0; vong < 50; vong++) {
+              const kq = await s3.send(new ListObjectsV2Command({
+                Bucket: bucket, MaxKeys: 1000, ContinuationToken: token,
+              }));
+              for (const o of kq.Contents || []) files.push({ key: o.Key, size: o.Size || 0 });
+              if (!kq.IsTruncated) break;
+              token = kq.NextContinuationToken;
+            }
+
+            const MUC = 10 * 1024 * 1024 * 1024;
+            let tong = 0;
+            const nhom = new Map();
+            for (const f of files) {
+              tong += f.size;
+              const i = f.key.indexOf('/');
+              const ten = i === -1 ? '(ngoai thu muc)' : f.key.slice(0, i);
+              const cu = nhom.get(ten) || { ten, bytes: 0, soFile: 0 };
+              cu.bytes += f.size; cu.soFile += 1;
+              nhom.set(ten, cu);
+            }
+
+            return res.end(JSON.stringify({
+              success: true, tong, soFile: files.length, mucMienPhi: MUC,
+              conLai: Math.max(0, MUC - tong), phanTram: (tong / MUC) * 100,
+              theoThuMuc: [...nhom.values()].sort((a, b) => b.bytes - a.bytes),
+              demDayDu: files.length < 50000,
+            }));
+          } catch (e) {
+            res.statusCode = 500;
+            return res.end(JSON.stringify({ success: false, error: String(e.message || e) }));
+          }
+        }
+
         // 2. /api/data (Read & Save portfolio data)
         if (req.url && (req.url === '/api/data' || req.url.startsWith('/api/data?')) && req.method === 'GET') {
           if (s3) {
