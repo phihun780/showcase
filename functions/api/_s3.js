@@ -137,24 +137,107 @@ export async function s3DeleteObject(env, key) {
   return s3Request({ method: 'DELETE', key, env });
 }
 
+// Một lần liệt kê trả tối đa 1000 file. Chặn ở 50 vòng (50.000 file) để lỡ có
+// gì sai thì vòng lặp còn dừng được, chứ không chạy mãi và treo máy chủ.
+const TOI_DA_VONG_XOA = 50;
+
+// Xoá bao nhiêu file cùng lúc. Xoá tuần tự thì 1000 file là 1000 lượt chờ nối
+// đuôi nhau — đủ lâu để Cloudflare cắt ngang giữa chừng.
+const XOA_CUNG_LUC = 8;
+
+/** Trả lại mấy ký tự XML đã được mã hoá trong tên file. */
+function boMaXml(s) {
+  return s
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&amp;/g, '&');   // phải để cuối, không thì giải mã hai lần
+}
+
+/**
+ * Xoá sạch một thư mục trong kho.
+ *
+ * BỐN LỖI BẢN CŨ MẮC PHẢI, ghi lại để đừng ai viết lại như vậy:
+ *
+ * 1. KHÔNG ĐI HẾT DANH SÁCH. Một lệnh liệt kê chỉ trả tối đa 1000 file, mà bản
+ *    cũ gọi đúng một lần rồi thôi. Thư mục quá 1000 file thì nó xoá 1000 cái
+ *    đầu, bỏ lại phần còn lại, mà VẪN BÁO THÀNH CÔNG. Người dùng tưởng đã dọn
+ *    sạch, thực tế còn nguyên một đống rác không ai tìm ra nữa.
+ *
+ * 2. CẮT DẤU GẠCH CUỐI SAI. Biểu thức cũ là `/^\/+|^\/+$/g` — vế thứ hai có
+ *    dấu `^` thừa nên chỉ khớp chuỗi TOÀN dấu gạch. Truyền vào "projects/abc/"
+ *    thì dấu gạch cuối không bị cắt, ghép thêm "/" nữa thành "projects/abc//",
+ *    không khớp file nào, và lại báo thành công với số đếm 0.
+ *
+ * 3. KHÔNG KIỂM TỪNG LỆNH XOÁ. `s3DeleteObject` trả về một Response nhưng bản
+ *    cũ không hề xem nó thành công hay không, cứ thế đếm là đã xoá.
+ *
+ * 4. XOÁ TUẦN TỰ. 1000 file là 1000 lượt chờ nối đuôi nhau.
+ *
+ * Đường đi qua R2 binding trong delete-folder.js vốn đã phân trang đúng. Nhưng
+ * trang thật KHÔNG gắn binding — nó chạy đúng vào hàm này, nên lỗi là lỗi thật
+ * chứ không phải lỗi trên lý thuyết.
+ */
 export async function s3DeleteFolder(env, prefix) {
-  const cleanPrefix = prefix.replace(/^\/+|^\/+$/g, '');
-  const listRes = await s3Request({ method: 'GET', queryParams: { prefix: `${cleanPrefix}/` }, env });
-  if (!listRes.ok) return { success: false, error: 'Không thể liệt kê file trong thư mục' };
+  const sach = prefix.replace(/^\/+|\/+$/g, '');
+  if (!sach) return { success: false, error: 'Thiếu tên thư mục' };
 
-  const xml = await listRes.text();
-  const keys = [];
-  const regex = /<Key>(.*?)<\/Key>/g;
-  let match;
-  while ((match = regex.exec(xml)) !== null) {
-    keys.push(match[1]);
+  // Dấu "/" ở cuối rất quan trọng: xoá "projects/abc" không được đụng nhầm
+  // tới "projects/abc-xyz".
+  const tienTo = `${sach}/`;
+
+  let daXoa = 0;
+  let loi = 0;
+  let the = null;
+
+  for (let vong = 0; vong < TOI_DA_VONG_XOA; vong++) {
+    const q = { 'list-type': '2', 'max-keys': '1000', prefix: tienTo };
+    if (the) q['continuation-token'] = the;
+
+    const listRes = await s3Request({ method: 'GET', queryParams: q, env });
+    if (!listRes.ok) {
+      return { success: false, error: `Không liệt kê được thư mục (${listRes.status})`, count: daXoa };
+    }
+
+    const xml = await listRes.text();
+
+    const keys = [];
+    const re = /<Key>([\s\S]*?)<\/Key>/g;
+    let m;
+    while ((m = re.exec(xml)) !== null) keys.push(boMaXml(m[1]));
+
+    for (let i = 0; i < keys.length; i += XOA_CUNG_LUC) {
+      const lo = keys.slice(i, i + XOA_CUNG_LUC);
+      const kq = await Promise.all(lo.map(async (k) => {
+        try {
+          const r = await s3DeleteObject(env, k);
+          // S3 trả 204 khi xoá xong, và cũng trả 204 khi file vốn không có —
+          // cả hai đều coi như xong việc.
+          return r.ok || r.status === 404;
+        } catch {
+          return false;
+        }
+      }));
+      for (const ok of kq) ok ? daXoa++ : loi++;
+    }
+
+    const conTiep = /<IsTruncated>true<\/IsTruncated>/i.test(xml);
+    const theTiep = (xml.match(/<NextContinuationToken>([\s\S]*?)<\/NextContinuationToken>/) || [])[1];
+    if (!conTiep || !theTiep) {
+      return loi > 0
+        ? { success: false, error: `Xoá được ${daXoa} file, ${loi} file thất bại`, count: daXoa, loi }
+        : { success: true, count: daXoa };
+    }
+    the = theTiep;
   }
 
-  for (const k of keys) {
-    await s3DeleteObject(env, k);
-  }
-
-  return { success: true, count: keys.length };
+  // Chạm trần vòng lặp: nói thẳng là chưa xoá hết, đừng báo thành công.
+  return {
+    success: false,
+    error: `Thư mục quá lớn, mới xoá được ${daXoa} file. Chạy lại để xoá tiếp.`,
+    count: daXoa,
+  };
 }
 
 /**
