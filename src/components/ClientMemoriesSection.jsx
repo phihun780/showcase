@@ -516,7 +516,7 @@ export default function ClientMemoriesSection() {
                     onClick={() => bamThe(client, n > 0 ? idx % n : idx)}
                     aria-label={`Xem ${ten}`}
                     style={{ transformOrigin: 'center center' }}
-                    className={`shrink-0 w-[var(--the)] text-left rounded-2xl border p-2 cursor-pointer transition-colors duration-300 ${
+                    className={`shrink-0 w-[var(--the)] text-center rounded-2xl border p-2 cursor-pointer transition-colors duration-300 ${
                       camUng ? 'snap-center' : ''
                     } ${
                       giua ? 'border-white/15 bg-[#18181b]' : 'border-white/8 bg-[#121216]'
