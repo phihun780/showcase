@@ -1607,7 +1607,7 @@ export default function CMSPage({ onBackToPortfolio }) {
                   {
                     id: 'mid_autumn',
                     title: 'Trung Thu',
-                    desc: 'Đèn lồng phát sáng lung linh, lá thu vàng rơi & ánh trăng',
+                    desc: 'Đèn lồng phát sáng bay lên, lá thu vàng rơi & sao đêm',
                     icon: '🥮',
                     badge: 'Rằm Tháng 8',
                   },
