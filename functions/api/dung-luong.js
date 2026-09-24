@@ -123,8 +123,12 @@ export async function onRequestGet(context) {
   // khoản thì phải nới nó ra mọi kho — thành ra khoá của CMS đụng được cả dữ
   // liệu của webapp khác, và lỡ nó lộ thì mất nhiều hơn hẳn.
   //
-  // Nên tách: một khoá thứ hai CHỈ ĐỌC, cấp trên mọi kho, chỉ dùng đúng cho
-  // việc đếm này. Không đặt thì đoạn dưới tự lùi về đếm mỗi kho của trang.
+  // Nên tách: một khoá thứ hai CHỈ ĐỌC, quyền "Admin Read only", chỉ dùng đúng
+  // cho việc đếm này. Không đặt thì đoạn dưới tự lùi về đếm mỗi kho của trang.
+  //
+  // PHẢI là "Admin Read only" chứ không phải "Object Read only": theo tài liệu
+  // Cloudflare chỉ quyền Admin mới liệt kê được danh sách bucket, mà muốn tính
+  // tổng thì trước hết phải biết tài khoản có những bucket nào.
   const envDem = env.R2_READ_ALL_ACCESS_KEY_ID && env.R2_READ_ALL_SECRET_ACCESS_KEY
     ? {
         ...env,

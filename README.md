@@ -38,11 +38,16 @@ Hai biến nữa **không bắt buộc**, chỉ cho ô "dung lượng R2" trong 
 `VITE_R2_READ_ALL_ACCESS_KEY_ID` và `VITE_R2_READ_ALL_SECRET_ACCESS_KEY`.
 
 Hạn mức 10 GB miễn phí tính cho **cả tài khoản** chứ không phải từng kho. Muốn
-ô đó hiện tổng của mọi kho thì tạo thêm một khoá R2 **chỉ đọc**, cấp trên **mọi
-kho** (Cloudflare → R2 → Manage API Tokens → Create → "Object Read only" →
-Apply to all buckets), rồi điền vào hai biến đó — ở `.env.local` cho máy, và ở
-Settings → Variables and Secrets trên Cloudflare cho trang thật (bỏ tiền tố
-`VITE_`). Không điền thì ô đó chỉ đếm kho của trang này và nói rõ ra.
+ô đó hiện tổng của mọi kho thì tạo thêm một khoá R2 quyền **Admin Read only**
+(Cloudflare → R2 → Account Details → API Tokens → Manage → Create), rồi điền
+vào hai biến đó — ở `.env.local` cho máy, và ở Settings → Variables and Secrets
+trên Cloudflare cho trang thật (bỏ tiền tố `VITE_`). Không điền thì ô đó chỉ
+đếm kho của trang này và nói rõ ra.
+
+**Phải là `Admin Read only`, không phải `Object Read only`.** Theo tài liệu
+Cloudflare, chỉ quyền Admin mới *liệt kê được danh sách bucket*; quyền Object
+chỉ đọc được object trong những bucket đã chỉ định sẵn — mà muốn tính tổng thì
+trước hết phải biết tài khoản có những bucket nào.
 
 Cố ý tách khỏi khoá chính: khoá chính có quyền ghi và xoá, nới nó ra mọi kho là
 CMS đụng được cả dữ liệu của webapp khác.
