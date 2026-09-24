@@ -1012,16 +1012,6 @@ export default function CMSPage({ onBackToPortfolio }) {
               })}
             </div>
 
-            {/* Dung lượng kho, bản cho MÀN HÌNH LỚN: nằm ngay dưới danh sách
-                mục nên lúc nào cũng thấy trong khi làm việc.
-
-                Giấu trên điện thoại. Ở đó thanh bên nằm trên cùng, nên ô này
-                chen vào giữa danh sách mục và phần cài đặt — mà nó chỉ là chỗ
-                ĐỌC thông tin, không việc gì phải đứng trước những thứ người ta
-                vào đây để sửa. Bản cho điện thoại nằm ở cuối trang. */}
-            <div className="hidden lg:block">
-              <DungLuongKho />
-            </div>
 
           {/* Hidden File Inputs for Direct Actions */}
           <input
@@ -1704,6 +1694,8 @@ export default function CMSPage({ onBackToPortfolio }) {
             <VibecodeEditor formData={hoSo} setFormData={datHoSo} />
           )}
 
+          {mucHienTai?.khoiAnh === 'dungLuong' && <DungLuongKho />}
+
           <StickySaveBar
             isSaved={daLuu}
             onSave={luuTatCa}
@@ -1711,14 +1703,6 @@ export default function CMSPage({ onBackToPortfolio }) {
             label="Lưu Thay Đổi"
             hint="Một nút lưu cho cả trang — sửa mục này không làm mất mục kia"
           />
-
-          {/* Dung lượng kho, bản cho ĐIỆN THOẠI: nằm cuối trang.
-              Ô này chỉ để đọc thông tin nên xuống sau cùng, nhường chỗ trên cho
-              những thứ người ta vào đây để sửa. Trên màn hình lớn thì bản trong
-              thanh bên lo, bản này ẩn đi. */}
-          <div className="lg:hidden pt-1">
-            <DungLuongKho />
-          </div>
         </div>
         </div>
       </main>

@@ -142,6 +142,14 @@ export const CAC_MUC = [
       { k: 'ogImage', nhan: 'Địa chỉ ảnh preview khi gửi link', vd: 'https://…/og-image.png', co: 6 },
     ],
   },
+  {
+    id: 'dungLuong',
+    ten: 'Dung lượng kho',
+    mo: 'Đã dùng bao nhiêu trên R2, so với mức 10 GB miễn phí',
+    khoiAnh: 'dungLuong',
+    // Mục duy nhất chỉ để ĐỌC, không sửa được gì — nên xếp cuối danh sách.
+    truong: [],
+  },
 ];
 
 /** Mọi trường chữ, gom phẳng — dùng để dò xem có bỏ sót trường nào không. */
