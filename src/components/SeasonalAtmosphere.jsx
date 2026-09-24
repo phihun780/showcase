@@ -2,7 +2,8 @@ import React, { useEffect, useRef } from 'react';
 import { usePortfolioData } from '../context/PortfolioDataContext';
 
 /**
- * Hiệu ứng không khí theo mùa: tuyết rơi, hoa Tết, Trung thu.
+ * Hiệu ứng không khí theo mùa: tuyết rơi, hoa Tết, Trung thu, mưa, Giáng
+ * sinh, Quốc khánh 2/9.
  *
  * BỐN THỨ QUYẾT ĐỊNH NHÌN CÓ "ĐÃ" HAY KHÔNG, theo đúng thứ tự quan trọng:
  *
@@ -20,8 +21,10 @@ import { usePortfolioData } from '../context/PortfolioDataContext';
  *    nhìn lâu thấy máy móc. Giờ có một luồng gió chung dao động chậm, thỉnh
  *    thoảng mạnh lên rồi lắng xuống.
  *
- * 4. SỐ LƯỢNG. Bản trước tối đa 24 bông tuyết trên cả màn hình — thưa tới mức
- *    không thành không khí. Giờ tối đa 110, tức gần gấp năm.
+ * 4. SỐ LƯỢNG VỪA PHẢI. Thưa quá thì không thành không khí, dày quá thì tranh
+ *    chỗ với bài viết. Đã thử 110 bông tuyết: quá dày. Chốt ở 34 — và cả mục
+ *    này nằm SAU nội dung (z-0), nên nó là nền chứ không phải thứ bay trước
+ *    mặt người đọc.
  *
  * VÌ SAO VẼ SẴN HẠT RA ẢNH RỒI DÁN, THAY VÌ `ctx.shadowBlur` NHƯ BẢN TRƯỚC:
  * Vì HÌNH THỨC, không phải vì tốc độ.
@@ -481,34 +484,137 @@ export default function SeasonalAtmosphere({ effectOverride, phiaTren = false } 
     };
 
     // ==========================================
-    // 5. GIÁNG SINH — đốm sáng dây đèn
+    // 5. GIÁNG SINH — kẹo gậy, ngôi sao, cây thông, quả châu
     // ==========================================
-    // Cố ý KHÔNG có tuyết ở đây: đã có sẵn mục "Tuyết rơi" riêng. Mục này là
-    // hơi ấm của dây đèn nhoè trong đêm — thứ mà tuyết trắng không nói được.
-    const MAU_NOEL = ['235, 70, 70', '80, 190, 110', '255, 205, 90', '255, 240, 215'];
-    let domNoel = [];
+    // Cố ý KHÔNG có tuyết ở đây: đã có sẵn mục "Tuyết rơi" riêng.
+    //
+    // VẼ SẴN MỖI MÓN MỘT LẦN RỒI DÁN:
+    // Kẹo gậy có sọc, cây thông có ba tầng lá với thân, ngôi sao có năm cánh và
+    // lõi sáng — vẽ lại từng nét cho từng món, từng khung hình thì tốn vô ích,
+    // vì hình không hề đổi, chỉ có vị trí và góc xoay đổi. Vẽ một lần ra ảnh
+    // rồi mỗi khung hình chỉ xoay và dán.
+    //
+    // Mỗi món vẽ trong một khung 100×100 đơn vị cho dễ căn, rồi thu về cỡ thật
+    // lúc dán.
+    const MON_NOEL = ['keo', 'sao', 'thong', 'chau'];
+    let hinhNoel = [];
 
-    const dungDomNoel = () => {
-      domNoel = MAU_NOEL.map(m => veChamSang(16, m, 0.82));
+    const veMonNoel = (kieu) => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const CO = 100;
+      const c = document.createElement('canvas');
+      c.width = c.height = Math.ceil(CO * dpr);
+      const g = c.getContext('2d');
+      g.scale(dpr, dpr);
+
+      if (kieu === 'keo') {
+        // Cây kẹo: một nét cong hình móc. Tô trắng trước, rồi tô đè bằng nét
+        // đứt màu đỏ — ra sọc mà không phải cắt xén hình gì cả.
+        const duong = new Path2D();
+        duong.moveTo(58, 88);
+        duong.lineTo(58, 44);
+        duong.arc(44, 44, 14, 0, Math.PI, true);
+        duong.lineTo(30, 52);
+
+        g.lineWidth = 15;
+        g.lineCap = 'round';
+        g.strokeStyle = '#FFFFFF';
+        g.stroke(duong);
+
+        g.save();
+        g.lineWidth = 15;
+        g.strokeStyle = '#E63946';
+        // ĐẦU VẠCH PHẢI CẮT PHẲNG, KHÔNG BO TRÒN.
+        // Đầu bo tròn kéo dài mỗi vạch thêm nửa bề dày ở MỖI đầu — vạch 9 đơn
+        // vị thành 9 + 7,5 + 7,5 = 24, dài hơn cả chu kỳ 20, nên các vạch đỏ
+        // nối liền nhau và lấp kín phần trắng. Cây kẹo ra một màu đỏ trơn,
+        // không còn sọc. Đã đo: trắng chỉ còn 17 pixel so với đỏ 1500.
+        g.lineCap = 'butt';
+        g.setLineDash([9, 11]);
+        g.stroke(duong);
+        g.restore();
+      } else if (kieu === 'sao') {
+        // Ngôi sao năm cánh, lõi sáng hơn rìa cho có khối.
+        const R = 42, r = 17, tam = 50;
+        g.beginPath();
+        for (let i = 0; i < 10; i++) {
+          const bk = i % 2 === 0 ? R : r;
+          const a = -Math.PI / 2 + (i * Math.PI) / 5;
+          const px = tam + Math.cos(a) * bk;
+          const py = tam + Math.sin(a) * bk;
+          if (i === 0) g.moveTo(px, py);
+          else g.lineTo(px, py);
+        }
+        g.closePath();
+        const gr = g.createRadialGradient(tam, tam, 4, tam, tam, R);
+        gr.addColorStop(0, '#FFF6C9');
+        gr.addColorStop(0.55, '#FFD24A');
+        gr.addColorStop(1, '#F0A500');
+        g.fillStyle = gr;
+        g.fill();
+      } else if (kieu === 'thong') {
+        // Cây thông: ba tầng lá chồng lên nhau, thêm thân gỗ.
+        g.fillStyle = '#7A4A21';
+        g.fillRect(44, 78, 12, 16);
+
+        const tang = [[50, 8, 26, 34], [50, 32, 33, 30], [50, 54, 40, 28]];
+        for (const [cx, dinh, nua, cao] of tang) {
+          const gr = g.createLinearGradient(cx - nua, 0, cx + nua, 0);
+          gr.addColorStop(0, '#2E7D4F');
+          gr.addColorStop(0.5, '#48A86B');
+          gr.addColorStop(1, '#276B43');
+          g.fillStyle = gr;
+          g.beginPath();
+          g.moveTo(cx, dinh);
+          g.lineTo(cx + nua, dinh + cao);
+          g.lineTo(cx - nua, dinh + cao);
+          g.closePath();
+          g.fill();
+        }
+      } else {
+        // Quả châu: mặt cầu bóng, có núm treo trên đỉnh.
+        g.fillStyle = '#C9A227';
+        g.fillRect(44, 10, 12, 10);
+        g.strokeStyle = '#C9A227';
+        g.lineWidth = 3;
+        g.beginPath();
+        g.arc(50, 10, 7, Math.PI, 0);
+        g.stroke();
+
+        const gr = g.createRadialGradient(38, 40, 4, 50, 56, 38);
+        gr.addColorStop(0, '#FF8A8A');
+        gr.addColorStop(0.45, '#D62828');
+        gr.addColorStop(1, '#8E1616');
+        g.fillStyle = gr;
+        g.beginPath();
+        g.arc(50, 56, 34, 0, Math.PI * 2);
+        g.fill();
+      }
+
+      return { anh: c, co: CO };
+    };
+
+    const dungHinhNoel = () => {
+      hinhNoel = MON_NOEL.map(veMonNoel);
     };
 
     const taoNoel = () => {
-      const soLuong = dayDac ? Math.min(Math.floor(width / 52), 28) : 10;
+      const soLuong = dayDac ? Math.min(Math.floor(width / 78), 18) : 7;
       return Array.from({ length: soLuong }, () => {
         const z = Math.random();
         return {
           x: Math.random() * width,
           y: Math.random() * height,
           z,
-          co: 2 + Math.pow(z, 1.5) * 9,
-          roi: 0.1 + Math.pow(z, 1.4) * 0.42,
-          dam: 0.12 + z * 0.34,
+          co: 9 + Math.pow(z, 1.5) * 20,
+          roi: 0.18 + Math.pow(z, 1.35) * 0.75,
+          dam: 0.22 + z * 0.5,
+          goc: Math.random() * Math.PI * 2,
+          // Xoay rất chậm. Món đồ quay tít trông như rác bay, không ra trang trí.
+          nhipXoay: (Math.random() * 0.008 - 0.004),
           lac: Math.random() * Math.PI * 2,
-          nhipLac: 0.003 + Math.random() * 0.008,
-          // Nhịp nháy riêng từng bóng, nên cả dây không sáng tắt cùng lúc.
-          nhay: Math.random() * Math.PI * 2,
-          nhipNhay: 0.012 + Math.random() * 0.03,
-          mau: Math.floor(Math.random() * MAU_NOEL.length),
+          nhipLac: 0.004 + Math.random() * 0.01,
+          mon: Math.floor(Math.random() * MON_NOEL.length),
         };
       });
     };
@@ -517,19 +623,23 @@ export default function SeasonalAtmosphere({ effectOverride, phiaTren = false } 
       for (let i = 0; i < noel.length; i++) {
         const d = noel[i];
         d.lac += d.nhipLac * nhip;
-        d.nhay += d.nhipNhay * nhip;
-        d.x += ((gio * (0.12 + d.z * 0.3)) + Math.sin(d.lac) * (0.15 + d.z * 0.3)) * nhip;
+        d.goc += d.nhipXoay * nhip;
+        d.x += ((gio * (0.2 + d.z * 0.5)) + Math.sin(d.lac) * (0.3 + d.z * 0.6)) * nhip;
         d.y += d.roi * nhip;
 
-        if (d.y > height + 30) { d.y = -30; d.x = Math.random() * width; }
-        if (d.x > width + 40) d.x = -40;
-        if (d.x < -40) d.x = width + 40;
+        if (d.y > height + 40) { d.y = -40; d.x = Math.random() * width; }
+        if (d.x > width + 50) d.x = -50;
+        if (d.x < -50) d.x = width + 50;
 
-        const sang = 0.55 + Math.abs(Math.sin(d.nhay)) * 0.45;
-        const cham = domNoel[d.mau];
-        const ve = d.co * 3.2;
-        ctx.globalAlpha = d.dam * sang;
-        ctx.drawImage(cham.anh, d.x - ve, d.y - ve, ve * 2, ve * 2);
+        const h = hinhNoel[d.mon];
+        if (!h) continue;
+
+        ctx.save();
+        ctx.translate(d.x, d.y);
+        ctx.rotate(d.goc);
+        ctx.globalAlpha = d.dam;
+        ctx.drawImage(h.anh, -d.co, -d.co, d.co * 2, d.co * 2);
+        ctx.restore();
       }
       ctx.globalAlpha = 1;
     };
@@ -611,7 +721,7 @@ export default function SeasonalAtmosphere({ effectOverride, phiaTren = false } 
       }
 
       if (seasonalEffect === 'christmas') {
-        dungDomNoel();
+        dungHinhNoel();
         noel = taoNoel();
       } else {
         noel = [];

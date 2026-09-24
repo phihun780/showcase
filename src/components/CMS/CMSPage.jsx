@@ -1621,7 +1621,7 @@ export default function CMSPage({ onBackToPortfolio }) {
                   {
                     id: 'christmas',
                     title: 'Giáng Sinh',
-                    desc: 'Đốm sáng dây đèn đỏ – lục – vàng nhoè trong đêm',
+                    desc: 'Kẹo gậy, ngôi sao, cây thông & quả châu bay lửng lơ',
                     icon: '🎄',
                     badge: 'Tháng 12',
                   },
